@@ -1,0 +1,48 @@
+{
+  "name": "VYRO - Shop Management",
+  "short_name": "VYRO",
+  "description": "All kinds of electric goods importer, wholesaler & supplier - Shop Management System",
+  "start_url": "./vyro.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1e3c72",
+  "theme_color": "#1e3c72",
+  "scope": "./",
+  "lang": "bn",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "vyro-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "vyro-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "finance"],
+  "shortcuts": [
+    {
+      "name": "New Sale",
+      "short_name": "Sale",
+      "description": "Create a new sale",
+      "url": "./vyro.html?action=sale"
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Home",
+      "description": "Go to dashboard",
+      "url": "./vyro.html?action=dashboard"
+    },
+    {
+      "name": "Backup",
+      "short_name": "Backup",
+      "description": "Backup your data",
+      "url": "./vyro.html?action=backup"
+    }
+  ]
+}
