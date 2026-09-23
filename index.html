@@ -7630,6 +7630,28 @@ window.finalizeSale = function(custId, cost) {
 var _origShowInvoiceStep7 = window.showInvoice;
 window.showInvoice = function(saleId) {
   if (_origShowInvoiceStep7) _origShowInvoiceStep7(saleId);
+    // ✅ Auto-fix Invoice Number Display
+  setTimeout(function() {
+    var modal = document.getElementById('invoiceModal');
+    if (!modal) return;
+    var sales = DB.get('sales');
+    var s = null;
+    for (var i = 0; i < sales.length; i++) {
+      if (String(sales[i].id) === String(saleId)) { s = sales[i]; break; }
+    }
+    if (!s) s = sales[sales.length - 1];
+    if (!s) return;
+    var invNo = s.invoiceNo || ((SETTINGS.get('invoicePrefix', 'INV')) + '-' + (s.id || '0000'));
+    var allB = modal.querySelectorAll('b');
+    for (var j = 0; j < allB.length; j++) {
+      if (allB[j].textContent.indexOf('NaN') !== -1) {
+        allB[j].textContent = invNo;
+      }
+    }
+    if (modal.innerHTML.indexOf('NaN') !== -1) {
+      modal.innerHTML = modal.innerHTML.replace(/NaNNaNNaN/g, invNo);
+    }
+  }, 300);
   setTimeout(function() {
     var modal = document.getElementById('invoiceModal');
     if (!modal) return;
