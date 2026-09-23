@@ -4532,6 +4532,11 @@ window.openBackupModal = function() {
 
 // ---------- Google Drive Upload (uses browser's Google Drive integration) ----------
 window.uploadToGoogleDrive = function() {
+  if (typeof window.doAutoGDriveBackup === 'function') {
+    return window.doAutoGDriveBackup();
+  }
+  
+  // ... পুরনো code এখানে (কিন্তু আর execute হবে না)
   var result = collectFullBackupData();
   var s = result.summary;
   
@@ -5565,6 +5570,9 @@ function showBackupSuccess(type) {
 
 // ---------- Enhanced Backup Modal (with format choice) ----------
 window.openBackupModal = function() {
+    if (typeof window.doAutoGDriveBackup === 'function') {
+    return window.doAutoGDriveBackup();
+  }
   closeModal();
   var modal = document.getElementById('backupModal');
   modal.classList.remove('hidden');
