@@ -1638,6 +1638,34 @@ function calcBilling() {
   } else if (wordsBox) wordsBox.style.display = 'none';
   window._billCalc = {subtotal: subtotal, discount: discount, vatPct: vatPct, vatAmount: vatAmount, grandTotal: grandTotal, paid: paid, due: due};
 }
+  // ============================================================
+// SHORT INVOICE NUMBER SYSTEM (INV-2609-001)
+// ============================================================
+function peekInvoiceNo() {
+  var key = 'smp_inv_seq_' + DB.currentShopId;
+  var ym = today().slice(2, 7).replace('-', '');
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
+  var next = (store[ym] || 0) + 1;
+  var prefix = SETTINGS.get('invoicePrefix', 'INV');
+  return prefix + '-' + ym + '-' + String(next).padStart(3, '0');
+}
+
+function commitInvoiceNo() {
+  var key = 'smp_inv_seq_' + DB.currentShopId;
+  var ym = today().slice(2, 7).replace('-', '');
+  var store = {};
+  try { store = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
+  store[ym] = (store[ym] || 0) + 1;
+  localStorage.setItem(key, JSON.stringify(store));
+}
+
+function getInvoiceDisplay(s) {
+  if (s.invoiceNo) return s.invoiceNo;
+  var prefix = SETTINGS.get('invoicePrefix', 'INV');
+  return prefix + '-' + s.id;
+}
+  
 function finalizeSale(custId, cost) {
   var c = window._billCalc;
   if (!c) return;
@@ -1647,8 +1675,10 @@ function finalizeSale(custId, cost) {
   var profit = c.grandTotal - c.vatAmount - cost;
   var sales = DB.get('sales');
   var saleId = uid();
-  sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct, vatAmount: c.vatAmount, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
+    var shortInvoiceNo = peekInvoiceNo();
+  sales.push({id: saleId, invoiceNo: shortInvoiceNo, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct, vatAmount: c.vatAmount, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
   DB.set('sales', sales);
+    commitInvoiceNo();
   var products = DB.get('products');
   for (var k = 0; k < saleCart.length; k++) {
     for (var m = 0; m < products.length; m++) if (products[m].id === saleCart[k].productId) {
@@ -1694,7 +1724,7 @@ function showInvoice(saleId) {
   html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
   html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p></div></div>';
   html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:20px">INVOICE</h2>';
-  html += '<p style="font-size:13px;margin:8px 0 0"><b>' + invPrefix + '-' + s.id + '</b></p>';
+  html += '<p style="font-size:13px;margin:8px 0 0"><b>' + + getInvoiceDisplay(s) + + '</b></p>';
   html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p></div></div>';
   html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298)">';
   html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Bill To</p>';
