@@ -8189,5 +8189,206 @@ setTimeout(function() {
 
 console.log('✅ Step 8 FINAL loaded — Full Translation + Historical Fix + Polish');
 </script>
+<!-- ============================================ -->
+<!-- GOOGLE DRIVE AUTO BACKUP SETUP - FIX v1.0  -->
+<!-- ============================================ -->
+<script>
+var GDRIVE_STORAGE_KEY = 'vyro_gdrive_url';
+
+function getGDriveUrl() {
+  return localStorage.getItem(GDRIVE_STORAGE_KEY) || '';
+}
+
+window.openGDriveSetup = function() {
+  var current = getGDriveUrl();
+  var lastBackup = +localStorage.getItem('smp_last_gdrive_backup_' + DB.currentShopId) || 0;
+  var lastStr = lastBackup ? new Date(lastBackup).toLocaleString('en-GB') : 'Never';
+  
+  // Remove any existing modal
+  var existing = document.getElementById('gdriveSetupModal');
+  if (existing) existing.remove();
+  
+  var html = '<div class="modal-overlay" id="gdriveSetupModal" onclick="if(event.target===this)this.remove()" style="z-index:9999">';
+  html += '<div class="modal" style="max-width:560px">';
+  html += '<h3>☁️ Google Drive Auto Backup</h3>';
+  
+  // Status box
+  html += '<div style="background:' + (current ? '#d4f5dd' : '#fff3cd') + ';padding:12px;border-radius:8px;margin-bottom:12px;font-size:12px;line-height:1.7">';
+  html += '<b>' + (current ? '✅ Connected' : '⚠️ Not Setup') + '</b><br>';
+  html += 'Last Drive Backup: <b>' + lastStr + '</b>';
+  html += '</div>';
+  
+  // Setup guide
+  html += '<details style="background:#e3f2fd;padding:10px;border-radius:8px;margin-bottom:12px;font-size:11px">';
+  html += '<summary style="cursor:pointer;font-weight:700;color:#2a5298">📖 Setup Guide (ক্লিক করুন)</summary>';
+  html += '<div style="margin-top:8px;line-height:1.9">';
+  html += '১) <b>script.google.com</b> → New Project<br>';
+  html += '২) Code paste → Deploy → <b>Web app</b><br>';
+  html += '৩) Execute as: <b>Me</b> • Access: <b>Anyone</b><br>';
+  html += '৪) Deploy → Authorize → URL কপি<br>';
+  html += '৫) নিচে paste → Save';
+  html += '</div></details>';
+  
+  // URL Input
+  html += '<label style="font-size:11px;color:#666;font-weight:700">Web App URL</label>';
+  html += '<input id="gdriveUrlInput" value="' + current + '" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:11px;padding:12px;font-family:monospace;width:100%;box-sizing:border-box">';
+  
+  // Save + Test buttons
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">';
+  html += '<button class="btn-success" style="padding:11px;font-size:12px" onclick="saveGDriveUrl()">💾 Save URL</button>';
+  html += '<button class="btn-info" style="padding:11px;font-size:12px" onclick="testGDriveConnection()">🧪 Test Connection</button>';
+  html += '</div>';
+  
+  // Backup buttons
+  html += '<button class="btn-primary" style="width:100%;margin-top:8px;background:linear-gradient(135deg,#4285f4,#34a853);padding:12px;font-size:13px;font-weight:700" onclick="doAutoGDriveBackup()">☁️ Backup Now to Google Drive</button>';
+  html += '<button class="btn-primary" style="width:100%;margin-top:6px;background:#2ed573;padding:11px;font-size:12px" onclick="downloadLocalBackup()">📥 Download JSON (offline)</button>';
+  html += '<button class="btn-primary" style="width:100%;margin-top:6px;background:#888;padding:11px;font-size:12px" onclick="document.getElementById(\'gdriveSetupModal\').remove()">Close</button>';
+  
+  // Footer
+  html += '<div style="text-align:center;font-size:10px;color:#888;margin-top:12px;padding-top:10px;border-top:1px dashed #ddd">';
+  html += 'Powered by VYRO • Google Drive API v1';
+  html += '</div>';
+  
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.saveGDriveUrl = function() {
+  var input = document.getElementById('gdriveUrlInput');
+  if (!input) return;
+  var url = input.value.trim();
+  if (!url) {
+    localStorage.removeItem(GDRIVE_STORAGE_KEY);
+    alert('✅ URL removed');
+    return;
+  }
+  if (url.indexOf('https://script.google.com') === -1) {
+    alert('❌ সঠিক URL দিন\n\nURL শুরু হবে "https://script.google.com" দিয়ে');
+    return;
+  }
+  if (url.indexOf('/exec') === -1) {
+    alert('❌ URL এর শেষে "/exec" থাকতে হবে');
+    return;
+  }
+  localStorage.setItem(GDRIVE_STORAGE_KEY, url);
+  alert('✅ URL saved successfully!');
+};
+
+window.testGDriveConnection = function() {
+  var input = document.getElementById('gdriveUrlInput');
+  var url = (input ? input.value.trim() : '') || getGDriveUrl();
+  if (!url) {
+    alert('❌ আগে URL দিন');
+    return;
+  }
+  showToast ? showToast('🧪 Testing connection...', 'warning') : null;
+  fetch(url, { method: 'GET' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'running' || data.service === 'VYRO Drive API') {
+        alert('✅ Connection OK!\n\n' + JSON.stringify(data, null, 2));
+      } else {
+        alert('⚠️ Response:\n' + JSON.stringify(data, null, 2));
+      }
+    })
+    .catch(function(e) {
+      alert('❌ Connection failed!\n\n' + e.message + '\n\nসম্ভাব্য কারণ:\n১. URL ভুল\n২. Apps Script Deploy করা নেই\n৩. Access = Anyone নেই');
+    });
+};
+
+window.doAutoGDriveBackup = function() {
+  var url = getGDriveUrl();
+  if (!url) {
+    alert('❌ আগে Setup করুন (URL save করুন)');
+    return;
+  }
+  if (!currentShop) {
+    alert('❌ Login required');
+    return;
+  }
+  
+  if (typeof showToast === 'function') {
+    showToast('☁️ Uploading to Drive...', 'warning');
+  }
+  
+  var result = (typeof collectFullBackupData === 'function') ? collectFullBackupData() : {
+    data: DB.getOneShopData(currentShop.id),
+    summary: {}
+  };
+  
+  var safeName = currentShop.name.replace(/[^a-zA-Z0-9\u0980-\u09FF]/g, '-');
+  var fileName = safeName + '-VYRO-' + today() + '-' + Date.now() + '.json';
+  
+  var payload = {
+    fileName: fileName,
+    folderName: 'VYRO Backups',
+    content: {
+      version: '4.4.0',
+      exportedAt: new Date().toISOString(),
+      deviceId: (typeof getDeviceId === 'function') ? getDeviceId() : 'unknown',
+      shopId: currentShop.id,
+      shopName: currentShop.name,
+      shop: currentShop,
+      summary: result.summary || {},
+      data: result.data || {}
+    }
+  };
+  
+  fetch(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(payload)
+  })
+  .then(function() {
+    localStorage.setItem('smp_last_gdrive_backup_' + currentShop.id, Date.now());
+    localStorage.setItem('smp_last_backup_' + currentShop.id, Date.now());
+    var changes = +localStorage.getItem('smp_change_count_' + currentShop.id) || 0;
+    localStorage.setItem('smp_changes_at_backup_' + currentShop.id, changes);
+    
+    if (typeof showToast === 'function') {
+      showToast('✅ Drive backup complete!');
+    } else {
+      alert('✅ Drive backup complete!\n\nFile: ' + fileName);
+    }
+    
+    // Refresh modal if open
+    var modal = document.getElementById('gdriveSetupModal');
+    if (modal) {
+      setTimeout(function() {
+        modal.remove();
+        openGDriveSetup();
+      }, 800);
+    }
+  })
+  .catch(function(e) {
+    if (typeof showToast === 'function') {
+      showToast('❌ Failed: ' + e.message, 'error');
+    } else {
+      alert('❌ Upload failed!\n\n' + e.message);
+    }
+  });
+};
+
+window.downloadLocalBackup = function() {
+  if (typeof doBackup === 'function') doBackup();
+  else alert('Download function unavailable');
+};
+
+// Auto backup every hour check
+setInterval(function() {
+  if (!currentShop) return;
+  var url = getGDriveUrl();
+  if (!url) return;
+  var last = +localStorage.getItem('smp_last_gdrive_backup_' + currentShop.id) || 0;
+  var hours = (Date.now() - last) / (1000 * 60 * 60);
+  if (hours >= 24) {
+    console.log('⏰ Auto Google Drive backup triggered (24h passed)');
+    doAutoGDriveBackup();
+  }
+}, 60 * 60 * 1000);
+
+console.log('✅ Google Drive Setup FIX v1.0 loaded');
+</script>
 </body>
 </html>
