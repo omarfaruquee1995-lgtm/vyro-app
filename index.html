@@ -4855,7 +4855,7 @@ function showAutoBackupBanner(days, changes) {
     '<b>Backup Reminder</b><br>' +
     '<span style="font-size:11px;opacity:.9">' + msg + '</span>' +
     '</div>' +
-    '<button onclick="autoBackupNow()" style="background:#fff;color:#f44336;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">Backup</button>' +
+    '<button onclick="doAutoGDriveBackup()" style="background:#fff;color:#f44336;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">Backup</button>' +
     '<button onclick="dismissBackupBanner()" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:11px;cursor:pointer">✕</button>';
   
   document.body.appendChild(banner);
@@ -4873,7 +4873,7 @@ function dismissBackupBanner() {
 }
 
 // ---------- One-Click Auto Backup to Google Drive ----------
-window.autoBackupNow = function() {
+window."doAutoGDriveBackup()" = function() {
   dismissBackupBanner();
   
   if (!currentShop) { alert('Login required'); return; }
@@ -4981,7 +4981,7 @@ window.openAutoBackupSettings = function() {
   
   // Actions
   html += '<button class="btn-primary" style="background:#2ed573;margin-top:10px" onclick="saveAutoBackupSettings()">💾 Save Settings</button>';
-  html += '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);margin-top:6px" onclick="autoBackupNow()">☁️ Backup Now to Google Drive</button>';
+  html += '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);margin-top:6px" onclick="doAutoGDriveBackup()"()">☁️ Backup Now to Google Drive</button>';
   html += '<button class="btn-primary" style="background:#607d8b;margin-top:6px" onclick="openAutoBackupHistory()">📜 View Auto Backup History</button>';
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'autoBackupSettingsModal\').remove()">Close</button>';
   html += '</div></div>';
