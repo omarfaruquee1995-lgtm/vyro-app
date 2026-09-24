@@ -8449,6 +8449,163 @@ setInterval(function() {
 }, 60 * 60 * 1000);
 
 console.log('✅ Google Drive Setup FIX v1.0 loaded');
+  // ============================================================
+// VYRO STORAGE MANAGEMENT SYSTEM
+// Auto Monitor + Warning + Cleanup
+// ============================================================
+window.checkStorage = function() {
+  var totalSize = 0;
+  var keys = ['products', 'sales', 'customers', 'suppliers', 'purchases', 'stockJournal', 'expenses', 'payments', 'supplierPayments', 'quotations'];
+  
+  console.log('╔══════════════════════════════════════════╗');
+  console.log('║   📊 VYRO STORAGE ANALYSIS               ║');
+  console.log('╠══════════════════════════════════════════╣');
+  
+  var data = {};
+  for (var i = 0; i < keys.length; i++) {
+    var key = 'smp_' + keys[i] + '_' + DB.currentShopId;
+    var value = localStorage.getItem(key) || '';
+    totalSize += value.length;
+    
+    try {
+      var arr = JSON.parse(value || '[]');
+      data[keys[i]] = arr.length;
+      console.log('║  ' + keys[i].padEnd(20) + arr.length.toString().padStart(6) + ' items  ║');
+    } catch(e) {}
+  }
+  
+  console.log('╠══════════════════════════════════════════╣');
+  console.log('║  TOTAL: ' + (totalSize/1024).toFixed(1).padStart(8) + ' KB                   ║');
+  console.log('║  USAGE: ' + ((totalSize/(5*1024*1024))*100).toFixed(2).padStart(8) + ' %                    ║');
+  console.log('╚══════════════════════════════════════════╝');
+  
+  return { totalSize: (totalSize/1024).toFixed(1), usage: ((totalSize/(5*1024*1024))*100).toFixed(2), counts: data };
+};
+
+window.storageAlert = function() {
+  var total = 0;
+  var keys = ['products', 'sales', 'customers', 'suppliers', 'purchases', 'stockJournal', 'expenses', 'payments', 'supplierPayments', 'quotations'];
+  
+  for (var i = 0; i < keys.length; i++) {
+    var key = 'smp_' + keys[i] + '_' + DB.currentShopId;
+    total += (localStorage.getItem(key) || '').length;
+  }
+  
+  var usagePercent = (total / (5 * 1024 * 1024)) * 100;
+  
+  if (usagePercent >= 90) {
+    alert('🚨 CRITICAL: Storage 90%+ Full!\n\nUsage: ' + usagePercent.toFixed(1) + '%\n\nSteps:\n1. Backup Now\n2. Clean Old Data\n3. Export to Excel');
+    return 'critical';
+  } else if (usagePercent >= 75) {
+    alert('⚠️ WARNING: Storage 75%+ Full!\n\nUsage: ' + usagePercent.toFixed(1) + '%\n\nRecommend:\n1. Backup Now\n2. Consider Cleanup');
+    return 'warning';
+  } else if (usagePercent >= 50) {
+    console.log('🟡 Storage: ' + usagePercent.toFixed(1) + '% — Caution');
+    return 'caution';
+  } else {
+    console.log('🟢 Storage: ' + usagePercent.toFixed(1) + '% — Safe');
+    return 'safe';
+  }
+};
+
+window.autoCleanup = function() {
+  var deleted = { sales: 0, stockJournal: 0, payments: 0 };
+  var cutoffDate = new Date(Date.now() - (12 * 30 * 24 * 60 * 60 * 1000));
+  var cutoffStr = cutoffDate.toISOString().split('T')[0];
+  
+  console.log('🧹 Auto Cleanup — Cutoff: ' + cutoffStr);
+  
+  var sales = DB.get('sales');
+  var oldCount = sales.length;
+  sales = sales.filter(function(s) { return s.date >= cutoffStr; });
+  DB.set('sales', sales);
+  deleted.sales = oldCount - sales.length;
+  
+  var journals = DB.get('stockJournal');
+  oldCount = journals.length;
+  journals = journals.filter(function(j) { return j.date >= cutoffStr; });
+  if (journals.length > 5000) journals = journals.slice(-5000);
+  DB.set('stockJournal', journals);
+  deleted.stockJournal = oldCount - journals.length;
+  
+  var payments = DB.get('payments');
+  oldCount = payments.length;
+  payments = payments.filter(function(p) { return p.date >= cutoffStr; });
+  DB.set('payments', payments);
+  deleted.payments = oldCount - payments.length;
+  
+  console.log('✅ Deleted: Sales=' + deleted.sales + ', Journal=' + deleted.stockJournal + ', Payments=' + deleted.payments);
+  return deleted;
+};
+
+window.openStorageDashboard = function() {
+  var totalSize = 0;
+  var keys = [
+    {name: 'Products', key: 'products', max: 2000},
+    {name: 'Sales', key: 'sales', max: 5000},
+    {name: 'Customers', key: 'customers', max: 2000},
+    {name: 'Suppliers', key: 'suppliers', max: 500},
+    {name: 'Purchases', key: 'purchases', max: 3000},
+    {name: 'Stock Journal', key: 'stockJournal', max: 10000},
+    {name: 'Expenses', key: 'expenses', max: 3000},
+    {name: 'Payments', key: 'payments', max: 5000},
+    {name: 'Quotations', key: 'quotations', max: 2000}
+  ];
+  
+  var rows = '';
+  for (var i = 0; i < keys.length; i++) {
+    var item = keys[i];
+    var storageKey = 'smp_' + item.key + '_' + DB.currentShopId;
+    var value = localStorage.getItem(storageKey) || '[]';
+    var size = value.length;
+    totalSize += size;
+    
+    var arr = [];
+    try { arr = JSON.parse(value); } catch(e) {}
+    var count = arr.length;
+    var percent = ((count / item.max) * 100).toFixed(0);
+    var bar = '█'.repeat(Math.floor(percent / 10)) + '░'.repeat(10 - Math.floor(percent / 10));
+    
+    rows += '<tr style="border-bottom:1px solid #eee">';
+    rows += '<td style="padding:6px;font-size:11px">' + item.name + '</td>';
+    rows += '<td style="padding:6px;font-size:11px;text-align:center;font-weight:700">' + count + '</td>';
+    rows += '<td style="padding:6px;font-size:11px;text-align:right">' + (size/1024).toFixed(1) + ' KB</td>';
+    rows += '<td style="padding:6px;font-size:9px;font-family:monospace;color:#4a90e2">' + bar + '</td>';
+    rows += '</tr>';
+  }
+  
+  var usagePercent = ((totalSize / (5 * 1024 * 1024)) * 100).toFixed(2);
+  var remaining = ((5 * 1024 * 1024 - totalSize) / 1024).toFixed(1);
+  
+  var statusColor = '#2ed573', statusText = '🟢 SAFE';
+  if (usagePercent >= 90) { statusColor = '#ff4757'; statusText = '🔴 CRITICAL'; }
+  else if (usagePercent >= 75) { statusColor = '#ffa502'; statusText = '🟠 WARNING'; }
+  else if (usagePercent >= 50) { statusColor = '#ffc107'; statusText = '🟡 CAUTION'; }
+  
+  var html = '<div class="modal-overlay" id="storageDashboardModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal" style="max-width:600px">';
+  html += '<h3>📊 Storage Dashboard</h3>';
+  html += '<div style="background:' + statusColor + ';color:#fff;padding:12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:10px;font-size:14px">';
+  html += statusText + ' — ' + usagePercent + '% Used';
+  html += '</div>';
+  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px">';
+  html += '<b>Used:</b> ' + (totalSize/1024).toFixed(1) + ' KB | <b>Limit:</b> 5 MB | <b>Remaining:</b> ' + remaining + ' KB';
+  html += '</div>';
+  html += '<table style="width:100%;border-collapse:collapse">';
+  html += '<thead><tr style="background:#f0f2f5">';
+  html += '<th style="padding:6px;font-size:10px;text-align:left">DATA</th>';
+  html += '<th style="padding:6px;font-size:10px">COUNT</th>';
+  html += '<th style="padding:6px;font-size:10px;text-align:right">SIZE</th>';
+  html += '<th style="padding:6px;font-size:10px">BAR</th>';
+  html += '</tr></thead><tbody>' + rows + '</tbody></table>';
+  html += '<button class="btn-warning" style="width:100%;margin-top:10px;padding:10px" onclick="if(confirm(\'Clean Old Data?\')){autoCleanup();location.reload();}">🧹 Auto Cleanup (12+ Months)</button>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:6px;width:100%;padding:10px" onclick="document.getElementById(\'storageDashboardModal\').remove()">Close</button>';
+  html += '</div></div>';
+  
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+console.log('✅ Storage Management System Loaded!');
 </script>
 </body>
 </html>
