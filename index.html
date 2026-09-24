@@ -8606,30 +8606,68 @@ window.openStorageDashboard = function() {
 };
 
 console.log('✅ Storage Management System Loaded!');
-  // ============================================================
-// Storage Dashboard Button — Permanent Injector
+// ============================================================
+// Storage Dashboard Button — MutationObserver Injector
 // ============================================================
 (function() {
-  var _origOpenSettings = window.openSettings;
-  window.openSettings = function() {
-    _origOpenSettings();
-    setTimeout(function() {
-      var modal = document.querySelector('#settingsModal .modal');
-      if (!modal) return;
-      if (modal.querySelector('button[onclick*="openStorageDashboard"]')) return;
-      
-      var uomBtn = modal.querySelector('button[onclick*="openUOMMaster"]');
-      if (!uomBtn) return;
-      
-      var storageBtn = document.createElement('button');
-      storageBtn.className = 'btn-primary';
-      storageBtn.style.cssText = 'background:linear-gradient(135deg,#9c27b0,#e91e63);padding:12px;font-size:13px;width:100%;margin-top:6px;cursor:pointer;border:none;border-radius:8px;color:#fff;font-weight:600';
-      storageBtn.innerHTML = '📊 Storage Dashboard';
-      storageBtn.onclick = window.openStorageDashboard;
-      uomBtn.parentNode.insertBefore(storageBtn, uomBtn.nextSibling);
-      console.log('✅ Storage Dashboard button injected');
-    }, 300);
-  };
+  function injectStorageButton() {
+    var modal = document.querySelector('#settingsModal .modal');
+    if (!modal) return;
+    if (modal.querySelector('#storageDashboardBtn')) return;
+    
+    var btns = modal.querySelectorAll('button');
+    var uomBtn = null;
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i].textContent.indexOf('UOM Master') !== -1) {
+        uomBtn = btns[i];
+        break;
+      }
+    }
+    if (!uomBtn) return;
+    
+    var storageBtn = document.createElement('button');
+    storageBtn.id = 'storageDashboardBtn';
+    storageBtn.className = 'btn-primary';
+    storageBtn.style.cssText = 'background:linear-gradient(135deg,#9c27b0,#e91e63);padding:12px;font-size:13px;width:100%;margin-top:6px;cursor:pointer;border:none;border-radius:8px;color:#fff;font-weight:600';
+    storageBtn.innerHTML = '📊 Storage Dashboard';
+    storageBtn.onclick = window.openStorageDashboard;
+    uomBtn.parentNode.insertBefore(storageBtn, uomBtn.nextSibling);
+    console.log('✅ Storage Dashboard button injected');
+  }
+  
+  function startObserver() {
+    var settingsModal = document.getElementById('settingsModal');
+    if (!settingsModal) {
+      setTimeout(startObserver, 500);
+      return;
+    }
+    
+    var observer = new MutationObserver(function(mutations) {
+      for (var i = 0; i < mutations.length; i++) {
+        var target = mutations[i].target;
+        if (target.id === 'settingsModal' && !target.classList.contains('hidden')) {
+          setTimeout(injectStorageButton, 100);
+          break;
+        }
+      }
+    });
+    
+    observer.observe(settingsModal, { attributes: true, attributeFilter: ['class'] });
+    console.log('✅ Storage Button Observer started');
+    
+    if (!settingsModal.classList.contains('hidden')) {
+      setTimeout(injectStorageButton, 100);
+    }
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(startObserver, 1000);
+    });
+  } else {
+    setTimeout(startObserver, 1000);
+  }
+  
   console.log('✅ Storage Injector loaded');
 })();
 </script>
