@@ -8606,6 +8606,32 @@ window.openStorageDashboard = function() {
 };
 
 console.log('✅ Storage Management System Loaded!');
+  // ============================================================
+// Storage Dashboard Button — Permanent Injector
+// ============================================================
+(function() {
+  var _origOpenSettings = window.openSettings;
+  window.openSettings = function() {
+    _origOpenSettings();
+    setTimeout(function() {
+      var modal = document.querySelector('#settingsModal .modal');
+      if (!modal) return;
+      if (modal.querySelector('button[onclick*="openStorageDashboard"]')) return;
+      
+      var uomBtn = modal.querySelector('button[onclick*="openUOMMaster"]');
+      if (!uomBtn) return;
+      
+      var storageBtn = document.createElement('button');
+      storageBtn.className = 'btn-primary';
+      storageBtn.style.cssText = 'background:linear-gradient(135deg,#9c27b0,#e91e63);padding:12px;font-size:13px;width:100%;margin-top:6px;cursor:pointer;border:none;border-radius:8px;color:#fff;font-weight:600';
+      storageBtn.innerHTML = '📊 Storage Dashboard';
+      storageBtn.onclick = window.openStorageDashboard;
+      uomBtn.parentNode.insertBefore(storageBtn, uomBtn.nextSibling);
+      console.log('✅ Storage Dashboard button injected');
+    }, 300);
+  };
+  console.log('✅ Storage Injector loaded');
+})();
 </script>
 </body>
 </html>
