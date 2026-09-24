@@ -8382,6 +8382,7 @@ window.doAutoGDriveBackup = function() {
   var payload = {
     fileName: fileName,
     folderName: 'VYRO Backups',
+      token: localStorage.getItem('vyro_gdrive_token') || '',
     content: {
       version: '4.4.0',
       exportedAt: new Date().toISOString(),
