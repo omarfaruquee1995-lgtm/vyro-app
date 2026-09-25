@@ -1742,14 +1742,14 @@ function showInvoice(saleId) {
   }
   html += '</tbody></table>';
   var sub = s.subtotal || s.total;
-  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><div style="min-width:280px;font-size:13px">';
-  html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
-  if (s.discount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>Special Discount:</span><b>− ' + fmt(s.discount) + '</b></div>';
-  if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
-  if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
-  html += '</div></div>';
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><table style="min-width:280px;font-size:13px;border-collapse:collapse"><tbody>';
+html += '<tr><td style="padding:5px 0;text-align:left">Subtotal:</td><td style="padding:5px 0;text-align:right"><b>' + fmt(sub) + '</b></td></tr>';
+if (s.discount > 0) html += '<tr style="color:#c0392b"><td style="padding:5px 0;text-align:left">Special Discount:</td><td style="padding:5px 0;text-align:right"><b>− ' + fmt(s.discount) + '</b></td></tr>';
+if (s.vatAmount > 0) html += '<tr style="color:#e67e22"><td style="padding:5px 0;text-align:left">VAT (' + (s.vatPct || 0) + '%):</td><td style="padding:5px 0;text-align:right"><b>+ ' + fmt(s.vatAmount) + '</b></td></tr>';
+html += '<tr style="border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><td style="padding:8px 0;text-align:left"><b>Grand Total:</b></td><td style="padding:8px 0;text-align:right"><b>' + fmt(s.total) + '</b></td></tr>';
+html += '<tr style="color:#2ed573"><td style="padding:4px 0;text-align:left">Paid:</td><td style="padding:4px 0;text-align:right"><b>' + fmt(s.paid) + '</b></td></tr>';
+if (s.due > 0) html += '<tr style="color:#c0392b"><td style="padding:4px 0;text-align:left">Due:</td><td style="padding:4px 0;text-align:right"><b>' + fmt(s.due) + '</b></td></tr>';
+html += '</tbody></table></div>';
   if (amountWordsEnabled && s.total > 0) {
     var wordsText = amountToWords(s.total);
     html += '<div class="amount-words"><span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span></div>';
