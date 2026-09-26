@@ -785,6 +785,7 @@ function initApp() {
         document.getElementById('bottomNav').style.display = 'flex';
         setTimeout(updateTopbarAvatar, 50);
         applySavedTheme();
+      setTimeout(function() { vyroLoadFromCloud(); }, 500);
       }
     } catch(e) {}
   }
