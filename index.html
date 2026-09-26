@@ -1311,6 +1311,13 @@ function updateProduct(id) {
 function deleteProduct(id) {
   if (!confirm('Delete?')) return;
   DB.set('products', DB.get('products').filter(function(p){ return p.id !== id; }));
+  // ☁️ Cloud sync delete to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { deleteProducts: [id] }).then(function(r) {
+      if (r && r.success) console.log('✅ Product deleted from cloud');
+      else console.warn('⚠️ Delete sync failed:', r && r.error);
+    });
+  }
   render();
 }
 function renderCustomers(app) {
