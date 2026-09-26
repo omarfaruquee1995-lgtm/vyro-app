@@ -738,6 +738,28 @@ function removePhoto() {
   showUserMenu();
 }
 
+// ============ VYRO Cloud Load ============
+async function vyroLoadFromCloud() {
+  if (!VYRO_TOKEN) return;
+  try {
+    var data = await vyroApiCall('/api/data', 'GET');
+    if (data && !data.error) {
+      console.log('✅ Loaded from cloud:', Object.keys(data).join(', '));
+      if (data.products) DB.set('products', data.products);
+      if (data.sales) DB.set('sales', data.sales);
+      if (data.customers) DB.set('customers', data.customers);
+      if (data.suppliers) DB.set('suppliers', data.suppliers);
+      if (data.purchases) DB.set('purchases', data.purchases);
+      if (data.expenses) DB.set('expenses', data.expenses);
+      render();
+    } else {
+      console.warn('⚠️ Cloud load failed:', data && data.error);
+    }
+  } catch (e) {
+    console.warn('⚠️ Cloud load error:', e.message);
+  }
+}
+// ============ End Cloud Load ============
 function initApp() {
   if (!checkActivation()) {
     document.getElementById('activationScreen').style.display = 'flex';
@@ -842,6 +864,7 @@ async function doLogin() {
     document.getElementById('bottomNav').style.display = 'flex';
     setTimeout(updateTopbarAvatar, 50);
     applySavedTheme();
+  await vyroLoadFromCloud();
     render();
     return;
   }
