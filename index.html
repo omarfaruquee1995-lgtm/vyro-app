@@ -777,18 +777,86 @@ function populateShopSelector() {
   var html = '<option value="">-- ' + t('selectShop') + ' --</option>';
   for (var i = 0; i < shops.length; i++) html += '<option value="' + shops[i].id + '">' + (shops[i].logo||'🏪') + ' ' + shops[i].name + '</option>';
   sel.innerHTML = html;
+
 }
-function doLogin() {
+// ============ VYRO Cloud Sync - Phase 1 ============
+var VYRO_API = 'https://vyro-api.omarfaruquee1995.workers.dev';
+var VYRO_TOKEN = localStorage.getItem('vyro_token') || null;
+var VYRO_SHOP = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
+var VYRO_SYNC_ENABLED = false; // API ready হলে true করব
+
+async function vyroApiCall(endpoint, method, body) {
+  try {
+    var headers = { 'Content-Type': 'application/json' };
+    if (VYRO_TOKEN) headers['Authorization'] = 'Bearer ' + VYRO_TOKEN;
+    var res = await fetch(VYRO_API + endpoint, {
+      method: method || 'GET',
+      headers: headers,
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return await res.json();
+  } catch (e) {
+    console.warn('VYRO API error:', e.message);
+    return { error: e.message };
+  }
+}
+
+async function vyroApiLogin(username, password) {
+  var result = await vyroApiCall('/api/login', 'POST', {
+    username: username,
+    password: password
+  });
+  if (result && result.success) {
+    VYRO_TOKEN = result.token;
+    localStorage.setItem('vyro_token', result.token);
+    localStorage.setItem('vyro_shop', JSON.stringify(result.shop));
+    localStorage.setItem('vyro_user', JSON.stringify(result.user));
+    console.log('✅ API Login successful');
+    return result;
+  }
+  console.warn('⚠️ API Login failed:', result.error);
+  return null;
+}
+// ============ End Phase 1 ============
+// ============ Phase 2 - New doLogin ============
+async function doLogin() {
   var shopId = +document.getElementById('loginShop').value;
   var u = document.getElementById('loginUser').value.trim();
   var p = document.getElementById('loginPass').value;
   var err = document.getElementById('loginErr');
   if (!shopId) { err.textContent = '❌ ' + t('selectShop'); return; }
+  
+  // Step 1: API login try করুন
+  err.textContent = '⏳ Logging in...';
+  var apiResult = await vyroApiLogin(u, p);
+  
+  if (apiResult && apiResult.success) {
+    console.log('✅ Cloud login successful');
+    currentUser = apiResult.user;
+    DB.currentShopId = apiResult.shop.id;
+    currentShop = apiResult.shop;
+    localStorage.setItem('smp_session', JSON.stringify({userId: apiResult.user.id, shopId: apiResult.shop.id}));
+    err.textContent = '✅ Logged in (Cloud)';
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('topbar').style.display = 'flex';
+    document.getElementById('bottomNav').style.display = 'flex';
+    setTimeout(updateTopbarAvatar, 50);
+    applySavedTheme();
+    render();
+    return;
+  }
+  
+  // Step 2: API fail হলে localStorage fallback
+  console.warn('⚠️ API login failed, using local login');
   var users = DB.getGlobal('users');
   var found = null;
-  for (var i = 0; i < users.length; i++) if (users[i].shopId === shopId && users[i].username === u && users[i].password === p) found = users[i];
+  for (var i = 0; i < users.length; i++) {
+    if (users[i].shopId === shopId && users[i].username === u && users[i].password === p) found = users[i];
+  }
   if (!found) { err.textContent = '❌ ' + t('wrongLogin'); return; }
-  currentUser = found; DB.currentShopId = shopId; currentShop = DB.findShop(shopId);
+  currentUser = found;
+  DB.currentShopId = shopId;
+  currentShop = DB.findShop(shopId);
   localStorage.setItem('smp_session', JSON.stringify({userId: found.id, shopId: shopId}));
   err.textContent = '';
   document.getElementById('loginScreen').style.display = 'none';
@@ -798,6 +866,8 @@ function doLogin() {
   applySavedTheme();
   render();
 }
+// ============ End Phase 2 ============
+
 function logout() {
   if (!confirm(t('logoutConfirm'))) return;
   currentUser = null; currentShop = null; DB.currentShopId = null;
@@ -1638,34 +1708,6 @@ function calcBilling() {
   } else if (wordsBox) wordsBox.style.display = 'none';
   window._billCalc = {subtotal: subtotal, discount: discount, vatPct: vatPct, vatAmount: vatAmount, grandTotal: grandTotal, paid: paid, due: due};
 }
-  // ============================================================
-// SHORT INVOICE NUMBER SYSTEM (INV-2609-001)
-// ============================================================
-function peekInvoiceNo() {
-  var key = 'smp_inv_seq_' + DB.currentShopId;
-  var ym = today().slice(2, 7).replace('-', '');
-  var store = {};
-  try { store = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
-  var next = (store[ym] || 0) + 1;
-  var prefix = SETTINGS.get('invoicePrefix', 'INV');
-  return prefix + '-' + ym + '-' + String(next).padStart(3, '0');
-}
-
-function commitInvoiceNo() {
-  var key = 'smp_inv_seq_' + DB.currentShopId;
-  var ym = today().slice(2, 7).replace('-', '');
-  var store = {};
-  try { store = JSON.parse(localStorage.getItem(key) || '{}'); } catch(e) {}
-  store[ym] = (store[ym] || 0) + 1;
-  localStorage.setItem(key, JSON.stringify(store));
-}
-
-function getInvoiceDisplay(s) {
-  if (s.invoiceNo) return s.invoiceNo;
-  var prefix = SETTINGS.get('invoicePrefix', 'INV');
-  return prefix + '-' + s.id;
-}
-  
 function finalizeSale(custId, cost) {
   var c = window._billCalc;
   if (!c) return;
@@ -1675,10 +1717,8 @@ function finalizeSale(custId, cost) {
   var profit = c.grandTotal - c.vatAmount - cost;
   var sales = DB.get('sales');
   var saleId = uid();
-    var shortInvoiceNo = peekInvoiceNo();
-  sales.push({id: saleId, invoiceNo: shortInvoiceNo, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct, vatAmount: c.vatAmount, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
+  sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct, vatAmount: c.vatAmount, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
   DB.set('sales', sales);
-    commitInvoiceNo();
   var products = DB.get('products');
   for (var k = 0; k < saleCart.length; k++) {
     for (var m = 0; m < products.length; m++) if (products[m].id === saleCart[k].productId) {
@@ -1724,7 +1764,7 @@ function showInvoice(saleId) {
   html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
   html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p></div></div>';
   html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:20px">INVOICE</h2>';
-  html += '<p style="font-size:13px;margin:8px 0 0"><b>' + + getInvoiceDisplay(s) + + '</b></p>';
+  html += '<p style="font-size:13px;margin:8px 0 0"><b>' + invPrefix + '-' + s.id + '</b></p>';
   html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p></div></div>';
   html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298)">';
   html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Bill To</p>';
@@ -1742,14 +1782,14 @@ function showInvoice(saleId) {
   }
   html += '</tbody></table>';
   var sub = s.subtotal || s.total;
-  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><table style="min-width:280px;font-size:13px;border-collapse:collapse"><tbody>';
-html += '<tr><td style="padding:5px 0;text-align:left">Subtotal:</td><td style="padding:5px 0;text-align:right"><b>' + fmt(sub) + '</b></td></tr>';
-if (s.discount > 0) html += '<tr style="color:#c0392b"><td style="padding:5px 0;text-align:left">Special Discount:</td><td style="padding:5px 0;text-align:right"><b>− ' + fmt(s.discount) + '</b></td></tr>';
-if (s.vatAmount > 0) html += '<tr style="color:#e67e22"><td style="padding:5px 0;text-align:left">VAT (' + (s.vatPct || 0) + '%):</td><td style="padding:5px 0;text-align:right"><b>+ ' + fmt(s.vatAmount) + '</b></td></tr>';
-html += '<tr style="border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><td style="padding:8px 0;text-align:left"><b>Grand Total:</b></td><td style="padding:8px 0;text-align:right"><b>' + fmt(s.total) + '</b></td></tr>';
-html += '<tr style="color:#2ed573"><td style="padding:4px 0;text-align:left">Paid:</td><td style="padding:4px 0;text-align:right"><b>' + fmt(s.paid) + '</b></td></tr>';
-if (s.due > 0) html += '<tr style="color:#c0392b"><td style="padding:4px 0;text-align:left">Due:</td><td style="padding:4px 0;text-align:right"><b>' + fmt(s.due) + '</b></td></tr>';
-html += '</tbody></table></div>';
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><div style="min-width:280px;font-size:13px">';
+  html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
+  if (s.discount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>Special Discount:</span><b>− ' + fmt(s.discount) + '</b></div>';
+  if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
+  html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
+  if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
+  html += '</div></div>';
   if (amountWordsEnabled && s.total > 0) {
     var wordsText = amountToWords(s.total);
     html += '<div class="amount-words"><span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span></div>';
@@ -4562,11 +4602,6 @@ window.openBackupModal = function() {
 
 // ---------- Google Drive Upload (uses browser's Google Drive integration) ----------
 window.uploadToGoogleDrive = function() {
-  if (typeof window.doAutoGDriveBackup === 'function') {
-    return window.doAutoGDriveBackup();
-  }
-  
-  // ... পুরনো code এখানে (কিন্তু আর execute হবে না)
   var result = collectFullBackupData();
   var s = result.summary;
   
@@ -4890,7 +4925,7 @@ function showAutoBackupBanner(days, changes) {
     '<b>Backup Reminder</b><br>' +
     '<span style="font-size:11px;opacity:.9">' + msg + '</span>' +
     '</div>' +
-    '<button onclick="doAutoGDriveBackup()" style="background:#fff;color:#f44336;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">Backup</button>' +
+    '<button onclick="autoBackupNow()" style="background:#fff;color:#f44336;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:11px;cursor:pointer">Backup</button>' +
     '<button onclick="dismissBackupBanner()" style="background:rgba(255,255,255,.2);color:#fff;border:none;padding:8px 10px;border-radius:8px;font-size:11px;cursor:pointer">✕</button>';
   
   document.body.appendChild(banner);
@@ -4908,7 +4943,7 @@ function dismissBackupBanner() {
 }
 
 // ---------- One-Click Auto Backup to Google Drive ----------
-window."doAutoGDriveBackup()" = function() {
+window.autoBackupNow = function() {
   dismissBackupBanner();
   
   if (!currentShop) { alert('Login required'); return; }
@@ -5016,7 +5051,7 @@ window.openAutoBackupSettings = function() {
   
   // Actions
   html += '<button class="btn-primary" style="background:#2ed573;margin-top:10px" onclick="saveAutoBackupSettings()">💾 Save Settings</button>';
-  html += '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);margin-top:6px" onclick="doAutoGDriveBackup()"()">☁️ Backup Now to Google Drive</button>';
+  html += '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);margin-top:6px" onclick="autoBackupNow()">☁️ Backup Now to Google Drive</button>';
   html += '<button class="btn-primary" style="background:#607d8b;margin-top:6px" onclick="openAutoBackupHistory()">📜 View Auto Backup History</button>';
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'autoBackupSettingsModal\').remove()">Close</button>';
   html += '</div></div>';
@@ -5600,9 +5635,6 @@ function showBackupSuccess(type) {
 
 // ---------- Enhanced Backup Modal (with format choice) ----------
 window.openBackupModal = function() {
-    if (typeof window.doAutoGDriveBackup === 'function') {
-    return window.doAutoGDriveBackup();
-  }
   closeModal();
   var modal = document.getElementById('backupModal');
   modal.classList.remove('hidden');
@@ -7630,28 +7662,6 @@ window.finalizeSale = function(custId, cost) {
 var _origShowInvoiceStep7 = window.showInvoice;
 window.showInvoice = function(saleId) {
   if (_origShowInvoiceStep7) _origShowInvoiceStep7(saleId);
-    // ✅ Auto-fix Invoice Number Display
-  setTimeout(function() {
-    var modal = document.getElementById('invoiceModal');
-    if (!modal) return;
-    var sales = DB.get('sales');
-    var s = null;
-    for (var i = 0; i < sales.length; i++) {
-      if (String(sales[i].id) === String(saleId)) { s = sales[i]; break; }
-    }
-    if (!s) s = sales[sales.length - 1];
-    if (!s) return;
-    var invNo = s.invoiceNo || ((SETTINGS.get('invoicePrefix', 'INV')) + '-' + (s.id || '0000'));
-    var allB = modal.querySelectorAll('b');
-    for (var j = 0; j < allB.length; j++) {
-      if (allB[j].textContent.indexOf('NaN') !== -1) {
-        allB[j].textContent = invNo;
-      }
-    }
-    if (modal.innerHTML.indexOf('NaN') !== -1) {
-      modal.innerHTML = modal.innerHTML.replace(/NaNNaNNaN/g, invNo);
-    }
-  }, 300);
   setTimeout(function() {
     var modal = document.getElementById('invoiceModal');
     if (!modal) return;
@@ -8382,7 +8392,6 @@ window.doAutoGDriveBackup = function() {
   var payload = {
     fileName: fileName,
     folderName: 'VYRO Backups',
-      token: localStorage.getItem('vyro_gdrive_token') || '',
     content: {
       version: '4.4.0',
       exportedAt: new Date().toISOString(),
@@ -8450,227 +8459,339 @@ setInterval(function() {
 }, 60 * 60 * 1000);
 
 console.log('✅ Google Drive Setup FIX v1.0 loaded');
-  // ============================================================
-// VYRO STORAGE MANAGEMENT SYSTEM
-// Auto Monitor + Warning + Cleanup
+</script>
+<script>
 // ============================================================
-window.checkStorage = function() {
-  var totalSize = 0;
-  var keys = ['products', 'sales', 'customers', 'suppliers', 'purchases', 'stockJournal', 'expenses', 'payments', 'supplierPayments', 'quotations'];
-  
-  console.log('╔══════════════════════════════════════════╗');
-  console.log('║   📊 VYRO STORAGE ANALYSIS               ║');
-  console.log('╠══════════════════════════════════════════╣');
-  
-  var data = {};
-  for (var i = 0; i < keys.length; i++) {
-    var key = 'smp_' + keys[i] + '_' + DB.currentShopId;
-    var value = localStorage.getItem(key) || '';
-    totalSize += value.length;
-    
-    try {
-      var arr = JSON.parse(value || '[]');
-      data[keys[i]] = arr.length;
-      console.log('║  ' + keys[i].padEnd(20) + arr.length.toString().padStart(6) + ' items  ║');
-    } catch(e) {}
-  }
-  
-  console.log('╠══════════════════════════════════════════╣');
-  console.log('║  TOTAL: ' + (totalSize/1024).toFixed(1).padStart(8) + ' KB                   ║');
-  console.log('║  USAGE: ' + ((totalSize/(5*1024*1024))*100).toFixed(2).padStart(8) + ' %                    ║');
-  console.log('╚══════════════════════════════════════════╝');
-  
-  return { totalSize: (totalSize/1024).toFixed(1), usage: ((totalSize/(5*1024*1024))*100).toFixed(2), counts: data };
-};
-
-window.storageAlert = function() {
-  var total = 0;
-  var keys = ['products', 'sales', 'customers', 'suppliers', 'purchases', 'stockJournal', 'expenses', 'payments', 'supplierPayments', 'quotations'];
-  
-  for (var i = 0; i < keys.length; i++) {
-    var key = 'smp_' + keys[i] + '_' + DB.currentShopId;
-    total += (localStorage.getItem(key) || '').length;
-  }
-  
-  var usagePercent = (total / (5 * 1024 * 1024)) * 100;
-  
-  if (usagePercent >= 90) {
-    alert('🚨 CRITICAL: Storage 90%+ Full!\n\nUsage: ' + usagePercent.toFixed(1) + '%\n\nSteps:\n1. Backup Now\n2. Clean Old Data\n3. Export to Excel');
-    return 'critical';
-  } else if (usagePercent >= 75) {
-    alert('⚠️ WARNING: Storage 75%+ Full!\n\nUsage: ' + usagePercent.toFixed(1) + '%\n\nRecommend:\n1. Backup Now\n2. Consider Cleanup');
-    return 'warning';
-  } else if (usagePercent >= 50) {
-    console.log('🟡 Storage: ' + usagePercent.toFixed(1) + '% — Caution');
-    return 'caution';
-  } else {
-    console.log('🟢 Storage: ' + usagePercent.toFixed(1) + '% — Safe');
-    return 'safe';
-  }
-};
-
-window.autoCleanup = function() {
-  var deleted = { sales: 0, stockJournal: 0, payments: 0 };
-  var cutoffDate = new Date(Date.now() - (12 * 30 * 24 * 60 * 60 * 1000));
-  var cutoffStr = cutoffDate.toISOString().split('T')[0];
-  
-  console.log('🧹 Auto Cleanup — Cutoff: ' + cutoffStr);
-  
-  var sales = DB.get('sales');
-  var oldCount = sales.length;
-  sales = sales.filter(function(s) { return s.date >= cutoffStr; });
-  DB.set('sales', sales);
-  deleted.sales = oldCount - sales.length;
-  
-  var journals = DB.get('stockJournal');
-  oldCount = journals.length;
-  journals = journals.filter(function(j) { return j.date >= cutoffStr; });
-  if (journals.length > 5000) journals = journals.slice(-5000);
-  DB.set('stockJournal', journals);
-  deleted.stockJournal = oldCount - journals.length;
-  
-  var payments = DB.get('payments');
-  oldCount = payments.length;
-  payments = payments.filter(function(p) { return p.date >= cutoffStr; });
-  DB.set('payments', payments);
-  deleted.payments = oldCount - payments.length;
-  
-  console.log('✅ Deleted: Sales=' + deleted.sales + ', Journal=' + deleted.stockJournal + ', Payments=' + deleted.payments);
-  return deleted;
-};
-
-window.openStorageDashboard = function() {
-  var totalSize = 0;
-  var keys = [
-    {name: 'Products', key: 'products', max: 2000},
-    {name: 'Sales', key: 'sales', max: 5000},
-    {name: 'Customers', key: 'customers', max: 2000},
-    {name: 'Suppliers', key: 'suppliers', max: 500},
-    {name: 'Purchases', key: 'purchases', max: 3000},
-    {name: 'Stock Journal', key: 'stockJournal', max: 10000},
-    {name: 'Expenses', key: 'expenses', max: 3000},
-    {name: 'Payments', key: 'payments', max: 5000},
-    {name: 'Quotations', key: 'quotations', max: 2000}
-  ];
-  
-  var rows = '';
-  for (var i = 0; i < keys.length; i++) {
-    var item = keys[i];
-    var storageKey = 'smp_' + item.key + '_' + DB.currentShopId;
-    var value = localStorage.getItem(storageKey) || '[]';
-    var size = value.length;
-    totalSize += size;
-    
-    var arr = [];
-    try { arr = JSON.parse(value); } catch(e) {}
-    var count = arr.length;
-    var percent = ((count / item.max) * 100).toFixed(0);
-    var bar = '█'.repeat(Math.floor(percent / 10)) + '░'.repeat(10 - Math.floor(percent / 10));
-    
-    rows += '<tr style="border-bottom:1px solid #eee">';
-    rows += '<td style="padding:6px;font-size:11px">' + item.name + '</td>';
-    rows += '<td style="padding:6px;font-size:11px;text-align:center;font-weight:700">' + count + '</td>';
-    rows += '<td style="padding:6px;font-size:11px;text-align:right">' + (size/1024).toFixed(1) + ' KB</td>';
-    rows += '<td style="padding:6px;font-size:9px;font-family:monospace;color:#4a90e2">' + bar + '</td>';
-    rows += '</tr>';
-  }
-  
-  var usagePercent = ((totalSize / (5 * 1024 * 1024)) * 100).toFixed(2);
-  var remaining = ((5 * 1024 * 1024 - totalSize) / 1024).toFixed(1);
-  
-  var statusColor = '#2ed573', statusText = '🟢 SAFE';
-  if (usagePercent >= 90) { statusColor = '#ff4757'; statusText = '🔴 CRITICAL'; }
-  else if (usagePercent >= 75) { statusColor = '#ffa502'; statusText = '🟠 WARNING'; }
-  else if (usagePercent >= 50) { statusColor = '#ffc107'; statusText = '🟡 CAUTION'; }
-  
-  var html = '<div class="modal-overlay" id="storageDashboardModal" onclick="if(event.target===this)this.remove()">';
-  html += '<div class="modal" style="max-width:600px">';
-  html += '<h3>📊 Storage Dashboard</h3>';
-  html += '<div style="background:' + statusColor + ';color:#fff;padding:12px;border-radius:8px;text-align:center;font-weight:700;margin-bottom:10px;font-size:14px">';
-  html += statusText + ' — ' + usagePercent + '% Used';
-  html += '</div>';
-  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px">';
-  html += '<b>Used:</b> ' + (totalSize/1024).toFixed(1) + ' KB | <b>Limit:</b> 5 MB | <b>Remaining:</b> ' + remaining + ' KB';
-  html += '</div>';
-  html += '<table style="width:100%;border-collapse:collapse">';
-  html += '<thead><tr style="background:#f0f2f5">';
-  html += '<th style="padding:6px;font-size:10px;text-align:left">DATA</th>';
-  html += '<th style="padding:6px;font-size:10px">COUNT</th>';
-  html += '<th style="padding:6px;font-size:10px;text-align:right">SIZE</th>';
-  html += '<th style="padding:6px;font-size:10px">BAR</th>';
-  html += '</tr></thead><tbody>' + rows + '</tbody></table>';
-  html += '<button class="btn-warning" style="width:100%;margin-top:10px;padding:10px" onclick="if(confirm(\'Clean Old Data?\')){autoCleanup();location.reload();}">🧹 Auto Cleanup (12+ Months)</button>';
-  html += '<button class="btn-primary" style="background:#888;margin-top:6px;width:100%;padding:10px" onclick="document.getElementById(\'storageDashboardModal\').remove()">Close</button>';
-  html += '</div></div>';
-  
-  document.body.insertAdjacentHTML('beforeend', html);
-};
-
-console.log('✅ Storage Management System Loaded!');
+// STEP 9 — CLOUD API INTEGRATION (Cloudflare D1)
 // ============================================================
-// Storage Dashboard Button — MutationObserver Injector
-// ============================================================
-(function() {
-  function injectStorageButton() {
-    var modal = document.querySelector('#settingsModal .modal');
-    if (!modal) return;
-    if (modal.querySelector('#storageDashboardBtn')) return;
-    
-    var btns = modal.querySelectorAll('button');
-    var uomBtn = null;
-    for (var i = 0; i < btns.length; i++) {
-      if (btns[i].textContent.indexOf('UOM Master') !== -1) {
-        uomBtn = btns[i];
-        break;
-      }
-    }
-    if (!uomBtn) return;
-    
-    var storageBtn = document.createElement('button');
-    storageBtn.id = 'storageDashboardBtn';
-    storageBtn.className = 'btn-primary';
-    storageBtn.style.cssText = 'background:linear-gradient(135deg,#9c27b0,#e91e63);padding:12px;font-size:13px;width:100%;margin-top:6px;cursor:pointer;border:none;border-radius:8px;color:#fff;font-weight:600';
-    storageBtn.innerHTML = '📊 Storage Dashboard';
-    storageBtn.onclick = window.openStorageDashboard;
-    uomBtn.parentNode.insertBefore(storageBtn, uomBtn.nextSibling);
-    console.log('✅ Storage Dashboard button injected');
+
+// ⚠️ YOUR API URL
+var VYRO_API_URL = 'https://vyro-api.omarfaruquee1995.workers.dev';
+
+// Token storage
+var vyroToken = localStorage.getItem('vyro_cloud_token') || '';
+var vyroCloudUser = null;
+var vyroCloudShop = null;
+
+// Try to restore from localStorage
+try {
+  vyroCloudUser = JSON.parse(localStorage.getItem('vyro_cloud_user') || 'null');
+  vyroCloudShop = JSON.parse(localStorage.getItem('vyro_cloud_shop') || 'null');
+} catch(e) {}
+
+// ---------- Cloud API Helper ----------
+async function cloudFetch(path, options) {
+  options = options || {};
+  options.headers = options.headers || {};
+  options.headers['Content-Type'] = 'application/json';
+  if (vyroToken) options.headers['Authorization'] = 'Bearer ' + vyroToken;
+  
+  var response = await fetch(VYRO_API_URL + path, options);
+  var data = await response.json();
+  
+  if (response.status === 401) {
+    localStorage.removeItem('vyro_cloud_token');
+    vyroToken = '';
+    throw new Error('Session expired. Please login again.');
   }
   
-  function startObserver() {
-    var settingsModal = document.getElementById('settingsModal');
-    if (!settingsModal) {
-      setTimeout(startObserver, 500);
+  if (response.status === 403 && data.expired) {
+    alert('⚠️ আপনার subscription expire হয়েছে!\n\nPlease contact admin to renew.');
+    throw new Error('Subscription expired');
+  }
+  
+  return data;
+}
+
+// ---------- Register New Shop (14-day trial) ----------
+window.cloudRegister = async function() {
+  var shopName = prompt('🏪 দোকানের নাম:');
+  if (!shopName) return;
+  
+  var ownerName = prompt('👤 আপনার নাম:');
+  if (!ownerName) return;
+  
+  var phone = prompt('📞 মোবাইল নম্বর (Unique):');
+  if (!phone) return;
+  
+  var username = prompt('👤 Username (login-এর জন্য):', 'admin');
+  if (!username) return;
+  
+  var password = prompt('🔒 Password (কমপক্ষে ৬ অক্ষর):');
+  if (!password || password.length < 6) {
+    alert('❌ Password কমপক্ষে ৬ অক্ষর হতে হবে');
+    return;
+  }
+  
+  try {
+    if (typeof showToast === 'function') showToast('⏳ Creating account...');
+    
+    var result = await cloudFetch('/api/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        shop_name: shopName,
+        owner_name: ownerName,
+        phone: phone,
+        username: username,
+        password: password
+      })
+    });
+    
+    if (result.error) {
+      alert('❌ ' + result.error);
       return;
     }
     
-    var observer = new MutationObserver(function(mutations) {
-      for (var i = 0; i < mutations.length; i++) {
-        var target = mutations[i].target;
-        if (target.id === 'settingsModal' && !target.classList.contains('hidden')) {
-          setTimeout(injectStorageButton, 100);
-          break;
-        }
+    vyroToken = result.token;
+    localStorage.setItem('vyro_cloud_token', vyroToken);
+    localStorage.setItem('vyro_cloud_shop', JSON.stringify({id: result.shop_id, name: result.shop_name}));
+    
+    var expDate = new Date(result.trial_expires).toLocaleDateString();
+    alert('✅ Account Created!\n\n🎁 14-day Free Trial\n\n🏪 ' + shopName + '\n📅 Expires: ' + expDate);
+    
+    // Auto-login with cloud session
+    cloudAutoLogin();
+    
+  } catch(e) {
+    alert('❌ Error: ' + e.message);
+  }
+};
+
+// ---------- Cloud Login ----------
+window.cloudLogin = async function() {
+  var phone = prompt('📞 মোবাইল নম্বর:');
+  if (!phone) return;
+  
+  var username = prompt('👤 Username:', 'admin');
+  if (!username) return;
+  
+  var password = prompt('🔒 Password:');
+  if (!password) return;
+  
+  try {
+    if (typeof showToast === 'function') showToast('⏳ Logging in...');
+    
+    var result = await cloudFetch('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ phone: phone, username: username, password: password })
+    });
+    
+    if (result.error) {
+      alert('❌ ' + result.error);
+      return;
+    }
+    
+    vyroToken = result.token;
+    vyroCloudUser = result.user;
+    vyroCloudShop = result.shop;
+    
+    localStorage.setItem('vyro_cloud_token', vyroToken);
+    localStorage.setItem('vyro_cloud_user', JSON.stringify(result.user));
+    localStorage.setItem('vyro_cloud_shop', JSON.stringify(result.shop));
+    
+    if (typeof showToast === 'function') showToast('✅ Login successful!');
+    
+    // Sync data from cloud
+    await cloudSyncFromCloud();
+    
+    alert('✅ Welcome back, ' + result.user.name + '!\n\n🏪 ' + result.shop.name);
+    
+    // Reload page to apply
+    location.reload();
+    
+  } catch(e) {
+    alert('❌ Error: ' + e.message);
+  }
+};
+
+// ---------- Auto Login (from saved token) ----------
+window.cloudAutoLogin = async function() {
+  if (!vyroToken) return false;
+  try {
+    var sub = await cloudFetch('/api/subscription');
+    if (sub.is_active) {
+      console.log('✅ Cloud session active. Plan:', sub.plan, '| Days left:', sub.days_left);
+      return true;
+    }
+  } catch(e) {
+    console.log('Cloud session invalid:', e.message);
+    return false;
+  }
+  return false;
+};
+
+// ---------- Sync Data FROM Cloud ----------
+window.cloudSyncFromCloud = async function() {
+  if (!vyroToken) return false;
+  try {
+    if (typeof showToast === 'function') showToast('⏳ Downloading data from cloud...');
+    
+    var data = await cloudFetch('/api/data');
+    
+    // Save to LocalStorage (same keys as current app)
+    if (!DB.currentShopId) {
+      console.log('⚠️ No shop selected. Data downloaded but not saved.');
+      return false;
+    }
+    
+    var keys = ['products', 'sales', 'customers', 'suppliers', 'purchases', 'expenses', 'payments', 'supplierPayments', 'stockJournal', 'returns', 'challans', 'quotations'];
+    var counts = {};
+    
+    for (var k = 0; k < keys.length; k++) {
+      var key = keys[k];
+      var arr = data[key] || [];
+      localStorage.setItem('smp_' + key + '_' + DB.currentShopId, JSON.stringify(arr));
+      counts[key] = arr.length;
+    }
+    
+    console.log('✅ Cloud sync complete:', counts);
+    if (typeof showToast === 'function') {
+      showToast('✅ Data synced! ' + (counts.products || 0) + ' products, ' + (counts.sales || 0) + ' sales');
+    }
+    return true;
+    
+  } catch(e) {
+    console.log('Cloud sync failed:', e.message);
+    if (typeof showToast === 'function') showToast('⚠️ Sync failed: ' + e.message, 'error');
+    return false;
+  }
+};
+
+// ---------- Sync Data TO Cloud ----------
+window.cloudSyncToCloud = async function() {
+  if (!vyroToken) { alert('❌ Please login to cloud first'); return false; }
+  if (!DB.currentShopId) { alert('❌ No shop selected'); return false; }
+  
+  try {
+    if (typeof showToast === 'function') showToast('⏳ Uploading to cloud...');
+    
+    var keys = ['products', 'sales', 'customers', 'suppliers', 'purchases', 'expenses', 'payments', 'supplierPayments', 'stockJournal', 'returns', 'challans', 'quotations'];
+    var payload = {};
+    
+    for (var k = 0; k < keys.length; k++) {
+      var key = keys[k];
+      var arr = DB.get(key) || [];
+      payload[key] = arr;
+    }
+    
+    var result = await cloudFetch('/api/save', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    
+    console.log('✅ Cloud upload complete:', result);
+    if (typeof showToast === 'function') {
+      showToast('✅ Uploaded to cloud!');
+    }
+    return true;
+    
+  } catch(e) {
+    console.log('Cloud upload failed:', e.message);
+    if (typeof showToast === 'function') showToast('❌ Upload failed: ' + e.message, 'error');
+    return false;
+  }
+};
+
+// ---------- Check Subscription Status ----------
+window.cloudCheckSubscription = async function() {
+  if (!vyroToken) { alert('❌ Not logged in to cloud'); return null; }
+  try {
+    var sub = await cloudFetch('/api/subscription');
+    alert('📊 Subscription Status\n\n' +
+      'Plan: ' + sub.plan.toUpperCase() + '\n' +
+      'Expires: ' + new Date(sub.expires_at).toLocaleDateString() + '\n' +
+      'Days Left: ' + sub.days_left + '\n' +
+      'Status: ' + (sub.is_active ? '✅ Active' : '❌ Expired'));
+    return sub;
+  } catch(e) {
+    alert('❌ Error: ' + e.message);
+    return null;
+  }
+};
+
+// ---------- Cloud Logout ----------
+window.cloudLogout = async function() {
+  if (!confirm('Logout from cloud?')) return;
+  try {
+    await cloudFetch('/api/logout', { method: 'POST' });
+  } catch(e) {}
+  
+  vyroToken = '';
+  vyroCloudUser = null;
+  vyroCloudShop = null;
+  localStorage.removeItem('vyro_cloud_token');
+  localStorage.removeItem('vyro_cloud_user');
+  localStorage.removeItem('vyro_cloud_shop');
+  
+  alert('✅ Cloud logged out');
+  location.reload();
+};
+
+// ---------- Add Cloud Buttons to Login Screen ----------
+setTimeout(function() {
+  var loginBox = document.querySelector('.login-box');
+  if (!loginBox) return;
+  if (document.getElementById('cloudBtns')) return;
+  
+  var div = document.createElement('div');
+  div.id = 'cloudBtns';
+  div.style.cssText = 'margin-top:15px;padding-top:15px;border-top:2px dashed #ddd';
+  div.innerHTML = 
+    '<div style="font-size:11px;color:#666;text-align:center;margin-bottom:10px;font-weight:700">☁️ Cloud Account</div>' +
+    '<button class="btn-primary" style="background:linear-gradient(135deg,#2ed573,#20c997);width:100%;padding:12px;margin-bottom:6px;font-weight:700" onclick="cloudRegister()">✨ নতুন Account (14-day free trial)</button>' +
+    '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);width:100%;padding:12px;font-weight:700" onclick="cloudLogin()">☁️ Cloud Login</button>';
+  
+  loginBox.appendChild(div);
+}, 1000);
+
+// ---------- Add Cloud Menu to Settings ----------
+var _origOpenSettingsCloud = window.openSettings;
+window.openSettings = function() {
+  if (_origOpenSettingsCloud) _origOpenSettingsCloud.apply(this, arguments);
+  setTimeout(function() {
+    var modal = document.querySelector('#settingsModal .modal');
+    if (!modal) return;
+    if (document.getElementById('cloudSettingsBlock')) return;
+    
+    var div = document.createElement('div');
+    div.id = 'cloudSettingsBlock';
+    div.style.cssText = 'margin-top:12px;padding-top:12px;border-top:2px dashed #ddd';
+    
+    var html = '<div style="font-size:12px;font-weight:700;color:#2a5298;margin-bottom:8px">☁️ Cloud Sync</div>';
+    
+    if (vyroToken && vyroCloudShop) {
+      html += '<div style="background:#d4f5dd;padding:8px;border-radius:6px;font-size:11px;margin-bottom:8px">';
+      html += '✅ Connected: <b>' + vyroCloudShop.name + '</b>';
+      html += '</div>';
+      html += '<button class="btn-primary" style="background:linear-gradient(135deg,#2ed573,#20c997);width:100%;padding:10px;margin-bottom:6px;font-size:12px" onclick="cloudSyncToCloud()">⬆️ Upload to Cloud</button>';
+      html += '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);width:100%;padding:10px;margin-bottom:6px;font-size:12px" onclick="cloudSyncFromCloud().then(function(){location.reload()})">⬇️ Download from Cloud</button>';
+      html += '<button class="btn-primary" style="background:#607d8b;width:100%;padding:10px;margin-bottom:6px;font-size:12px" onclick="cloudCheckSubscription()">📊 Subscription Status</button>';
+      html += '<button class="btn-primary" style="background:#ff4757;width:100%;padding:10px;font-size:12px" onclick="cloudLogout()">🚪 Cloud Logout</button>';
+    } else {
+      html += '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);width:100%;padding:10px;font-size:12px" onclick="cloudLogin()">☁️ Connect to Cloud</button>';
+    }
+    
+    div.innerHTML = html;
+    
+    var closeBtn = modal.querySelector('button[onclick*="settingsModal"]');
+    if (closeBtn) closeBtn.parentNode.insertBefore(div, closeBtn);
+    else modal.appendChild(div);
+  }, 200);
+};
+
+// ---------- Auto Login on Load ----------
+setTimeout(function() {
+  if (vyroToken) {
+    cloudAutoLogin().then(function(ok) {
+      if (ok && vyroCloudShop) {
+        console.log('✅ Cloud connected:', vyroCloudShop.name);
       }
     });
-    
-    observer.observe(settingsModal, { attributes: true, attributeFilter: ['class'] });
-    console.log('✅ Storage Button Observer started');
-    
-    if (!settingsModal.classList.contains('hidden')) {
-      setTimeout(injectStorageButton, 100);
-    }
   }
-  
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-      setTimeout(startObserver, 1000);
-    });
-  } else {
-    setTimeout(startObserver, 1000);
-  }
-  
-  console.log('✅ Storage Injector loaded');
-})();
+}, 1500);
+
+console.log('✅ Step 9 loaded — Cloud API Integration');
+console.log('🌐 API URL:', VYRO_API_URL);
 </script>
 </body>
 </html>
