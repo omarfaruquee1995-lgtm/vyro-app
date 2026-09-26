@@ -1232,6 +1232,13 @@ function saveProduct() {
   var id = uid();
   products.push({id: id, name: name, sku: document.getElementById('pSku').value.trim(), barcode: document.getElementById('pBarcode').value.trim(), buyPrice: +document.getElementById('pBuy').value || 0, sellPrice: +document.getElementById('pSell').value || 0, stock: stock, unit: unit, lowAlert: +document.getElementById('pLow').value || 5});
   DB.set('products', products);
+   // ☁️ Cloud sync to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { products: [products[products.length - 1]] }).then(function(r) {
+      if (r && r.success) console.log('✅ Product synced to cloud');
+      else console.warn('⚠️ Cloud sync failed:', r && r.error);
+    });
+  }
   if (stock > 0) addStockJournal(id, 'purchase', stock, +document.getElementById('pBuy').value || 0, 'Initial stock', today());
   document.getElementById('prodModal').remove();
   render();
