@@ -1757,6 +1757,13 @@ function finalizeSale(custId, cost) {
   var saleId = uid();
   sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct, vatAmount: c.vatAmount, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
   DB.set('sales', sales);
+  // ☁️ Cloud sync sale to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { sales: [sales[sales.length - 1]] }).then(function(r) {
+      if (r && r.success) console.log('✅ Sale synced to cloud');
+      else console.warn('⚠️ Sale sync failed:', r && r.error);
+    });
+  }
   var products = DB.get('products');
   for (var k = 0; k < saleCart.length; k++) {
     for (var m = 0; m < products.length; m++) if (products[m].id === saleCart[k].productId) {
@@ -2248,6 +2255,13 @@ function saveInvoiceEdit(id) {
     }
   }
   DB.set('sales', sales);
+// ☁️ Cloud sync edited sale to D1
+if (VYRO_TOKEN && s) {
+  vyroApiCall('/api/save', 'POST', { sales: [s] }).then(function(r) {
+    if (r && r.success) console.log('✅ Edited sale synced to cloud');
+    else console.warn('⚠️ Edited sale sync failed:', r && r.error);
+  });
+}
   alert('✅ Invoice আপডেট হয়েছে');
   document.getElementById('editInvoiceModal').remove();
   openSettings();
