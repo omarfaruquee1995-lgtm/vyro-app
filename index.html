@@ -2609,12 +2609,34 @@ function saveSupplier() {
     suppliers.push({id: uid(), name: name, phone: document.getElementById('supPhone').value.trim(), address: document.getElementById('supAddress').value.trim(), company: document.getElementById('supCompany').value.trim(), due: 0, paid: 0, createdAt: today()});
   }
   DB.set('suppliers', suppliers);
+  // ☁️ Cloud sync supplier to D1
+  if (VYRO_TOKEN) {
+    var targetSup = null;
+    if (editSupplierId) {
+      for (var k = 0; k < suppliers.length; k++) if (suppliers[k].id === editSupplierId) targetSup = suppliers[k];
+    } else {
+      targetSup = suppliers[suppliers.length - 1];
+    }
+    if (targetSup) {
+      vyroApiCall('/api/save', 'POST', { suppliers: [targetSup] }).then(function(r) {
+        if (r && r.success) console.log('✅ Supplier synced to cloud');
+        else console.warn('⚠️ Supplier sync failed:', r && r.error);
+      });
+    }
+  }
   document.getElementById('supplierModal').classList.add('hidden');
   openSupplierManager();
 }
 function deleteSupplier(id) {
   if (!confirm('Delete?')) return;
   DB.set('suppliers', DB.get('suppliers').filter(function(s){ return s.id !== id; }));
+  // ☁️ Cloud sync delete to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { deleteSuppliers: [id] }).then(function(r) {
+      if (r && r.success) console.log('✅ Supplier deleted from cloud');
+      else console.warn('⚠️ Supplier delete sync failed:', r && r.error);
+    });
+  }
   openSupplierManager();
 }
 function openPurchaseEntry(prodId) {
