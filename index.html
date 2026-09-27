@@ -2329,6 +2329,13 @@ function saveExpense() {
   var expenses = DB.get('expenses');
   expenses.push({id: uid(), description: desc, amount: amt, date: document.getElementById('eDate').value || today()});
   DB.set('expenses', expenses);
+  // ☁️ Cloud sync expense to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { expenses: [expenses[expenses.length - 1]] }).then(function(r) {
+      if (r && r.success) console.log('✅ Expense synced to cloud');
+      else console.warn('⚠️ Expense sync failed:', r && r.error);
+    });
+  }
   document.getElementById('expenseModal').remove();
   render();
 }
@@ -2560,6 +2567,13 @@ function renderReports(app) {
 function deleteExpense(id) {
   if (!confirm('Delete?')) return;
   DB.set('expenses', DB.get('expenses').filter(function(e){ return e.id !== id; }));
+  // ☁️ Cloud sync delete to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { deleteExpenses: [id] }).then(function(r) {
+      if (r && r.success) console.log('✅ Expense deleted from cloud');
+      else console.warn('⚠️ Expense delete sync failed:', r && r.error);
+    });
+  }
   renderReports(document.getElementById('app'));
 }
 function openSupplierManager() {
