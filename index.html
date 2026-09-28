@@ -2711,6 +2711,13 @@ function savePurchase() {
   var purchases = DB.get('purchases');
   purchases.push({id: uid(), productId: prodId, supplierId: supId, qty: qty, unit: unit, price: price, total: total, paid: paid, due: due, date: date, note: note, time: nowTime()});
   DB.set('purchases', purchases);
+  // ☁️ Cloud sync purchase to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { purchases: [purchases[purchases.length - 1]] }).then(function(r) {
+      if (r && r.success) console.log('✅ Purchase synced to cloud');
+      else console.warn('⚠️ Purchase sync failed:', r && r.error);
+    });
+  }
   var products = DB.get('products');
   for (var i = 0; i < products.length; i++) if (products[i].id === prodId) {
     products[i].stock = (products[i].stock || 0) + qty;
