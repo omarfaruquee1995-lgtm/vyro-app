@@ -8711,6 +8711,57 @@ window.cloudLogin = async function() {
     vyroToken = result.token;
     vyroCloudUser = result.user;
     vyroCloudShop = result.shop;
+    vyroToken = result.token;
+    vyroCloudUser = result.user;
+    vyroCloudShop = result.shop;
+    
+    // 🆕 Permanent Fix: Shop auto-save to localStorage
+    localStorage.setItem('vyro_token', vyroToken);
+    localStorage.setItem('vyro_shop', JSON.stringify(vyroCloudShop));
+    localStorage.setItem('vyro_user', JSON.stringify(vyroCloudUser));
+    
+    // 🆕 Add shop to local shops list (dropdown)
+    var shops = DB.getGlobal('shops');
+    var exists = shops.some(function(s){ return s.id === vyroCloudShop.id; });
+    if (!exists) {
+      shops.push({
+        id: vyroCloudShop.id,
+        name: vyroCloudShop.name,
+        phone: vyroCloudShop.phone,
+        logo: vyroCloudShop.logo || '🏪',
+        address: vyroCloudShop.address || ''
+      });
+      DB.setGlobal('shops', shops);
+      console.log('✅ Shop added to dropdown:', vyroCloudShop.name);
+    }
+    
+    // 🆕 Add user to local users list
+    if (vyroCloudUser) {
+      var users = DB.getGlobal('users');
+      var uExists = users.some(function(u){ return u.id === vyroCloudUser.id; });
+      if (!uExists) {
+        users.push({
+          id: vyroCloudUser.id,
+          shopId: vyroCloudShop.id,
+          username: vyroCloudUser.username,
+          password: '',
+          name: vyroCloudUser.name,
+          role: vyroCloudUser.role || 'admin',
+          permissions: ['sell', 'stock', 'customers', 'reports', 'expense']
+        });
+        DB.setGlobal('users', users);
+      }
+    }
+    
+    // 🆕 Set current session
+    DB.currentShopId = vyroCloudShop.id;
+    currentShop = vyroCloudShop;
+    currentUser = vyroCloudUser;
+    localStorage.setItem('smp_session', JSON.stringify({
+      userId: vyroCloudUser.id,
+      shopId: vyroCloudShop.id
+    }));
+    // 🆕 End fix
     
     localStorage.setItem('vyro_cloud_token', vyroToken);
     localStorage.setItem('vyro_cloud_user', JSON.stringify(result.user));
