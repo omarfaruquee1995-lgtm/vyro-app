@@ -1955,6 +1955,13 @@ function deleteSale(saleId) {
     DB.set('customers', customers);
   }
   DB.set('sales', sales.filter(function(x){ return x.id !== saleId; }));
+  // ☁️ Cloud sync delete to D1
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save', 'POST', { deleteSales: [saleId] }).then(function(r) {
+      if (r && r.success) console.log('✅ Sale deleted from cloud');
+      else console.warn('⚠️ Sale delete sync failed:', r && r.error);
+    });
+  }
   alert('✅ Sale ডিলিট হয়েছে');
   render();
 }
