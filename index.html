@@ -177,11 +177,31 @@ button { padding:10px 14px; border:none; border-radius:8px; font-size:13px; curs
 .device-box .label { font-size:10px; color:#856404; text-transform:uppercase; letter-spacing:1px; }
 .device-box .code { font-family:monospace; font-size:15px; font-weight:700; color:#c0392b; letter-spacing:2px; margin-top:4px; user-select:all; }
 .copy-btn { background:#ffa502; color:#fff; padding:6px 12px; border-radius:6px; font-size:11px; margin-top:6px; border:none; cursor:pointer; font-weight:700; }
-#loginScreen { position:fixed; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,#1e3c72,#2a5298); display:none; justify-content:center; align-items:center; z-index:9999; padding:16px; overflow-y:auto; }
-.login-box { background:#fff; border-radius:16px; padding:22px 18px; width:100%; max-width:380px; box-shadow:0 10px 30px rgba(0,0,0,.3); }
-.login-box h2 { text-align:center; color:#2a5298; margin-bottom:4px; font-size:20px; }
-.login-box .brand { text-align:center; color:#888; font-size:10px; margin-bottom:14px; }
-.login-err { color:#ff4757; font-size:11px; text-align:center; margin-top:6px; min-height:14px; }
+/* ============ Modern Login Redesign ============ */
+#loginScreen { position:fixed; top:0; left:0; right:0; bottom:0; background:linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%); display:none; justify-content:center; align-items:center; z-index:9999; padding:20px; overflow-y:auto; }
+#loginScreen::before { content:''; position:absolute; top:0; left:0; right:0; bottom:0; background-image:radial-gradient(circle at 20% 50%, rgba(42,82,152,.3) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(46,213,115,.15) 0%, transparent 50%), radial-gradient(circle at 40% 20%, rgba(52,152,219,.2) 0%, transparent 50%); pointer-events:none; }
+.login-box { background:#fff; border-radius:20px; padding:38px 30px 28px; width:100%; max-width:420px; box-shadow:0 25px 70px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05); position:relative; z-index:1; animation:loginSlideUp .5s ease-out; }
+@keyframes loginSlideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+.login-box .vyro-logo-img { width:70px; height:70px; border-radius:16px; display:block; margin:0 auto 10px; box-shadow:0 8px 20px rgba(42,82,152,.25); }
+.login-box h2 { text-align:center; color:#0f2027; margin-bottom:4px; font-size:26px; font-weight:800; letter-spacing:1px; background:linear-gradient(135deg,#1e3c72,#2a5298); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.login-box .brand { text-align:center; color:#888; font-size:11px; margin-bottom:24px; letter-spacing:.5px; }
+.login-box select, .login-box input { width:100%; padding:14px 16px 14px 42px; border:2px solid #e8ecf1; border-radius:10px; font-size:14px; margin-bottom:12px; background:#f8fafc; font-family:inherit; transition:all .2s; position:relative; }
+.login-box select:focus, .login-box input:focus { outline:none; border-color:#2a5298; background:#fff; box-shadow:0 0 0 4px rgba(42,82,152,.1); }
+.login-box .btn-primary { background:linear-gradient(135deg,#1e3c72,#2a5298); color:#fff; width:100%; padding:15px; border:none; border-radius:10px; font-size:15px; font-weight:700; cursor:pointer; letter-spacing:.5px; box-shadow:0 6px 20px rgba(42,82,152,.35); transition:all .2s; margin-bottom:10px; }
+.login-box .btn-primary:hover { transform:translateY(-2px); box-shadow:0 10px 25px rgba(42,82,152,.45); }
+.login-box .cloud-btn { background:#fff; color:#2a5298; border:2px solid #2a5298; }
+.login-box .cloud-btn:hover { background:#f0f5ff; }
+.login-box .register-btn { background:linear-gradient(135deg,#2ed573,#26ae60); box-shadow:0 6px 20px rgba(46,213,115,.35); }
+.login-box .register-btn:hover { box-shadow:0 10px 25px rgba(46,213,115,.45); }
+.login-divider { text-align:center; color:#94a3b8; font-size:11px; margin:18px 0 14px; position:relative; }
+.login-divider::before, .login-divider::after { content:''; position:absolute; top:50%; width:38%; height:1px; background:#e8ecf1; }
+.login-divider::before { left:0; }
+.login-divider::after { right:0; }
+
+.login-footer { text-align:center; font-size:10px; color:#94a3b8; margin-top:18px; padding-top:14px; border-top:1px solid #f0f2f5; line-height:1.6; }
+.login-footer b { color:#2a5298; }
+.login-err { color:#ff4757; font-size:12px; text-align:center; margin-top:8px; min-height:18px; font-weight:600; }
+/* ============ End Modern Login ============ */
 .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.55); z-index:300; display:flex; justify-content:center; align-items:center; padding:16px; }
 .modal { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:420px; max-height:88vh; overflow-y:auto; }
 .modal h3 { color:#2a5298; margin-bottom:10px; font-size:16px; }
@@ -262,19 +282,35 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
 </div>
 
 <div id="loginScreen">
+
   <div class="login-box">
     <img src="vyro-logo.png" class="vyro-logo-img" onerror="this.style.display='none'">
     <h2>VYRO</h2>
     <div class="brand">Shop Management • Powered by O-FR Pro Software</div>
+    
     <select id="loginShop" style="margin-bottom:8px"></select>
-    <input id="loginUser" placeholder="Username">
-    <input id="loginPass" type="password" placeholder="Password">
-    <button class="btn-primary" onclick="doLogin()">🔐 Login</button>
+    <input id="loginUser" placeholder="👤 Username">
+    <input id="loginPass" type="password" placeholder="🔒 Password">
+    
+    <button class="btn-primary" onclick="doLogin()">🔐 LOGIN</button>
+    
+    <div class="login-divider">Cloud Account</div>
+    
+    <button class="btn-primary register-btn" onclick="if(typeof openCloudRegister==='function')openCloudRegister();else alert('Register feature coming soon!')">✨ নতুন Account (14-day free trial)</button>
+    <button class="btn-primary cloud-btn" onclick="if(typeof cloudLogin==='function')cloudLogin();else alert('Cloud Login coming soon!')">☁️ Cloud Login</button>
+    
     <div class="login-err" id="loginErr"></div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;font-size:10px;color:#888;text-align:center"><b>Demo:</b> admin / admin123</div>
+    
+    <div class="trust-badges">
+  <div class="badge-item">🔒 100% Secure Login</div>
+</div>
+    
+    <div class="login-footer">
+      © 2026 <b>VYRO</b> • Powered by O-FR Pro Software<br>
+      Made in Bangladesh 🇧🇩
+    </div>
   </div>
 </div>
-
 <div class="biz-header" id="topbar" style="display:none">
   <div class="biz-header-left">
     <div class="biz-title">
@@ -8905,22 +8941,6 @@ window.cloudLogout = async function() {
   location.reload();
 };
 
-// ---------- Add Cloud Buttons to Login Screen ----------
-setTimeout(function() {
-  var loginBox = document.querySelector('.login-box');
-  if (!loginBox) return;
-  if (document.getElementById('cloudBtns')) return;
-  
-  var div = document.createElement('div');
-  div.id = 'cloudBtns';
-  div.style.cssText = 'margin-top:15px;padding-top:15px;border-top:2px dashed #ddd';
-  div.innerHTML = 
-    '<div style="font-size:11px;color:#666;text-align:center;margin-bottom:10px;font-weight:700">☁️ Cloud Account</div>' +
-    '<button class="btn-primary" style="background:linear-gradient(135deg,#2ed573,#20c997);width:100%;padding:12px;margin-bottom:6px;font-weight:700" onclick="cloudRegister()">✨ নতুন Account (14-day free trial)</button>' +
-    '<button class="btn-primary" style="background:linear-gradient(135deg,#4285f4,#34a853);width:100%;padding:12px;font-weight:700" onclick="cloudLogin()">☁️ Cloud Login</button>';
-  
-  loginBox.appendChild(div);
-}, 1000);
 
 // ---------- Add Cloud Menu to Settings ----------
 var _origOpenSettingsCloud = window.openSettings;
