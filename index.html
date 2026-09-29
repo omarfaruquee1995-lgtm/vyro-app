@@ -271,11 +271,7 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
     <input id="loginPass" type="password" placeholder="Password">
     <button class="btn-primary" onclick="doLogin()">🔐 Login</button>
     <div class="login-err" id="loginErr"></div>
-    <div class="login-divider" style="text-align:center;color:#94a3b8;font-size:11px;margin:18px 0 14px;position:relative;">☁️ Cloud Account</div>
-    
-    <button class="btn-primary" style="background:linear-gradient(135deg,#2ed573,#26ae60);color:#fff;width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;" onclick="if(typeof openCloudRegister==='function')openCloudRegister();else alert('Register coming soon!')">✨ নতুন Account (14-day free trial)</button>
-    
-    <button class="btn-primary" style="background:#fff;color:#2a5298;border:2px solid #2a5298;width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;" onclick="if(typeof cloudLogin==='function')cloudLogin();else alert('Cloud Login coming soon!')">☁️ Cloud Login</button>
+   
 
     <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;font-size:10px;color:#888;text-align:center"><b>Demo:</b> admin / admin123</div>
   </div>
@@ -8765,6 +8761,87 @@ window.cloudAutoLogin = async function() {
 
 // -------- Cloud Login --------
 
+// ============ Cloud Register (New Account) ============
+window.openCloudRegister = async function() {
+  var shopName = prompt('🏪 Shop Name:');
+  if (!shopName) return;
+  
+  var ownerName = prompt('👤 Owner Name:');
+  if (!ownerName) return;
+  
+  var phone = prompt('📱 Phone Number:');
+  if (!phone) return;
+  
+  var username = prompt('🔑 Username:', 'admin');
+  if (!username) return;
+  
+  var password = prompt('🔒 Password (min 6 chars):');
+  if (!password || password.length < 6) {
+    alert('❌ Password must be at least 6 characters');
+    return;
+  }
+  
+  try {
+    if (typeof showToast === 'function') showToast('⏳ Creating account...');
+    
+    var result = await cloudFetch('/api/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        shop_name: shopName,
+        owner_name: ownerName,
+        phone: phone,
+        username: username,
+        password: password
+      })
+    });
+    
+    if (result && result.success) {
+      alert('✅ Account Created!\n\n🎉 14-day Free Trial\n\n🏪 ' + shopName);
+      
+      // Auto-save to localStorage
+      localStorage.setItem('vyro_token', result.token);
+      localStorage.setItem('vyro_shop', JSON.stringify({id: result.shop_id, name: result.shop_name, phone: phone, logo: '🏪'}));
+      
+      var shops = DB.getGlobal('shops');
+      var shopExists = shops.some(function(s){ return s.id === result.shop_id; });
+      if (!shopExists) {
+        shops.push({id: result.shop_id, name: result.shop_name, phone: phone, logo: '🏪'});
+        DB.setGlobal('shops', shops);
+        console.log('✅ Shop added to dropdown:', result.shop_name);
+      }
+      
+      var users = DB.getGlobal('users');
+      var userId = Date.now();
+      var userExists = users.some(function(u){ return u.shopId === result.shop_id; });
+      if (!userExists) {
+        users.push({
+          id: userId, shopId: result.shop_id, username: 'admin', password: '',
+          name: 'Admin', role: 'admin',
+          permissions: ['sell', 'stock', 'customers', 'reports', 'expense']
+        });
+        DB.setGlobal('users', users);
+      }
+      
+      localStorage.setItem('smp_session', JSON.stringify({userId: userId, shopId: result.shop_id}));
+      DB.currentShopId = result.shop_id;
+      currentShop = {id: result.shop_id, name: result.shop_name, phone: phone, logo: '🏪'};
+      currentUser = {id: userId, name: 'Admin', username: 'admin', role: 'admin'};
+      console.log('✅ Auto-save complete!');
+      
+      // Auto-login
+      if (typeof cloudAutoLogin === 'function') {
+        await cloudAutoLogin();
+      } else {
+        setTimeout(function(){ location.reload(); }, 1000);
+      }
+    } else {
+      alert('❌ Registration failed: ' + (result && result.error ? result.error : 'Unknown'));
+    }
+  } catch(e) {
+    alert('❌ Error: ' + e.message);
+  }
+};
+// ============ End Cloud Register ============
 window.cloudLogin = async function() {
   var phone = prompt('📞 মোবাইল নম্বর:');
   if (!phone) return;
