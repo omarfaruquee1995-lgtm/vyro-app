@@ -271,6 +271,12 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
     <input id="loginPass" type="password" placeholder="Password">
     <button class="btn-primary" onclick="doLogin()">🔐 Login</button>
     <div class="login-err" id="loginErr"></div>
+    <div class="login-divider" style="text-align:center;color:#94a3b8;font-size:11px;margin:18px 0 14px;position:relative;">☁️ Cloud Account</div>
+    
+    <button class="btn-primary" style="background:linear-gradient(135deg,#2ed573,#26ae60);color:#fff;width:100%;padding:12px;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;" onclick="if(typeof openCloudRegister==='function')openCloudRegister();else alert('Register coming soon!')">✨ নতুন Account (14-day free trial)</button>
+    
+    <button class="btn-primary" style="background:#fff;color:#2a5298;border:2px solid #2a5298;width:100%;padding:12px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;" onclick="if(typeof cloudLogin==='function')cloudLogin();else alert('Cloud Login coming soon!')">☁️ Cloud Login</button>
+
     <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;font-size:10px;color:#888;text-align:center"><b>Demo:</b> admin / admin123</div>
   </div>
 </div>
