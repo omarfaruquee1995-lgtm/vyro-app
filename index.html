@@ -5013,6 +5013,10 @@ function checkAutoBackupReminder() {
   if (!cfg.enabled) return;
   
   var lastManualBackup = +localStorage.getItem('smp_last_backup_' + currentShop.id) || 0;
+  // ✅ FIX: যদি কখনো manual backup না নেওয়া হয় → reminder দেখাবেন না
+  if (lastManualBackup === 0) {
+    return;
+  }
   var lastGdrive = +localStorage.getItem('smp_last_gdrive_backup_' + currentShop.id) || 0;
   var lastReminder = +localStorage.getItem('smp_last_backup_reminder_' + currentShop.id) || 0;
   var changes = +localStorage.getItem('smp_change_count_' + currentShop.id) || 0;
