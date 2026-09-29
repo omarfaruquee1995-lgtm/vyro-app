@@ -8670,6 +8670,40 @@ window.cloudRegister = async function() {
     alert('✅ Account Created!\n\n🎁 14-day Free Trial\n\n🏪 ' + shopName + '\n📅 Expires: ' + expDate);
     
     // Auto-login with cloud session
+    // ============ PERMANENT FIX: localStorage Auto-Save ============
+    localStorage.setItem('vyro_token', result.token);
+    localStorage.setItem('vyro_shop', JSON.stringify({id: result.shop_id, name: result.shop_name, phone: shopName, logo: '🏪'}));
+    
+    var shops = DB.getGlobal('shops');
+    var shopExists = shops.some(function(s){ return s.id === result.shop_id; });
+    if (!shopExists) {
+      shops.push({id: result.shop_id, name: result.shop_name, phone: shopName, logo: '🏪'});
+      DB.setGlobal('shops', shops);
+      console.log('✅ Shop added to dropdown:', result.shop_name);
+    }
+    
+    var users = DB.getGlobal('users');
+    var userId = Date.now();
+    var userExists = users.some(function(u){ return u.shopId === result.shop_id; });
+    if (!userExists) {
+      users.push({
+        id: userId,
+        shopId: result.shop_id,
+        username: 'admin',
+        password: '',
+        name: 'Admin',
+        role: 'admin',
+        permissions: ['sell', 'stock', 'customers', 'reports', 'expense']
+      });
+      DB.setGlobal('users', users);
+    }
+    
+    localStorage.setItem('smp_session', JSON.stringify({userId: userId, shopId: result.shop_id}));
+    DB.currentShopId = result.shop_id;
+    currentShop = {id: result.shop_id, name: result.shop_name, phone: shopName, logo: '🏪'};
+    currentUser = {id: userId, name: 'Admin', username: 'admin', role: 'admin'};
+    console.log('✅ Auto-save complete!');
+    // ============ END PERMANENT FIX ============
     cloudAutoLogin();
     
   } catch(e) {
@@ -8678,6 +8712,54 @@ window.cloudRegister = async function() {
 };
 
 // ---------- Cloud Login ----------
+// ============ Cloud Auto Login (PERMANENT FIX) ============
+window.cloudAutoLogin = async function() {
+  try {
+    var token = localStorage.getItem('vyro_token');
+    var shop = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
+    
+    if (!token || !shop) {
+      console.log('⚠️ No cloud session found');
+      return;
+    }
+    
+    vyroToken = token;
+    vyroCloudShop = shop;
+    DB.currentShopId = shop.id;
+    currentShop = shop;
+    
+    var users = DB.getGlobal('users');
+    var foundUser = null;
+    for (var i = 0; i < users.length; i++) {
+      if (users[i].shopId === shop.id) { foundUser = users[i]; break; }
+    }
+    currentUser = foundUser || {id: 0, name: 'Admin', username: 'admin', role: 'admin'};
+    
+    if (typeof vyroLoadFromCloud === 'function') {
+      await vyroLoadFromCloud();
+    }
+    
+    var loginScreen = document.getElementById('loginScreen');
+    if (loginScreen) loginScreen.style.display = 'none';
+    var topbar = document.getElementById('topbar');
+    if (topbar) topbar.style.display = 'flex';
+    var bottomNav = document.getElementById('bottomNav');
+    if (bottomNav) bottomNav.style.display = 'flex';
+    
+    if (typeof updateTopbarAvatar === 'function') setTimeout(updateTopbarAvatar, 50);
+    if (typeof applySavedTheme === 'function') applySavedTheme();
+    if (typeof render === 'function') render();
+    
+    console.log('✅ Auto-login successful:', shop.name);
+  } catch(e) {
+    console.error('❌ Auto-login error:', e.message);
+  }
+};
+// ============ End Cloud Auto Login ============
+
+// -------- Cloud Login --------
+window.cloudLogin = async function() {          ← এটা এখনো থাকবে
+  ...
 window.cloudLogin = async function() {
   var phone = prompt('📞 মোবাইল নম্বর:');
   if (!phone) return;
