@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VYRO — ব্যবহারকারীর গাইড / User Guide</title>
+<link rel="icon" type="image/png" href="../vyro-logo.png">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI', 'Noto Sans Bengali', sans-serif; }
+body { background:#f0f2f5; color:#333; line-height:1.7; }
+body.dark { background:#121212; color:#e0e0e0; }
+
+/* HEADER */
+.header {
+  background:linear-gradient(135deg,#1e3c72,#2a5298);
+  color:#fff; padding:16px 20px;
+  position:sticky; top:0; z-index:100;
+  box-shadow:0 4px 12px rgba(0,0,0,.15);
+  display:flex; justify-content:space-between; align-items:center; gap:12px;
+}
+.header-left { display:flex; align-items:center; gap:12px; min-width:0; flex:1; }
+.header-logo { font-size:28px; }
+.header-title { font-size:18px; font-weight:800; letter-spacing:.3px; line-height:1.2; }
+.header-sub { font-size:11px; opacity:.85; }
+.header-right { display:flex; gap:8px; align-items:center; }
+.hd-btn {
+  background:rgba(255,255,255,.18); border:none; color:#fff;
+  padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700;
+  cursor:pointer; transition:all .2s; font-family:inherit;
+  display:flex; align-items:center; gap:5px;
+}
+.hd-btn:hover { background:rgba(255,255,255,.32); transform:translateY(-1px); }
+.hd-btn.active { background:#fff; color:#1e3c72; }
+
+/* LAYOUT */
+.container {
+  display:flex; max-width:1200px; margin:auto;
+  gap:20px; padding:20px;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width:260px; flex-shrink:0;
+  background:#fff; border-radius:12px;
+  padding:16px 12px; height:calc(100vh - 120px);
+  position:sticky; top:100px; overflow-y:auto;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+body.dark .sidebar { background:#1e1e1e; }
+.sidebar h3 {
+  font-size:11px; color:#888; text-transform:uppercase;
+  letter-spacing:1px; margin-bottom:8px; padding-left:8px;
+}
+.sidebar a {
+  display:block; padding:8px 12px; margin-bottom:3px;
+  color:#555; text-decoration:none; border-radius:8px;
+  font-size:13px; font-weight:600; transition:all .15s;
+  border-left:3px solid transparent;
+}
+.sidebar a:hover { background:#e3f2fd; color:#2a5298; border-left-color:#2a5298; }
+.sidebar a.active { background:#2a5298; color:#fff; border-left-color:#1e3c72; }
+body.dark .sidebar a { color:#bbb; }
+body.dark .sidebar a:hover { background:#2a2a2a; color:#4a90e2; }
+
+/* SEARCH */
+.search-box {
+  width:100%; padding:10px 14px; margin-bottom:12px;
+  border:2px solid #e0e0e0; border-radius:8px;
+  font-size:13px; font-family:inherit;
+  background:#fafafa;
+}
+.search-box:focus { outline:none; border-color:#2a5298; background:#fff; }
+body.dark .search-box { background:#2a2a2a; color:#fff; border-color:#333; }
+
+/* CONTENT */
+.content {
+  flex:1; min-width:0;
+  background:#fff; border-radius:12px;
+  padding:28px 32px; box-shadow:0 2px 8px rgba(0,0,0,.06);
+}
+body.dark .content { background:#1e1e1e; }
+
+/* TYPOGRAPHY */
+.content h1 {
+  font-size:26px; color:#1e3c72; margin-bottom:6px;
+  padding-bottom:10px; border-bottom:3px solid #2a5298;
+}
+body.dark .content h1 { color:#4a90e2; }
+.content h2 {
+  font-size:20px; color:#2a5298; margin-top:32px; margin-bottom:12px;
+  padding:10px 0 8px; border-bottom:2px solid #e3f2fd;
+  scroll-margin-top:100px;
+}
+body.dark .content h2 { color:#4a90e2; border-bottom-color:#333; }
+.content h3 {
+  font-size:16px; color:#1e3c72; margin-top:20px; margin-bottom:8px;
+}
+body.dark .content h3 { color:#4a90e2; }
+.content p { margin-bottom:12px; font-size:14px; }
+.content ul, .content ol { margin:10px 0 14px 24px; font-size:14px; }
+.content li { margin-bottom:6px; }
+.content strong { color:#1e3c72; }
+body.dark .content strong { color:#4a90e2; }
+.content code {
+  background:#f0f2f5; padding:2px 6px; border-radius:4px;
+  font-family:'Courier New', monospace; font-size:13px; color:#c0392b;
+}
+body.dark .content code { background:#2a2a2a; color:#ff7b7b; }
+.content a { color:#2a5298; text-decoration:none; font-weight:600; }
+.content a:hover { text-decoration:underline; }
+
+/* CALLOUTS */
+.tip, .warning, .info, .success {
+  padding:12px 16px; margin:12px 0; border-radius:8px;
+  font-size:13px; line-height:1.6;
+}
+.tip { background:#e3f2fd; border-left:4px solid #2196f3; color:#0d47a1; }
+.warning { background:#fff3cd; border-left:4px solid #ffa502; color:#856404; }
+.info { background:#f3e5f5; border-left:4px solid #9c27b0; color:#4a148c; }
+.success { background:#d4f5dd; border-left:4px solid #2ed573; color:#1e7e34; }
+body.dark .tip { background:#1a3a52; color:#90caf9; }
+body.dark .warning { background:#3a2f1a; color:#ffd966; }
+body.dark .info { background:#2a1a3a; color:#ce93d8; }
+body.dark .success { background:#1a3a2a; color:#a5d6a7; }
+
+/* TABLES */
+.content table {
+  width:100%; border-collapse:collapse; margin:12px 0;
+  font-size:13px;
+}
+.content th {
+  background:#2a5298; color:#fff; padding:10px;
+  text-align:left; font-weight:700;
+}
+.content td {
+  padding:10px; border-bottom:1px solid #eee;
+}
+.content tr:nth-child(even) { background:#f8f9fa; }
+body.dark .content tr:nth-child(even) { background:#2a2a2a; }
+body.dark .content td { border-bottom-color:#333; }
+
+/* LANGUAGE TOGGLE */
+.lang-content { display:none; }
+.lang-content.active { display:block; }
+
+/* BACK TO TOP */
+.back-to-top {
+  position:fixed; bottom:24px; right:24px;
+  background:#2a5298; color:#fff; border:none;
+  width:50px; height:50px; border-radius:50%;
+  font-size:20px; cursor:pointer;
+  box-shadow:0 4px 16px rgba(42,82,152,.4);
+  z-index:99; transition:all .2s;
+  display:none; align-items:center; justify-content:center;
+}
+.back-to-top:hover { transform:translateY(-3px); background:#1e3c72; }
+.back-to-top.visible { display:flex; }
+
+/* MOBILE */
+.mobile-menu-btn {
+  display:none;
+  background:rgba(255,255,255,.18); border:none; color:#fff;
+  width:40px; height:40px; border-radius:8px; font-size:20px; cursor:pointer;
+}
+@media (max-width: 900px) {
+  .container { padding:10px; gap:10px; flex-direction:column; }
+  .sidebar {
+    width:100%; height:auto; max-height:0;
+    overflow:hidden; position:static;
+    padding:0; transition:max-height .3s;
+  }
+  .sidebar.open { max-height:600px; padding:16px 12px; overflow-y:auto; }
+  .mobile-menu-btn { display:flex; align-items:center; justify-content:center; }
+  .content { padding:18px 16px; }
+  .content h1 { font-size:20px; }
+  .content h2 { font-size:16px; }
+  .header-title { font-size:14px; }
+  .header-sub { display:none; }
+}
+
+/* PRINT */
+@media print {
+  .header, .sidebar, .back-to-top, .mobile-menu-btn, .header-right { display:none !important; }
+  .container { padding:0; }
+  .content { box-shadow:none; padding:0; }
+  body { background:#fff; }
+  .content h2 { page-break-after:avoid; }
+  .tip, .warning, .info, .success { break-inside:avoid; }
+}
+
+/* SMOOTH SCROLL */
+html { scroll-behavior:smooth; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <span class="header-logo">📚</span>
+    <div>
+      <div class="header-title" id="hdrTitle">VYRO ব্যবহারকারীর গাইড</div>
+      <div class="header-sub" id="hdrSub">সম্পূর্ণ গাইড • Version 4.4.0</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <button class="hd-btn active" id="btnBN" onclick="switchLang('bn')">🇧🇩 বাংলা</button>
+    <button class="hd-btn" id="btnEN" onclick="switchLang('en')">🇬🇧 English</button>
+    <button class="hd-btn" onclick="window.print()" title="Print">🖨️</button>
+    <button class="hd-btn" onclick="window.close()" title="Close">✕</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍 খুঁজুন..." oninput="filterSidebar()">
+    <h3 id="sidebarTitle">সূচিপত্র</h3>
+    <nav id="navBN">
+      <a href="#bn-intro" class="nav-link">১. পরিচিতি</a>
+      <a href="#bn-activation" class="nav-link">২. Activation</a>
+      <a href="#bn-login" class="nav-link">৩. Login</a>
+      <a href="#bn-dashboard" class="nav-link">৪. ড্যাশবোর্ড</a>
+      <a href="#bn-product" class="nav-link">৫. পণ্য যোগ</a>
+      <a href="#bn-product-edit" class="nav-link">৬. পণ্য এডিট/ডিলিট</a>
+      <a href="#bn-sale" class="nav-link">৭. বিক্রি করা</a>
+      <a href="#bn-invoice" class="nav-link">৮. ইনভয়েস/PDF</a>
+      <a href="#bn-customer" class="nav-link">৯. কাস্টমার</a>
+      <a href="#bn-due" class="nav-link">১০. বাকি ও পেমেন্ট</a>
+      <a href="#bn-supplier" class="nav-link">১১. সাপ্লায়ার ও ক্রয়</a>
+      <a href="#bn-expense" class="nav-link">১২. খরচ</a>
+      <a href="#bn-quotation" class="nav-link">১৩. কোটেশন</a>
+      <a href="#bn-return" class="nav-link">১৪. বিক্রি ফেরত</a>
+      <a href="#bn-challan" class="nav-link">১৫. ডেলিভারি চালান</a>
+      <a href="#bn-reports" class="nav-link">১৬. রিপোর্ট</a>
+      <a href="#bn-history" class="nav-link">১৭. ঐতিহাসিক সার্চ</a>
+      <a href="#bn-backup" class="nav-link">১৮. ব্যাকআপ</a>
+      <a href="#bn-settings" class="nav-link">১৯. সেটিংস</a>
+      <a href="#bn-troubleshoot" class="nav-link">২০. সমস্যা ও সমাধান</a>
+      <a href="#bn-faq" class="nav-link">২১. প্রশ্নোত্তর</a>
+    </nav>
+    <nav id="navEN" style="display:none">
+      <a href="#en-intro" class="nav-link">1. Introduction</a>
+      <a href="#en-activation" class="nav-link">2. Activation</a>
+      <a href="#en-login" class="nav-link">3. Login</a>
+      <a href="#en-dashboard" class="nav-link">4. Dashboard</a>
+      <a href="#en-product" class="nav-link">5. Add Product</a>
+      <a href="#en-product-edit" class="nav-link">6. Edit/Delete Product</a>
+      <a href="#en-sale" class="nav-link">7. Making a Sale</a>
+      <a href="#en-invoice" class="nav-link">8. Invoice/PDF</a>
+      <a href="#en-customer" class="nav-link">9. Customers</a>
+      <a href="#en-due" class="nav-link">10. Due & Payment</a>
+      <a href="#en-supplier" class="nav-link">11. Supplier & Purchase</a>
+      <a href="#en-expense" class="nav-link">12. Expenses</a>
+      <a href="#en-quotation" class="nav-link">13. Quotations</a>
+      <a href="#en-return" class="nav-link">14. Sale Returns</a>
+      <a href="#en-challan" class="nav-link">15. Delivery Challan</a>
+      <a href="#en-reports" class="nav-link">16. Reports</a>
+      <a href="#en-history" class="nav-link">17. Historical Search</a>
+      <a href="#en-backup" class="nav-link">18. Backup</a>
+      <a href="#en-settings" class="nav-link">19. Settings</a>
+      <a href="#en-troubleshoot" class="nav-link">20. Troubleshooting</a>
+      <a href="#en-faq" class="nav-link">21. FAQ</a>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="content">
+
+    <!-- ============ BENGALI ============ -->
+    <div id="langBN" class="lang-content active">
+
+      <h1>📖 VYRO ব্যবহারকারীর গাইড</h1>
+      <p><strong>সংস্করণ:</strong> ৪.৪.০ | <strong>ডেভেলপার:</strong> O-FR Pro Software</p>
+
+      <div class="info">
+        💡 <strong>টিপস:</strong> উপরে 🇧🇩 / 🇬🇧 button দিয়ে ভাষা পরিবর্তন করতে পারবেন। বাম দিকের সূচিপত্র থেকে যেকোনো section-এ যান।
+      </div>
+
+      <h2 id="bn-intro">১. পরিচিতি</h2>
+      <p>VYRO হলো একটি ক্লাউড-ভিত্তিক দোকান ম্যানেজমেন্ট অ্যাপ। এটি দিয়ে আপনি সহজে পণ্য, বিক্রি, কাস্টমার, সাপ্লায়ার, খরচ ও রিপোর্ট পরিচালনা করতে পারবেন।</p>
+      <p><strong>প্রধান সুবিধা:</strong></p>
+      <ul>
+        <li>📱 একাধিক ডিভাইসে sync</li>
+        <li>☁️ Cloud backup</li>
+        <li>🌐 অফলাইনেও কাজ করে</li>
+        <li>🇧🇩 বাংলা + English</li>
+      </ul>
+
+      <h2 id="bn-activation">২. Activation করা</h2>
+      <p>প্রথমবার ব্যবহারের সময় একটি Activation Code লাগবে।</p>
+      <ol>
+        <li>অ্যাপ খুললে <strong>Device ID</strong> দেখতে পাবেন (যেমন: <code>DEV7K2M8X9P1</code>)</li>
+        <li><strong>📋 Copy Device ID</strong> button চেপে copy করুন</li>
+        <li>Admin-কে WhatsApp/Message করুন</li>
+        <li>Admin একটি Activation Code দেবেন (যেমন: <code>ACT-1234-ABCD</code>)</li>
+        <li>Code লিখে <strong>✅ Activate Now</strong> চাপুন</li>
+      </ol>
+      <div class="warning">⚠️ <strong>সতর্কতা:</strong> Device ID গোপন রাখুন। এটি অন্য কারো সাথে শেয়ার করবেন না।</div>
+
+      <h2 id="bn-login">৩. Login করা</h2>
+      <ol>
+        <li><strong>Select Shop</strong> dropdown থেকে দোকান বেছে নিন</li>
+        <li>Username লিখুন</li>
+        <li>Password লিখুন (case-sensitive)</li>
+        <li><strong>🔐 Login</strong> button চাপুন</li>
+      </ol>
+      <div class="tip">💡 <strong>টিপস:</strong> Caps Lock বন্ধ আছে কিনা দেখে নিন। Password ভুল হলে "Wrong username or password" দেখাবে।</div>
+
+      <h2 id="bn-dashboard">৪. ড্যাশবোর্ড</h2>
+      <p>লগইন করার পর যা দেখবেন:</p>
+      <ul>
+        <li><strong>৮টি KPI কার্ড:</strong> আজকের বিক্রি, লাভ, বাকি, স্টক মূল্য ইত্যাদি</li>
+        <li><strong>Quick Actions:</strong> ১২টি দ্রুত কাজের button</li>
+        <li><strong>Sales Chart:</strong> ৭ দিন / ৩০ দিন / বছরের বিক্রির চার্ট</li>
+        <li><strong>Smart Alerts:</strong> কম স্টক, বাকি ইত্যাদি সতর্কতা</li>
+      </ul>
+      <p><strong>নিচে Bottom Navigation:</strong></p>
+      <ul>
+        <li>🏠 Home — ড্যাশবোর্ড</li>
+        <li>📦 Stock — ইনভেন্টরি</li>
+        <li>👥 Party — কাস্টমার</li>
+        <li>🧾 Sales — বিক্রি</li>
+        <li>📊 Reports — রিপোর্ট</li>
+      </ul>
+
+      <h2 id="bn-product">৫. পণ্য যোগ করা</h2>
+      <ol>
+        <li>নিচে <strong>📦 Stock</strong> চাপুন</li>
+        <li><strong>+ Add</strong> button চাপুন</li>
+        <li>তথ্য পূরণ করুন:
+          <ul>
+            <li>পণ্যের নাম <strong>(আবশ্যক)</strong></li>
+            <li>SKU, Barcode (থাকলে)</li>
+            <li>ক্রয় মূল্য, বিক্রয় মূল্য</li>
+            <li>Stock Qty ও Unit (pcs/kg/box)</li>
+            <li>Low Alert (ডিফল্ট ৫)</li>
+          </ul>
+        </li>
+        <li><strong>💾 Save</strong> চাপুন</li>
+      </ol>
+      <div class="success">✅ সফল হলে পণ্য তালিকায় যোগ হবে এবং cloud-এ sync হবে।</div>
+
+      <h2 id="bn-product-edit">৬. পণ্য এডিট / ডিলিট</h2>
+      <p><strong>এডিট করতে:</strong> পণ্যের পাশে ✏️ button → তথ্য পরিবর্তন → 💾 Save</p>
+      <p><strong>ডিলিট করতে:</strong> পণ্যের পাশে 🗑️ button → Confirm</p>
+      <div class="warning">⚠️ ডিলিট করলে সব ডিভাইস থেকে মুছে যাবে।</div>
+
+      <h2 id="bn-sale">৭. বিক্রি করা</h2>
+      <ol>
+        <li>নিচে <strong>🧾 Sales</strong> চাপুন</li>
+        <li>Search box-এ পণ্যের নামের শুরু লিখুন → পণ্য tap করুন</li>
+        <li>Cart-এ + / − দিয়ে পরিমাণ ঠিক করুন</li>
+        <li>Customer select করুন (Cash / নির্দিষ্ট কাস্টমার)</li>
+        <li><strong>✅ Complete Sale</strong> চাপুন</li>
+        <li>Discount, VAT, Paid Amount দিন</li>
+        <li>আবার <strong>✅ Complete Sale</strong> চাপুন</li>
+      </ol>
+      <div class="success">✅ সফল হলে ইনভয়েস তৈরি হবে, স্টক কমবে, cloud-এ sync হবে।</div>
+
+      <h2 id="bn-invoice">৮. ইনভয়েস / PDF / WhatsApp</h2>
+      <ul>
+        <li><strong>🖨️ Print:</strong> প্রিন্ট প্রিভিউ</li>
+        <li><strong>📄 Save PDF:</strong> PDF download</li>
+        <li><strong>📱 WhatsApp:</strong> WhatsApp-এ পাঠান</li>
+        <li><strong>🖼️ Save Image:</strong> PNG download</li>
+        <li><strong>🔄 Sale Return:</strong> বিক্রি ফেরত</li>
+      </ul>
+      <div class="tip">💡 Invoice color, font, prefix সব Settings থেকে পরিবর্তন করা যাবে।</div>
+
+      <h2 id="bn-customer">৯. কাস্টমার ম্যানেজমেন্ট</h2>
+      <p><strong>নতুন কাস্টমার:</strong> 👥 Party → + Add → তথ্য দিন → Save</p>
+      <p><strong>কাস্টমারের button:</strong></p>
+      <ul>
+        <li>📋 — লেজার দেখুন</li>
+        <li>📎 — Due voucher (ছবি) attach</li>
+        <li>✏️ — এডিট</li>
+        <li>🗑️ — ডিলিট</li>
+      </ul>
+
+      <h2 id="bn-due">১০. বাকি ট্র্যাকিং ও পেমেন্ট গ্রহণ</h2>
+      <p><strong>বাকি দেখতে:</strong> ড্যাশবোর্ডের "Recent Due Customers" section-এ।</p>
+      <p><strong>পেমেন্ট নিতে:</strong></p>
+      <ol>
+        <li>কাস্টমারের 📋 button চাপুন</li>
+        <li><strong>💵 Receive Payment</strong> চাপুন</li>
+        <li>টাকার পরিমাণ লিখুন → Confirm</li>
+      </ol>
+
+      <h2 id="bn-supplier">১১. সাপ্লায়ার ও ক্রয় এন্ট্রি</h2>
+      <p><strong>সাপ্লায়ার যোগ:</strong> ড্যাশবোর্ড → 🚚 Supplier → + Add</p>
+      <p><strong>ক্রয় এন্ট্রি:</strong> ড্যাশবোর্ড → 📥 Purchase Entry → তথ্য দিন → Save</p>
+      <div class="success">✅ সফল হলে Stock বাড়বে এবং সাপ্লায়ারের Due বাড়বে (যদি বাকি থাকে)।</div>
+
+      <h2 id="bn-expense">১২. খরচ যোগ করা</h2>
+      <p>ড্যাশবোর্ড → 💰 Add Expense → Description, Amount, Date → Save</p>
+      <p>খরচ ডিলিট করতে: Reports → Expenses → 🗑️</p>
+
+      <h2 id="bn-quotation">১৩. কোটেশন বানানো</h2>
+      <p>ড্যাশবোর্ড → 📋 Create Quotation</p>
+      <p><strong>Steps:</strong></p>
+      <ol>
+        <li>Customer সিলেক্ট/লিখুন</li>
+        <li>Products যোগ করুন (Search Stock বা Manual)</li>
+        <li>Payment terms দিন (Advance %, Method)</li>
+        <li>💾 Save Draft অথবা 🧾 To Invoice</li>
+      </ol>
+      <p><strong>কোটেশনের button:</strong> Print, WhatsApp, To Invoice</p>
+
+      <h2 id="bn-return">১৪. বিক্রি ফেরত দেওয়া</h2>
+      <ol>
+        <li>Sales তালিকা থেকে ইনভয়েস খুলুন</li>
+        <li><strong>🔄 Sale Return</strong> button চাপুন</li>
+        <li>ফেরত আইটেমের checkbox টিক দিন</li>
+        <li>কারণ ও Refund method দিন</li>
+        <li><strong>✅ Complete Return</strong> চাপুন</li>
+      </ol>
+      <div class="success">✅ Stock ফিরে আসবে, কাস্টমারের Due সমন্বয় হবে।</div>
+
+      <h2 id="bn-challan">১৫. ডেলিভারি চালান</h2>
+      <p>প্রতিটি বিক্রির সাথে স্বয়ংক্রিয়ভাবে Delivery Challan তৈরি হয়।</p>
+      <p>ইনভয়েস খুলে <strong>🚚 Delivery Challan</strong> button চাপুন।</p>
+      <p>রিপোর্ট দেখতে: Reports → 🚚 Challan Register</p>
+
+      <h2 id="bn-reports">১৬. রিপোর্ট দেখা</h2>
+      <p>নিচে <strong>📊 Reports</strong> চাপুন।</p>
+      <ul>
+        <li><strong>Today</strong> — আজকের রিপোর্ট</li>
+        <li><strong>This Month</strong> — এই মাসের</li>
+        <li><strong>This Year</strong> — এই বছরের</li>
+      </ul>
+      <p>যা দেখতে পাবেন: মোট বিক্রি, লাভ, খরচ, নেট লাভ।</p>
+
+      <h2 id="bn-history">১৭. ঐতিহাসিক সার্চ</h2>
+      <p>Settings → 🔍 Historical Record Search</p>
+      <p><strong>Search Type:</strong> Date / Month / Year / Date Range / All</p>
+      <p><strong>Filter:</strong> Sales / Purchases / Expenses / Payments</p>
+      <p><strong>📥 Export CSV</strong> button দিয়ে ডাউনলোড করুন।</p>
+
+      <h2 id="bn-backup">১৮. ব্যাকআপ নেওয়া</h2>
+      <p>Settings → 💾 Backup & Restore</p>
+      <p><strong>Backup এর ধরন:</strong></p>
+      <ul>
+        <li><strong>📥 JSON Backup:</strong> সম্পূর্ণ ব্যাকআপ (restore-able)</li>
+        <li><strong>📊 Excel/CSV:</strong> মাল্টি-শিট রিপোর্ট</li>
+        <li><strong>🧾 Invoice PDF:</strong> সব ইনভয়েস এক PDF-এ</li>
+        <li><strong>☁️ Google Drive:</strong> cloud-এ upload</li>
+      </ul>
+      <div class="warning">⚠️ সপ্তাহে অন্তত একবার Backup নিন।</div>
+
+      <h2 id="bn-settings">১৯. সেটিংস</h2>
+      <p>উপরে ডানে <strong>⚙️</strong> icon চাপুন।</p>
+      <ul>
+        <li><strong>🏪 Shop Profile:</strong> নাম, লোগো, ঠিকানা, মোবাইল</li>
+        <li><strong>🎨 Appearance:</strong> Invoice color ও font</li>
+        <li><strong>🧾 Invoice Settings:</strong> Prefix, Signature, Amount in Words</li>
+        <li><strong>💰 Sales Settings:</strong> Generate/Edit Invoice, History</li>
+        <li><strong>🔐 Security:</strong> Password পরিবর্তন</li>
+        <li><strong>💾 Data:</strong> Backup & Restore</li>
+        <li><strong>🎛️ System Control:</strong> ৩০+ feature toggle</li>
+        <li><strong>👁️ Hide System:</strong> UI element লুকান</li>
+        <li><strong>📏 UOM Master:</strong> Unit তালিকা এডিট</li>
+      </ul>
+
+      <h2 id="bn-troubleshoot">২০. সমস্যা ও সমাধান</h2>
+
+      <h3>Login হচ্ছে না</h3>
+      <ul>
+        <li>Username/Password ঠিক আছে কিনা দেখুন</li>
+        <li>Caps Lock বন্ধ আছে কিনা</li>
+        <li>Shop সিলেক্ট করেছেন কিনা</li>
+        <li>Internet check করুন</li>
+      </ul>
+
+      <h3>অন্য ডিভাইসে নতুন data দেখাচ্ছে না</h3>
+      <ul>
+        <li>Pull-to-refresh করুন (mobile)</li>
+        <li>Ctrl+Shift+R চাপুন (PC)</li>
+        <li>Logout → Login করুন</li>
+      </ul>
+
+      <h3>Sale delete অন্য ডিভাইসে এখনো আছে</h3>
+      <ul>
+        <li>Ctrl+Shift+R চাপুন</li>
+        <li>Console (F12) দেখুন</li>
+        <li>Logout → Login</li>
+      </ul>
+
+      <h3>PDF তৈরি হচ্ছে না</h3>
+      <ul>
+        <li>৩ সেকেন্ড অপেক্ষা করুন</li>
+        <li>Chrome/Edge ব্যবহার করুন</li>
+        <li>Print option ব্যবহার করুন</li>
+      </ul>
+
+      <h3>Data হারিয়ে গেছে</h3>
+      <ul>
+        <li>Settings → Backup → Restore</li>
+        <li>Cloud sync check করুন</li>
+      </ul>
+
+      <h2 id="bn-faq">২১. প্রশ্নোত্তর</h2>
+      <p><strong>প্র: VYRO অফলাইনে কাজ করে?</strong><br>উ: হ্যাঁ, Internet থাকলে sync হয়।</p>
+      <p><strong>প্র: কতটা ডিভাইসে ব্যবহার করা যাবে?</strong><br>উ: অসংখ্য — একই login দিয়ে sync হয়।</p>
+      <p><strong>প্র: Data কোথায় থাকে?</strong><br>উ: আপনার ব্রাউজারে (local) + Cloud-এ (encrypted)।</p>
+      <p><strong>প্র: Mobile-এ চলবে?</strong><br>উ: হ্যাঁ। Home screen-এ add করলে app-এর মতো কাজ করবে (PWA)।</p>
+      <p><strong>প্র: Free trial আছে?</strong><br>উ: হ্যাঁ — ১৪ দিনের।</p>
+
+      <div class="success">
+        📞 <strong>সহায়তা:</strong> 01911332244 · omarfaruquee1995@gmail.com
+      </div>
+
+    </div>
+
+    <!-- ============ ENGLISH ============ -->
+    <div id="langEN" class="lang-content">
+
+      <h1>📖 VYRO User Guide</h1>
+      <p><strong>Version:</strong> 4.4.0 | <strong>Developer:</strong> O-FR Pro Software</p>
+
+      <div class="info">
+        💡 <strong>Tip:</strong> Use 🇧🇩 / 🇬🇧 buttons above to switch language. Click any section in the sidebar.
+      </div>
+
+      <h2 id="en-intro">1. Introduction</h2>
+      <p>VYRO is a cloud-based shop management app for managing products, sales, customers, suppliers, expenses, and reports.</p>
+      <p><strong>Key benefits:</strong></p>
+      <ul>
+        <li>📱 Multi-device sync</li>
+        <li>☁️ Cloud backup</li>
+        <li>🌐 Works offline</li>
+        <li>🇧🇩 Bangla + English</li>
+      </ul>
+
+      <h2 id="en-activation">2. Activation</h2>
+      <ol>
+        <li>Open app → see <strong>Device ID</strong> (e.g. <code>DEV7K2M8X9P1</code>)</li>
+        <li>Click <strong>📋 Copy Device ID</strong></li>
+        <li>Send to admin via WhatsApp/Message</li>
+        <li>Receive Activation Code (e.g. <code>ACT-1234-ABCD</code>)</li>
+        <li>Enter code → <strong>✅ Activate Now</strong></li>
+      </ol>
+      <div class="warning">⚠️ Keep your Device ID private.</div>
+
+      <h2 id="en-login">3. Login</h2>
+      <ol>
+        <li>Select shop from <strong>Select Shop</strong> dropdown</li>
+        <li>Enter username</li>
+        <li>Enter password (case-sensitive)</li>
+        <li>Click <strong>🔐 Login</strong></li>
+      </ol>
+      <div class="tip">💡 Check Caps Lock. Wrong password shows "Wrong username or password".</div>
+
+      <h2 id="en-dashboard">4. Dashboard</h2>
+      <ul>
+        <li><strong>8 KPI cards:</strong> Today's sales, profit, due, stock value, etc.</li>
+        <li><strong>Quick Actions:</strong> 12 shortcut buttons</li>
+        <li><strong>Sales Chart:</strong> 7-day / 30-day / yearly</li>
+        <li><strong>Smart Alerts:</strong> Low stock, dues, etc.</li>
+      </ul>
+      <p><strong>Bottom Navigation:</strong> Home, Stock, Party, Sales, Reports</p>
+
+      <h2 id="en-product">5. Add Product</h2>
+      <ol>
+        <li>Tap <strong>📦 Stock</strong></li>
+        <li>Tap <strong>+ Add</strong></li>
+        <li>Fill in:
+          <ul>
+            <li>Product name <strong>(required)</strong></li>
+            <li>SKU, Barcode (optional)</li>
+            <li>Buy price, Sell price</li>
+            <li>Stock Qty and Unit (pcs/kg/box)</li>
+            <li>Low Alert (default 5)</li>
+          </ul>
+        </li>
+        <li>Click <strong>💾 Save</strong></li>
+      </ol>
+
+      <h2 id="en-product-edit">6. Edit / Delete Product</h2>
+      <p><strong>Edit:</strong> Tap ✏️ next to product → change → 💾 Save</p>
+      <p><strong>Delete:</strong> Tap 🗑️ next to product → confirm</p>
+      <div class="warning">⚠️ Delete removes from all devices.</div>
+
+      <h2 id="en-sale">7. Making a Sale</h2>
+      <ol>
+        <li>Tap <strong>🧾 Sales</strong></li>
+        <li>Type product name in search → tap product</li>
+        <li>Adjust quantity in Cart with + / −</li>
+        <li>Select customer (Cash / specific)</li>
+        <li>Click <strong>✅ Complete Sale</strong></li>
+        <li>Enter discount, VAT, paid amount</li>
+        <li>Click <strong>✅ Complete Sale</strong> again</li>
+      </ol>
+      <div class="success">✅ Invoice created, stock reduced, synced to cloud.</div>
+
+      <h2 id="en-invoice">8. Invoice / PDF / WhatsApp</h2>
+      <ul>
+        <li><strong>🖨️ Print:</strong> Print preview</li>
+        <li><strong>📄 Save PDF:</strong> Download PDF</li>
+        <li><strong>📱 WhatsApp:</strong> Share via WhatsApp</li>
+        <li><strong>🖼️ Save Image:</strong> Download PNG</li>
+        <li><strong>🔄 Sale Return:</strong> Process return</li>
+      </ul>
+
+      <h2 id="en-customer">9. Customer Management</h2>
+      <p><strong>Add:</strong> 👥 Party → + Add → fill → Save</p>
+      <p><strong>Buttons:</strong> 📋 Ledger, 📎 Due voucher, ✏️ Edit, 🗑️ Delete</p>
+
+      <h2 id="en-due">10. Due & Payment</h2>
+      <p><strong>View due:</strong> Dashboard "Recent Due Customers" section.</p>
+      <p><strong>Receive payment:</strong></p>
+      <ol>
+        <li>Tap customer's 📋 button</li>
+        <li>Click <strong>💵 Receive Payment</strong></li>
+        <li>Enter amount → confirm</li>
+      </ol>
+
+      <h2 id="en-supplier">11. Supplier & Purchase</h2>
+      <p><strong>Add supplier:</strong> Dashboard → 🚚 Supplier → + Add</p>
+      <p><strong>Purchase entry:</strong> Dashboard → 📥 Purchase Entry → fill → Save</p>
+      <div class="success">✅ Stock increases, supplier due increases (if unpaid).</div>
+
+      <h2 id="en-expense">12. Expenses</h2>
+      <p>Dashboard → 💰 Add Expense → description, amount, date → Save</p>
+
+      <h2 id="en-quotation">13. Quotations</h2>
+      <p>Dashboard → 📋 Create Quotation</p>
+      <ol>
+        <li>Select/enter customer</li>
+        <li>Add products (Search Stock or Manual)</li>
+        <li>Set payment terms</li>
+        <li>💾 Save Draft OR 🧾 To Invoice</li>
+      </ol>
+
+      <h2 id="en-return">14. Sale Returns</h2>
+      <ol>
+        <li>Open invoice from Sales list</li>
+        <li>Click <strong>🔄 Sale Return</strong></li>
+        <li>Check items being returned</li>
+        <li>Set reason and refund method</li>
+        <li>Click <strong>✅ Complete Return</strong></li>
+      </ol>
+
+      <h2 id="en-challan">15. Delivery Challan</h2>
+      <p>Auto-generated with each sale. Open invoice → <strong>🚚 Delivery Challan</strong>.</p>
+      <p>Register: Reports → 🚚 Challan Register</p>
+
+      <h2 id="en-reports">16. Reports</h2>
+      <p>Tap <strong>📊 Reports</strong> at bottom.</p>
+      <ul>
+        <li><strong>Today</strong> — Today's report</li>
+        <li><strong>This Month</strong> — Monthly report</li>
+        <li><strong>This Year</strong> — Yearly report</li>
+      </ul>
+
+      <h2 id="en-history">17. Historical Search</h2>
+      <p>Settings → 🔍 Historical Record Search</p>
+      <p>Search by Date / Month / Year / Range / All. Export CSV available.</p>
+
+      <h2 id="en-backup">18. Backup</h2>
+      <p>Settings → 💾 Backup & Restore</p>
+      <ul>
+        <li><strong>📥 JSON Backup:</strong> Full backup (restore-able)</li>
+        <li><strong>📊 Excel/CSV:</strong> Multi-sheet reports</li>
+        <li><strong>🧾 Invoice PDF:</strong> All invoices in one PDF</li>
+        <li><strong>☁️ Google Drive:</strong> Cloud upload</li>
+      </ul>
+      <div class="warning">⚠️ Backup at least weekly.</div>
+
+      <h2 id="en-settings">19. Settings</h2>
+      <p>Tap <strong>⚙️</strong> icon at top-right.</p>
+      <ul>
+        <li><strong>🏪 Shop Profile:</strong> Name, logo, address, phone</li>
+        <li><strong>🎨 Appearance:</strong> Invoice color, font</li>
+        <li><strong>🧾 Invoice Settings:</strong> Prefix, signature, amount-in-words</li>
+        <li><strong>💰 Sales Settings:</strong> Generate/edit invoice</li>
+        <li><strong>🔐 Security:</strong> Change password</li>
+        <li><strong>💾 Data:</strong> Backup & Restore</li>
+        <li><strong>🎛️ System Control:</strong> 30+ feature toggles</li>
+        <li><strong>👁️ Hide System:</strong> Hide UI elements</li>
+        <li><strong>📏 UOM Master:</strong> Edit unit list</li>
+      </ul>
+
+      <h2 id="en-troubleshoot">20. Troubleshooting</h2>
+
+      <h3>Can't login</h3>
+      <ul>
+        <li>Check username/password</li>
+        <li>Check Caps Lock</li>
+        <li>Ensure shop is selected</li>
+        <li>Check internet</li>
+      </ul>
+
+      <h3>New data not showing on other device</h3>
+      <ul>
+        <li>Pull-to-refresh (mobile)</li>
+        <li>Ctrl+Shift+R (PC)</li>
+        <li>Logout → Login</li>
+      </ul>
+
+      <h3>PDF not generating</h3>
+      <ul>
+        <li>Wait 3 seconds for library load</li>
+        <li>Use Chrome/Edge</li>
+        <li>Try Print option</li>
+      </ul>
+
+      <h3>Data lost</h3>
+      <ul>
+        <li>Settings → Backup → Restore</li>
+        <li>Check cloud sync</li>
+      </ul>
+
+      <h2 id="en-faq">21. FAQ</h2>
+      <p><strong>Q: Does VYRO work offline?</strong><br>A: Yes. Syncs when online.</p>
+      <p><strong>Q: How many devices?</strong><br>A: Unlimited with same login.</p>
+      <p><strong>Q: Where is data stored?</strong><br>A: Browser (local) + Cloud (encrypted).</p>
+      <p><strong>Q: Works on mobile?</strong><br>A: Yes. Add to home screen for PWA experience.</p>
+      <p><strong>Q: Free trial?</strong><br>A: Yes — 14 days.</p>
+
+      <div class="success">
+        📞 <strong>Support:</strong> 01911332244 · omarfaruquee1995@gmail.com
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<button class="back-to-top" id="backTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<script>
+// ===== LANGUAGE SWITCH =====
+var currentLang = 'bn';
+function switchLang(lang) {
+  currentLang = lang;
+  // Content
+  document.getElementById('langBN').classList.toggle('active', lang === 'bn');
+  document.getElementById('langEN').classList.toggle('active', lang === 'en');
+  // Sidebar
+  document.getElementById('navBN').style.display = (lang === 'bn') ? '' : 'none';
+  document.getElementById('navEN').style.display = (lang === 'en') ? '' : 'none';
+  // Buttons
+  document.getElementById('btnBN').classList.toggle('active', lang === 'bn');
+  document.getElementById('btnEN').classList.toggle('active', lang === 'en');
+  // Header
+  document.getElementById('hdrTitle').textContent = (lang === 'bn')
+    ? 'VYRO ব্যবহারকারীর গাইড'
+    : 'VYRO User Guide';
+  document.getElementById('hdrSub').textContent = (lang === 'bn')
+    ? 'সম্পূর্ণ গাইড • Version 4.4.0'
+    : 'Complete guide • Version 4.4.0';
+  document.getElementById('sidebarTitle').textContent = (lang === 'bn') ? 'সূচিপত্র' : 'Contents';
+  document.getElementById('searchBox').placeholder = (lang === 'bn') ? '🔍 খুঁজুন...' : '🔍 Search...';
+  // Save preference
+  try { localStorage.setItem('vyro_help_lang', lang); } catch(e) {}
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// Restore language preference
+(function() {
+  try {
+    var saved = localStorage.getItem('vyro_help_lang');
+    if (saved === 'en') switchLang('en');
+  } catch(e) {}
+})();
+
+// ===== SEARCH SIDEBAR =====
+function filterSidebar() {
+  var q = document.getElementById('searchBox').value.toLowerCase().trim();
+  var links = document.querySelectorAll('.sidebar .nav-link');
+  for (var i = 0; i < links.length; i++) {
+    var text = links[i].textContent.toLowerCase();
+    links[i].style.display = (!q || text.indexOf(q) !== -1) ? '' : 'none';
+  }
+}
+
+// ===== ACTIVE LINK HIGHLIGHT (scroll spy) =====
+window.addEventListener('scroll', function() {
+  var links = document.querySelectorAll('.sidebar .nav-link');
+  var sections = [];
+  for (var i = 0; i < links.length; i++) {
+    var href = links[i].getAttribute('href');
+    if (href && href.startsWith('#')) {
+      var el = document.getElementById(href.substring(1));
+      if (el) sections.push({ link: links[i], el: el });
+    }
+  }
+  var scrollPos = window.scrollY + 150;
+  var activeFound = false;
+  for (var j = sections.length - 1; j >= 0; j--) {
+    if (sections[j].el.offsetTop <= scrollPos) {
+      for (var k = 0; k < links.length; k++) links[k].classList.remove('active');
+      sections[j].link.classList.add('active');
+      activeFound = true;
+      break;
+    }
+  }
+  if (!activeFound && links.length > 0) {
+    for (var m = 0; m < links.length; m++) links[m].classList.remove('active');
+  }
+});
+
+// ===== BACK TO TOP BUTTON =====
+window.addEventListener('scroll', function() {
+  var btn = document.getElementById('backTop');
+  if (window.scrollY > 400) btn.classList.add('visible');
+  else btn.classList.remove('visible');
+});
+
+// ===== SMOOTH SCROLL for anchors =====
+document.addEventListener('click', function(e) {
+  if (e.target.tagName === 'A' && e.target.getAttribute('href') && e.target.getAttribute('href').startsWith('#')) {
+    e.preventDefault();
+    var target = document.getElementById(e.target.getAttribute('href').substring(1));
+    if (target) {
+      var offset = 100;
+      window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
+      // Close mobile sidebar
+      document.getElementById('sidebar').classList.remove('open');
+    }
+  }
+});
+
+// ===== MOBILE MENU TOGGLE =====
+document.querySelector('.header-left').addEventListener('click', function() {
+  if (window.innerWidth <= 900) {
+    document.getElementById('sidebar').classList.toggle('open');
+  }
+});
+</script>
+
+</body>
+</html>
