@@ -1074,7 +1074,7 @@ A: VYRO is a PWA — install via browser menu ("Add to Home Screen").
 
 **Owner:** Omar Faruque  
 **Contact:** omarfaruquee1995@gmail.com  
-**Phone:** 01911332244
+**Phone:** 01314012879
 
 **Restrictions:**
 - Cannot resell without permission
@@ -1088,8 +1088,8 @@ A: VYRO is a PWA — install via browser menu ("Add to Home Screen").
 | Channel | Details |
 |---|---|
 | 📧 Email | omarfaruquee1995@gmail.com |
-| 📱 Phone | 01911332244 |
-| 💬 WhatsApp | 01911332244 |
+| 📱 Phone | 01314012879 |
+| 💬 WhatsApp | 01314012879 |
 | 🌐 Live App | https://vyro-app-cyz.pages.dev |
 | 📚 GitHub | https://github.com/omarfaruquee1995-lgtm/vyro-app |
 

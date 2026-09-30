@@ -787,8 +787,9 @@ Toggle ON করুন।
 
 ### 📞 সহায়তার জন্য যোগাযোগ:
 
+- 👤 **Owner:** MD: OMAR FARUQUE
 - 📧 **Email:** omarfaruquee1995@gmail.com
-- 📱 **Phone/WhatsApp:** 01911332244
+- 📱 **Phone/WhatsApp:** 01314012879
 - 🌐 **Live App:** https://vyro-app-cyz.pages.dev
 
 ---

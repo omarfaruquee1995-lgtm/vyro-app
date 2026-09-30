@@ -121,3 +121,65 @@ cd vyro-app
 
 # Open in browser (no build step)
 start index.html
+
+---
+
+## 📁 Project Structure
+vyro-app/
+├── index.html # Main app (single-file)
+├── manifest.json # PWA manifest
+├── sw.js # Service worker
+├── vyro-logo.png # App icon
+├── DOCUMENTATION.md # Full technical docs
+├── USER-GUIDE.md # End-user guide (বাংলা)
+├── README.md # This file
+└── docs/
+└── help.html # In-app help page
+
+---
+
+## 🌐 Live URLs
+
+| Service | URL |
+|---|---|
+| **Live App** | https://vyro-app-cyz.pages.dev |
+| **API** | https://vyro-api.omarfaruquee1995.workers.dev |
+| **GitHub** | https://github.com/omarfaruquee1995-lgtm/vyro-app |
+| **Database** | Cloudflare D1 — `vyro-db` |
+
+---
+
+## 📄 License
+
+Proprietary — © 2026 **O-FR Pro Software** · All rights reserved.
+
+**Owner:** MD: OMAR FARUQUE
+
+---
+
+## 🤝 Support
+
+For support, bug reports, or feature requests:
+- 👤 **Owner:** MD: OMAR FARUQUE
+- 📧 **Email:** omarfaruquee1995@gmail.com
+- 📱 **Phone:** 01314012879
+
+---
+
+## 🇧🇩 বাংলা সংস্করণ
+
+### 🏪 VYRO — দোকান ম্যানেজমেন্ট সিস্টেম
+
+**সংস্করণ ৪.৪.০** · **O-FR Pro Software** দ্বারা পরিচালিত
+
+বাংলাদেশের ছোট ও মাঝারি ব্যবসার জন্য তৈরি একটি সহজ, ক্লাউড-ভিত্তিক দোকান ম্যানেজমেন্ট সলিউশন।
+
+### 📞 সহায়তা
+
+- 👤 **Owner:** MD: OMAR FARUQUE
+- 📧 **Email:** omarfaruquee1995@gmail.com
+- 📱 **Phone:** 01314012879
+
+---
+
+**Powered by O-FR Pro Software** · Made with ❤️ in Bangladesh
