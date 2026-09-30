@@ -474,6 +474,12 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
       <div class="settings-section-header">💾 Data</div>
       <div class="settings-row" onclick="openBackupModal()"><div class="sr-label">💾 Backup & Restore</div><div class="sr-value">›</div></div>
     </div>
+    <div class="settings-section">
+      <div class="settings-section-header">📚 Help & Support</div>
+      <div class="settings-row" onclick="openHelpGuide()"><div class="sr-label">📚 Help & User Guide</div><div class="sr-value">বাংলা + English ›</div></div>
+      <div class="settings-row" onclick="openUserGuideMd()"><div class="sr-label">📖 Markdown User Guide</div><div class="sr-value">GitHub ›</div></div>
+      <div class="settings-row" onclick="openContactSupport()"><div class="sr-label">📞 Contact Support</div><div class="sr-value">01911332244 ›</div></div>
+    </div>
     <button class="btn-primary" style="background:#888;margin-top:12px" onclick="document.getElementById('settingsModal').classList.add('hidden')">Close</button>
   </div>
 </div>
@@ -4015,6 +4021,27 @@ function getSysCtrl(key) {
 }
 function setSysCtrl(key, val) { SETTINGS.set('sysCtrl_' + key, !!val); }
 function isFeatureOn(key) { return getSysCtrl(key); }
+
+// ============ HELP GUIDE FUNCTIONS ============
+function openHelpGuide() {
+  window.open('docs/help.html', '_blank');
+}
+
+function openUserGuideMd() {
+  window.open('https://github.com/omarfaruquee1995-lgtm/vyro-app/blob/main/USER-GUIDE.md', '_blank');
+}
+
+function openContactSupport() {
+  var msg = 'VYRO Support\n\n' +
+    '📞 Phone/WhatsApp: 01911332244\n' +
+    '📧 Email: omarfaruquee1995@gmail.com\n' +
+    '🌐 App: https://vyro-app-cyz.pages.dev';
+  alert(msg);
+  if (confirm('WhatsApp-এ যোগাযোগ করবেন?')) {
+    window.open('https://wa.me/8801911332244?text=' + encodeURIComponent('VYRO Support প্রয়োজন'), '_blank');
+  }
+}
+// ============ END HELP GUIDE ============
 
 function openSystemControl() {
   var sm = document.getElementById('settingsModal'); if (sm) sm.classList.add('hidden');
