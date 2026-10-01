@@ -1072,7 +1072,7 @@ A: VYRO is a PWA — install via browser menu ("Add to Home Screen").
 **Proprietary Software**  
 © 2026 **O-FR Pro Software** · All rights reserved.
 
-**Owner:** Omar Faruque  
+**Owner:** MD: OMAR FARUQUE  
 **Contact:** omarfaruquee1995@gmail.com  
 **Phone:** 01314012879
 

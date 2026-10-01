@@ -1553,6 +1553,7 @@ function renderSales(app) {
   html += '<select id="saleProdSelect" onchange="addToCartFromSelect()"><option value="">-- Or Select Product --</option>';
   for (var i = 0; i < products.length; i++) html += '<option value="' + products[i].id + '">' + products[i].name + ' (' + products[i].stock + ' ' + (products[i].unit||'pcs') + ') - ' + fmt(products[i].sellPrice) + '</option>';
   html += '</select>';
+html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:100%;margin-bottom:8px;padding:10px;font-weight:700">➕ Add Custom Item (Stock-এ নেই)</button>';
   html += '<select id="saleCustSelect"><option value="0">Cash / Walk-in</option>';
   for (var j = 0; j < customers.length; j++) html += '<option value="' + customers[j].id + '">' + customers[j].name + (customers[j].due > 0 ? ' (' + fmt(customers[j].due) + ')' : '') + '</option>';
   html += '</select>';
@@ -1564,7 +1565,7 @@ function renderSales(app) {
       var item = saleCart[k];
       subtotal += item.price * item.qty;
       var itemUnit = item.unit || 'pcs';
-      html += '<div class="cart-item"><div style="flex:1"><b>' + item.name + '</b><br><small>' + fmt(item.price) + ' × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';
+    html += '<div class="cart-item"><div style="flex:1"><b>' + item.name + '</b><br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';
       html += '<div style="display:flex;gap:4px;align-items:center">';
       html += '<button class="btn-sm btn-warning" onclick="updateCartQty(' + k + ',-1)">−</button>';
       html += '<span style="min-width:20px;text-align:center">' + item.qty + '</span>';
@@ -1671,6 +1672,68 @@ function updateCartQty(idx, delta) {
   if (p && saleCart[idx].qty > p.stock) { saleCart[idx].qty = p.stock; alert('Stock: ' + p.stock); }
   renderSales(document.getElementById('app'));
 }
+
+// ============ INDEPENDENT SALE (Custom Item) ============
+function openCustomItemModal() {
+  closeModal();
+  var html = '<div class="modal-overlay" id="customItemModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
+  html += '<h3>➕ Add Custom Item</h3>';
+  html += '<div class="alert" style="background:#e3f2fd;border-color:#2196f3;font-size:11px">💡 Stock-এ নেই এমন item বিক্রি করতে ব্যবহার করুন</div>';
+  html += '<label style="font-size:11px;color:#666">Item Name *</label>';
+  html += '<input id="customItemName" placeholder="যেমন: Delivery Charge, Sample Item" autofocus>';
+  html += '<label style="font-size:11px;color:#666">Price (৳) *</label>';
+  html += '<input id="customItemPrice" type="number" placeholder="0.00" step="0.01">';
+  html += '<label style="font-size:11px;color:#666">Quantity</label>';
+  html += '<div style="display:flex;gap:6px">';
+  html += '<input id="customItemQty" type="number" value="1" style="flex:1">';
+  html += '<select id="customItemUnit" class="unit-select">';
+  var uomList = (typeof getUOMList === 'function') ? getUOMList() : ['pcs','kg','box','set'];
+  for (var u = 0; u < uomList.length; u++) {
+    html += '<option value="' + uomList[u] + '">' + uomList[u] + '</option>';
+  }
+  html += '</select></div>';
+  html += '<button class="btn-success" onclick="addCustomItemToCart()">✅ Add to Cart</button>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'customItemModal\').remove()">Cancel</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  setTimeout(function() { var el = document.getElementById('customItemName'); if (el) el.focus(); }, 50);
+}
+
+function addCustomItemToCart() {
+  var name = document.getElementById('customItemName').value.trim();
+  var price = +document.getElementById('customItemPrice').value || 0;
+  var qty = +document.getElementById('customItemQty').value || 1;
+  var unit = document.getElementById('customItemUnit').value || 'pcs';
+  
+  if (!name) { alert('❌ Item name required'); return; }
+  if (price <= 0) { alert('❌ Price must be greater than 0'); return; }
+  if (qty <= 0) { alert('❌ Quantity must be greater than 0'); return; }
+  
+  saleCart.push({
+    productId: 0,
+    name: name,
+    price: price,
+    buyPrice: 0,
+    qty: qty,
+    unit: unit,
+    isCustom: true
+  });
+  
+  document.getElementById('customItemModal').remove();
+  renderSales(document.getElementById('app'));
+  console.log('✅ Custom item added:', name);
+}
+
+function updateCartPrice(idx, newPrice) {
+  if (!saleCart[idx]) return;
+  var price = +newPrice || 0;
+  if (price < 0) price = 0;
+  saleCart[idx].price = price;
+  renderSales(document.getElementById('app'));
+  console.log('💰 Price updated for item', idx, '→', price);
+}
+// ============ END ============
+
 function removeFromCart(idx) {
   saleCart.splice(idx, 1);
   renderSales(document.getElementById('app'));
@@ -1788,6 +1851,7 @@ function finalizeSale(custId, cost) {
   }
   var products = DB.get('products');
   for (var k = 0; k < saleCart.length; k++) {
+    if (saleCart[k].isCustom || !saleCart[k].productId) continue;
     for (var m = 0; m < products.length; m++) if (products[m].id === saleCart[k].productId) {
       products[m].stock = (products[m].stock || 0) - saleCart[k].qty;
       addStockJournal(saleCart[k].productId, 'sale', saleCart[k].qty, saleCart[k].price, 'Sale #' + saleId, today());
