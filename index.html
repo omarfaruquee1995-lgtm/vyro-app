@@ -1844,7 +1844,7 @@ function finalizeSale(custId, cost) {
   var profit = c.grandTotal - c.vatAmount - (c.transport || 0) - cost;
   var sales = DB.get('sales');
   var saleId = uid();
-  sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct,vatAmount: c.vatAmount, transportCost: c.transport || 0, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
+  sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount,discountPct: c.discountPct, vatPct: c.vatPct,vatAmount: c.vatAmount, transportCost: c.transport || 0, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
   DB.set('sales', sales);
   // ☁️ Cloud sync sale to D1
   if (VYRO_TOKEN) {
