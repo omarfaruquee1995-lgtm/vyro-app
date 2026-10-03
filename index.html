@@ -1800,6 +1800,7 @@ function completeSale() {
   html += '<div style="background:#f0f2f5;padding:10px;border-radius:8px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>' + fmt(subtotal) + '</b></div></div>';
   html += '<label style="font-size:11px;color:#666">💸 Discount (৳)</label><input id="billDiscount" type="number" value="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">📊 VAT (%)</label><input id="billVat" type="number" value="0" oninput="calcBilling()">';
+  html += '<label style="font-size:11px;color:#666">🚚 Transport / Carrying Cost (৳)</label><input id="billTransport" type="number" value="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="' + subtotal + '" oninput="calcBilling()">';
   html += '<div id="billSummary" style="background:#e3f2fd;padding:12px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.8"></div>';
   html += '<div id="billWordsBox" class="amount-words" style="display:none"></div>';
@@ -1813,15 +1814,17 @@ function calcBilling() {
   var subtotal = window._billSubtotal || 0;
   var discount = +document.getElementById('billDiscount').value || 0;
   var vatPct = +document.getElementById('billVat').value || 0;
+  var transport = +document.getElementById('billTransport').value || 0;
   var paid = +document.getElementById('billPaid').value || 0;
   var afterDiscount = subtotal - discount;
   if (afterDiscount < 0) afterDiscount = 0;
   var vatAmount = afterDiscount * vatPct / 100;
-  var grandTotal = afterDiscount + vatAmount;
+  var grandTotal = afterDiscount + vatAmount + transport;
   var due = grandTotal - paid;
   if (due < 0) due = 0;
+  var transportLine = transport > 0 ? '🚚 Transport: <b style="color:#e67e22">+ ' + fmt(transport) + '</b><br>' : '';
   document.getElementById('billSummary').innerHTML =
-    'Subtotal: <b>' + fmt(subtotal) + '</b><br>Discount: <b style="color:#ff4757">− ' + fmt(discount) + '</b><br>VAT (' + vatPct + '%): <b style="color:#ffa502">+ ' + fmt(vatAmount) + '</b><br><hr style="margin:5px 0;border:none;border-top:1px dashed #ccc"><span style="font-size:15px">Grand Total: <b>' + fmt(grandTotal) + '</b></span><br>Paid: <b style="color:#2ed573">' + fmt(paid) + '</b><br>Due: <b style="color:#ff4757">' + fmt(due) + '</b>';
+    'Subtotal: <b>' + fmt(subtotal) + '</b><br>Discount: <b style="color:#ff4757">− ' + fmt(discount) + '</b><br>VAT (' + vatPct + '%): <b style="color:#ffa502">+ ' + fmt(vatAmount) + '</b><br>' + transportLine + '<hr style="margin:5px 0;border:none;border-top:1px dashed #ccc"><span style="font-size:15px">Grand Total: <b>' + fmt(grandTotal) + '</b></span><br>Paid: <b style="color:#2ed573">' + fmt(paid) + '</b><br>Due: <b style="color:#ff4757">' + fmt(due) + '</b>';
   var awEnabled = SETTINGS.get('amountWordsEnabled', true);
   var wordsBox = document.getElementById('billWordsBox');
   if (awEnabled && wordsBox && grandTotal > 0) {
@@ -1829,7 +1832,7 @@ function calcBilling() {
     wordsBox.style.display = 'block';
     wordsBox.innerHTML = '<span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span>';
   } else if (wordsBox) wordsBox.style.display = 'none';
-  window._billCalc = {subtotal: subtotal, discount: discount, vatPct: vatPct, vatAmount: vatAmount, grandTotal: grandTotal, paid: paid, due: due};
+  window._billCalc = {subtotal: subtotal, discount: discount, vatPct: vatPct, vatAmount: vatAmount, transport: transport, grandTotal: grandTotal, paid: paid, due: due};
 }
 function finalizeSale(custId, cost) {
   var c = window._billCalc;
@@ -1837,10 +1840,10 @@ function finalizeSale(custId, cost) {
   var customers = DB.get('customers');
   var cust = null;
   if (custId) for (var i = 0; i < customers.length; i++) if (customers[i].id === custId) cust = customers[i];
-  var profit = c.grandTotal - c.vatAmount - cost;
+  var profit = c.grandTotal - c.vatAmount - (c.transport || 0) - cost;
   var sales = DB.get('sales');
   var saleId = uid();
-  sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct, vatAmount: c.vatAmount, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
+  sales.push({id: saleId, customerId: custId || 0, customerName: cust ? cust.name : 'Cash', customerAddress: cust ? (cust.address || '') : '', customerAttention: cust ? (cust.attention || '') : '', items: JSON.parse(JSON.stringify(saleCart)), subtotal: c.subtotal, discount: c.discount, vatPct: c.vatPct,vatAmount: c.vatAmount, transportCost: c.transport || 0, total: c.grandTotal, paid: c.paid, due: c.due, profit: profit, date: today(), time: nowTime()});
   DB.set('sales', sales);
   // ☁️ Cloud sync sale to D1
   if (VYRO_TOKEN) {
@@ -1917,6 +1920,7 @@ function showInvoice(saleId) {
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
   if (s.discount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>Special Discount:</span><b>− ' + fmt(s.discount) + '</b></div>';
   if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
+  if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport/Carrying:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
   if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
