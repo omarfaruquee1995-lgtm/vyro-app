@@ -1920,8 +1920,9 @@ function showInvoice(saleId) {
   html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><div style="min-width:280px;font-size:13px">';
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
  if (s.discount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>Discount (' + (s.discountPct || 0) + '%):</span><b>− ' + fmt(s.discount) + '</b></div>';
-  if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport/Carrying:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
   if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
+  if (s.discount > 0 || s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #ccc;margin-top:5px;font-weight:600"><span>Subtotal (After Tax):</span><b>' + fmt((s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0)) + '</b></div>';
+  if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport/Carrying:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
   if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
