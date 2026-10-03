@@ -1798,10 +1798,10 @@ function completeSale() {
   var html = '<div class="modal-overlay" id="billingModal"><div class="modal">';
   html += '<h3>🧾 Billing Details</h3>';
   html += '<div style="background:#f0f2f5;padding:10px;border-radius:8px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>' + fmt(subtotal) + '</b></div></div>';
+html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="" placeholder="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">💸 Discount (%)</label><input id="billDiscount" type="number" value="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">📊 VAT (%)</label><input id="billVat" type="number" value="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">🚚 Transport / Carrying Cost (৳)</label><input id="billTransport" type="number" value="0" oninput="calcBilling()">';
-  html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="' + subtotal + '" oninput="calcBilling()">';
   html += '<div id="billSummary" style="background:#e3f2fd;padding:12px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.8"></div>';
   html += '<div id="billWordsBox" class="amount-words" style="display:none"></div>';
   html += '<button class="btn-success" onclick="finalizeSale(' + custId + ',' + cost + ')">✅ Complete Sale</button>';
