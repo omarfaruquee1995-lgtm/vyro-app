@@ -1819,6 +1819,7 @@ function calcBilling() {
   var discountAmount = subtotal * discountPct / 100;
   if (discountAmount > subtotal) discountAmount = subtotal;
   var afterDiscount = subtotal - discountAmount;
+  var vatAmount = afterDiscount * vatPct / 100;
   var grandTotal = afterDiscount + vatAmount + transport;
   var due = grandTotal - paid;
   if (due < 0) due = 0;
