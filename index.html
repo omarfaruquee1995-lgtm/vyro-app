@@ -1568,7 +1568,7 @@ html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:1
     html += '<div class="cart-item"><div style="flex:1"><b>' + item.name + '</b><br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';
       html += '<div style="display:flex;gap:4px;align-items:center">';
       html += '<button class="btn-sm btn-warning" onclick="updateCartQty(' + k + ',-1)">−</button>';
-      html += '<span style="min-width:20px;text-align:center">' + item.qty + '</span>';
+    html += '<input type="number" value="' + item.qty + '" min="1" step="any" onchange="setCartQty(' + k + ', this.value)" style="width:60px;text-align:center;padding:4px;font-size:12px;margin:0">';
       html += '<button class="btn-sm btn-success" onclick="updateCartQty(' + k + ',1)">+</button>';
       html += '<select class="unit-select" onchange="changeCartUnit(' + k + ',this.value)" style="width:60px;font-size:11px">';
       var uArr = ['pcs','box','pkt'];
@@ -1671,6 +1671,22 @@ function updateCartQty(idx, delta) {
   if (saleCart[idx].qty < 1) saleCart[idx].qty = 1;
   if (p && saleCart[idx].qty > p.stock) { saleCart[idx].qty = p.stock; alert('Stock: ' + p.stock); }
   renderSales(document.getElementById('app'));
+}
+
+function setCartQty(idx, newQty) {
+  if (!saleCart[idx]) return;
+  var qty = parseFloat(newQty) || 1;
+  if (qty < 0.001) qty = 1;
+  var products = DB.get('products');
+  var p = null;
+  for (var i = 0; i < products.length; i++) if (products[i].id === saleCart[idx].productId) p = products[i];
+  if (p && !saleCart[idx].isCustom && qty > p.stock) {
+    qty = p.stock;
+    alert('⚠️ Stock-এ মাত্র ' + p.stock + ' ' + (p.unit || 'pcs') + ' আছে।');
+  }
+  saleCart[idx].qty = qty;
+  renderSales(document.getElementById('app'));
+  console.log('✅ Qty set for item', idx, '→', qty);
 }
 
 // ============ INDEPENDENT SALE (Custom Item) ============
@@ -4618,11 +4634,13 @@ var uomObserver = new MutationObserver(function() {
   var cartSelects = document.querySelectorAll('.cart-item .unit-select:not([data-uom-patched])');
   for (var i = 0; i < cartSelects.length; i++) {
     var current = cartSelects[i].value;
+    var onchg = cartSelects[i].getAttribute('onchange');
     var html = '';
     for (var j = 0; j < list.length; j++) {
       html += '<option value="' + list[j] + '"' + (current === list[j] ? ' selected' : '') + '>' + list[j] + '</option>';
     }
     cartSelects[i].innerHTML = html;
+    if (onchg) cartSelects[i].setAttribute('onchange', onchg);
     cartSelects[i].setAttribute('data-uom-patched', '1');
   }
   // Quote item selects
