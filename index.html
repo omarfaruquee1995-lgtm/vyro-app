@@ -2245,11 +2245,19 @@ function changeUserPassword() {
   if (newP.length < 4) { alert('❌ নতুন password কমপক্ষে ৪ অক্ষর'); return; }
   if (newP !== newP2) { alert('❌ দুটো মিলছে না'); return; }
   
-  // Save to local
-  if (localMatch) {
-    localMatch.password = newP;
+    // Save to local (always available)
+  var allUsers = DB.getGlobal('users');
+  var existingUser = null;
+  for (var j = 0; j < allUsers.length; j++) {
+    if (allUsers[j].id === currentUser.id) {
+      existingUser = allUsers[j];
+      break;
+    }
+  }
+  if (existingUser) {
+    existingUser.password = newP;
   } else {
-    localUsers.push({
+    allUsers.push({
       id: currentUser.id || Date.now(),
       shopId: DB.currentShopId,
       username: currentUser.username,
@@ -2259,7 +2267,7 @@ function changeUserPassword() {
       permissions: ['sell', 'stock', 'customers', 'reports', 'expense']
     });
   }
-  DB.setGlobal('users', localUsers);
+  DB.setGlobal('users', allUsers);
   currentUser.password = newP;
   
   // ☁️ Save to Cloud
