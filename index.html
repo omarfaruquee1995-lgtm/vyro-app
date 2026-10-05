@@ -2220,26 +2220,27 @@ function changeUserPassword() {
   var newP2 = document.getElementById('newPass2').value;
   if (!oldP || !newP || !newP2) { alert('❌ সব ফিল্ড পূরণ করুন'); return; }
   
-  // Check old password — handle cloud login (password undefined)
-  var localUsers = DB.getGlobal('users');
-  var localMatch = null;
-  for (var i = 0; i < localUsers.length; i++) {
-    if (localUsers[i].id === currentUser.id || localUsers[i].username === currentUser.username) {
-      localMatch = localUsers[i];
-      break;
+    // Cloud login হলে (currentUser.password === undefined) — old password skip
+  // কারণ cloud-এ password hash হিসেবে saved, plain text নেই
+  var isCloudUser = (currentUser.password === undefined || currentUser.password === null || currentUser.password === '');
+  
+  if (!isCloudUser) {
+    // Local user — old password check
+    var localUsers = DB.getGlobal('users');
+    var localMatch = null;
+    for (var i = 0; i < localUsers.length; i++) {
+      if (localUsers[i].id === currentUser.id) {
+        localMatch = localUsers[i];
+        break;
+      }
+    }
+    var correctPassword = (localMatch && localMatch.password) ? localMatch.password : currentUser.password;
+    if (correctPassword && oldP !== correctPassword) {
+      alert('❌ পুরনো password ভুল');
+      return;
     }
   }
-  
-  // Cloud user হলে currentUser.password undefined — এ ক্ষেত্রে localMatch-এ check
-  var correctPassword = (currentUser.password !== undefined) ? currentUser.password : (localMatch ? localMatch.password : null);
-  
-  if (correctPassword === null) {
-    // First time password change (cloud user, no local record)
-    if (oldP.length < 1) { alert('❌ পুরনো password দিন'); return; }
-  } else if (oldP !== correctPassword) {
-    alert('❌ পুরনো password ভুল');
-    return;
-  }
+  // Cloud user হলে old password skip — সরাসরি নতুন password set হবে
   
   if (newP.length < 4) { alert('❌ নতুন password কমপক্ষে ৪ অক্ষর'); return; }
   if (newP !== newP2) { alert('❌ দুটো মিলছে না'); return; }
