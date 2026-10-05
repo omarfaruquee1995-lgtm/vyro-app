@@ -2219,16 +2219,62 @@ function changeUserPassword() {
   var newP = document.getElementById('newPass').value;
   var newP2 = document.getElementById('newPass2').value;
   if (!oldP || !newP || !newP2) { alert('❌ সব ফিল্ড পূরণ করুন'); return; }
-  if (oldP !== currentUser.password) { alert('❌ পুরনো password ভুল'); return; }
+  
+  // Check old password — handle cloud login (password undefined)
+  var localUsers = DB.getGlobal('users');
+  var localMatch = null;
+  for (var i = 0; i < localUsers.length; i++) {
+    if (localUsers[i].id === currentUser.id || localUsers[i].username === currentUser.username) {
+      localMatch = localUsers[i];
+      break;
+    }
+  }
+  
+  // Cloud user হলে currentUser.password undefined — এ ক্ষেত্রে localMatch-এ check
+  var correctPassword = (currentUser.password !== undefined) ? currentUser.password : (localMatch ? localMatch.password : null);
+  
+  if (correctPassword === null) {
+    // First time password change (cloud user, no local record)
+    if (oldP.length < 1) { alert('❌ পুরনো password দিন'); return; }
+  } else if (oldP !== correctPassword) {
+    alert('❌ পুরনো password ভুল');
+    return;
+  }
+  
   if (newP.length < 4) { alert('❌ নতুন password কমপক্ষে ৪ অক্ষর'); return; }
   if (newP !== newP2) { alert('❌ দুটো মিলছে না'); return; }
-  var users = DB.getGlobal('users');
-  for (var i = 0; i < users.length; i++) if (users[i].id === currentUser.id) users[i].password = newP;
-  DB.setGlobal('users', users);
+  
+  // Save to local
+  if (localMatch) {
+    localMatch.password = newP;
+  } else {
+    localUsers.push({
+      id: currentUser.id || Date.now(),
+      shopId: DB.currentShopId,
+      username: currentUser.username,
+      password: newP,
+      name: currentUser.name || 'Admin',
+      role: currentUser.role || 'admin',
+      permissions: ['sell', 'stock', 'customers', 'reports', 'expense']
+    });
+  }
+  DB.setGlobal('users', localUsers);
   currentUser.password = newP;
+  
+  // ☁️ Save to Cloud
+  if (VYRO_TOKEN) {
+    vyroApiCall('/api/save-password', 'POST', {
+      username: currentUser.username,
+      password: newP
+    }).then(function(r) {
+      if (r && r.success) console.log('✅ Password synced to cloud');
+      else console.warn('⚠️ Cloud password sync failed:', r && r.error);
+    });
+  }
+  
   document.getElementById('passwordModal').remove();
   openSettings();
-  alert('✅ Password পরিবর্তন হয়েছে!');
+  alert('✅ Password পরিবর্তন হয়েছে!\n\nনতুন password: ' + newP);
 }
 function openCustomerAddressEdit() {
   var customers = DB.get('customers');
