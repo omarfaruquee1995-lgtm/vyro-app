@@ -1045,6 +1045,13 @@ function calcDashboardStats() {
   };
 }
 
+// ============ CUSTOMER SELECT HANDLER ============
+function updateSelectedCustomer(sel) {
+  window.selectedCustomerId = +sel.value || 0;
+  console.log('✅ Customer selected:', window.selectedCustomerId, '|', sel.options[sel.selectedIndex].text);
+}
+// ============ END ============
+
 function renderSalesChart() {
   var canvas = document.getElementById('salesChart');
   if (!canvas || !window.Chart) return;
@@ -1593,7 +1600,7 @@ function renderSales(app) {
   for (var i = 0; i < products.length; i++) html += '<option value="' + products[i].id + '">' + products[i].name + ' (' + products[i].stock + ' ' + (products[i].unit||'pcs') + ') - ' + fmt(products[i].sellPrice) + '</option>';
   html += '</select>';
 html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:100%;margin-bottom:8px;padding:10px;font-weight:700">➕ Add Custom Item (Stock-এ নেই)</button>';
-  html += '<select id="saleCustSelect" onchange="renderSales(document.getElementById(\'app\'))"><option value="0">Cash / Walk-in</option>';
+html += '<select id="saleCustSelect" onchange="updateSelectedCustomer(this)"><option value="0">Cash / Walk-in</option>';
   for (var j = 0; j < customers.length; j++) html += '<option value="' + customers[j].id + '">' + customers[j].name + (customers[j].due > 0 ? ' (' + fmt(customers[j].due) + ')' : '') + '</option>';
   html += '</select>';
   html += '<h4 style="font-size:13px;margin:10px 0 6px;color:#2a5298">🛒 Cart (' + saleCart.length + ')</h4>';
@@ -1886,7 +1893,7 @@ function amountToWords(amount) {
 }
 function completeSale() {
   if (saleCart.length === 0) { alert('Cart empty'); return; }
-  var custId = +document.getElementById('saleCustSelect').value;
+var custId = window.selectedCustomerId || +document.getElementById('saleCustSelect').value || 0;
   var subtotal = 0, cost = 0;
   for (var j = 0; j < saleCart.length; j++) { subtotal += saleCart[j].price * saleCart[j].qty; cost += saleCart[j].buyPrice * saleCart[j].qty; }
   closeModal();
