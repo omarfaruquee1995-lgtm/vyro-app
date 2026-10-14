@@ -675,6 +675,33 @@ function getNextInvoiceNo() {
   return 'OE-' + year + '-' + String(nextNum).padStart(4, '0');
 }
 // ============ END INVOICE NUMBER ============
+
+// ============ CUSTOMER-PRODUCT HISTORY ============
+function getCustomerProductHistory(customerId, productId) {
+  if (!customerId || !productId) return [];
+  var sales = DB.get('sales');
+  var history = [];
+  for (var i = 0; i < sales.length; i++) {
+    var sale = sales[i];
+    if (sale.customerId !== customerId) continue;
+    var items = sale.items || [];
+    for (var j = 0; j < items.length; j++) {
+      if (items[j].productId === productId) {
+        history.push({
+          date: sale.date,
+          time: sale.time || '',
+          price: items[j].price,
+          qty: items[j].qty,
+          unit: items[j].unit || 'pcs',
+          invoiceNo: sale.invoiceNo || ('INV-' + sale.id)
+        });
+      }
+    }
+  }
+  history.sort(function(a, b) { return (b.date || '').localeCompare(a.date || ''); });
+  return history;
+}
+// ============ END HISTORY ============
 var nowTime = function() { return new Date().toLocaleTimeString('en-BD', {hour:'2-digit', minute:'2-digit'}); };
 
 var currentUser = null;
@@ -1566,7 +1593,7 @@ function renderSales(app) {
   for (var i = 0; i < products.length; i++) html += '<option value="' + products[i].id + '">' + products[i].name + ' (' + products[i].stock + ' ' + (products[i].unit||'pcs') + ') - ' + fmt(products[i].sellPrice) + '</option>';
   html += '</select>';
 html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:100%;margin-bottom:8px;padding:10px;font-weight:700">➕ Add Custom Item (Stock-এ নেই)</button>';
-  html += '<select id="saleCustSelect"><option value="0">Cash / Walk-in</option>';
+  html += '<select id="saleCustSelect" onchange="renderSales(document.getElementById(\'app\'))"><option value="0">Cash / Walk-in</option>';
   for (var j = 0; j < customers.length; j++) html += '<option value="' + customers[j].id + '">' + customers[j].name + (customers[j].due > 0 ? ' (' + fmt(customers[j].due) + ')' : '') + '</option>';
   html += '</select>';
   html += '<h4 style="font-size:13px;margin:10px 0 6px;color:#2a5298">🛒 Cart (' + saleCart.length + ')</h4>';
@@ -1618,22 +1645,42 @@ function filterSaleProducts(query) {
   if (!resultsDiv) return;
   query = (query || '').trim().toLowerCase();
   if (!query) { resultsDiv.style.display = 'none'; resultsDiv.innerHTML = ''; return; }
+  
   var products = DB.get('products');
+  var custId = +document.getElementById('saleCustSelect').value || 0;
+  
   var matches = products.filter(function(p) {
     return (p.name || '').toLowerCase().indexOf(query) !== -1 || (p.barcode || '').indexOf(query) !== -1 || (p.sku || '').toLowerCase().indexOf(query) !== -1;
   });
+  
   if (matches.length === 0) {
     resultsDiv.innerHTML = '<div style="padding:10px;text-align:center;color:#888;font-size:12px">No product found</div>';
     resultsDiv.style.display = 'block';
     return;
   }
+  
   var html = '';
   for (var i = 0; i < matches.length && i < 15; i++) {
     var p = matches[i];
     var stockColor = p.stock <= (p.lowAlert || 5) ? '#ff4757' : '#2ed573';
-    html += '<div onclick="addToCartById(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center">' +
-            '<div><b style="font-size:13px">' + p.name + '</b><br><small style="color:#888;font-size:11px">' + (p.barcode || p.sku || '-') + '</small></div>' +
-            '<div style="text-align:right"><b>' + fmt(p.sellPrice) + '</b><br><small style="color:' + stockColor + ';font-weight:700">Stock: ' + p.stock + ' ' + (p.unit||'pcs') + '</small></div></div>';
+    
+    var history = custId ? getCustomerProductHistory(custId, p.id) : [];
+    var lastSale = history.length > 0 ? history[0] : null;
+    
+    html += '<div onclick="addToCartById(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<b style="font-size:13px">' + p.name + '</b><br>';
+    html += '<small style="color:#888;font-size:11px">' + (p.barcode || p.sku || '-') + '</small><br>';
+    html += '<small style="color:' + stockColor + ';font-weight:700;font-size:11px">Stock: ' + p.stock + ' ' + (p.unit || 'pcs') + '</small>';
+    html += '</div>';
+    html += '<div style="text-align:right;flex-shrink:0">';
+    html += '<b style="font-size:13px;color:#2a5298">' + fmt(p.sellPrice) + '</b>';
+    if (lastSale) {
+      var priceColor = lastSale.price !== p.sellPrice ? '#e67e22' : '#888';
+      html += '<br><small style="color:' + priceColor + ';font-size:10px;font-weight:700">🕐 Last: ' + fmt(lastSale.price) + ' (' + lastSale.date + ')</small>';
+    }
+    html += '</div>';
+    html += '</div>';
   }
   resultsDiv.innerHTML = html;
   resultsDiv.style.display = 'block';
