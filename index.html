@@ -2052,7 +2052,14 @@ function showInvoice(saleId) {
   html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><div style="min-width:280px;font-size:13px">';
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
  if (s.discount > 0) {
-  var discLabel = (s.discountType === 'flat') ? 'Discount (৳):' : 'Discount (' + (s.discountPct || 0) + '%):';
+  var discLabel;
+  if (s.discountType === 'flat') {
+    discLabel = 'Discount:';
+  } else if (!s.discountType && s.discountPct > 100) {
+    discLabel = 'Discount:';
+  } else {
+    discLabel = 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
+  }
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
 }
   if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
