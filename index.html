@@ -1697,9 +1697,10 @@ function addToCartById(productId) {
   var p = null;
   for (var i = 0; i < products.length; i++) if (products[i].id === productId) { p = products[i]; break; }
   if (!p) return;
+  
+  // Check if already in cart
   for (var j = 0; j < saleCart.length; j++) {
     if (saleCart[j].productId === productId) {
-      if (saleCart[j].qty >= p.stock) { alert('❌ Stock শেষ!'); return; }
       saleCart[j].qty++;
       var sb = document.getElementById('saleSearchBox'); if (sb) sb.value = '';
       var rd = document.getElementById('saleProdResults'); if (rd) rd.style.display = 'none';
@@ -1707,8 +1708,13 @@ function addToCartById(productId) {
       return;
     }
   }
-  if (p.stock <= 0) { alert('❌ Stock শেষ!'); return; }
-  saleCart.push({productId: p.id, name: p.name, price: p.sellPrice, buyPrice: p.buyPrice, qty: 1, unit: p.unit || 'pcs'});
+  
+  // Stock warning (but allow add)
+  if (p.stock <= 0) {
+    if (!confirm('⚠️ "' + p.name + '" এর stock শেষ!\n\nবাইরে থেকে এনে sale করবেন?\n\nOK চাপলে cart-এ যোগ হবে।')) return;
+  }
+  
+  saleCart.push({productId: p.id, name: p.name, price: p.sellPrice, buyPrice: p.buyPrice, qty: 1, unit: p.unit || 'pcs', stockAtSale: p.stock || 0});
   var sb2 = document.getElementById('saleSearchBox'); if (sb2) sb2.value = '';
   var rd2 = document.getElementById('saleProdResults'); if (rd2) rd2.style.display = 'none';
   renderSales(document.getElementById('app'));
@@ -1746,10 +1752,13 @@ function setCartQty(idx, newQty) {
   var products = DB.get('products');
   var p = null;
   for (var i = 0; i < products.length; i++) if (products[i].id === saleCart[idx].productId) p = products[i];
-  if (p && !saleCart[idx].isCustom && qty > p.stock) {
-    qty = p.stock;
-    alert('⚠️ Stock-এ মাত্র ' + p.stock + ' ' + (p.unit || 'pcs') + ' আছে।');
+  
+  // Stock warning (allow, but inform)
+  if (p && !saleCart[idx].isCustom && p.stock > 0 && qty > p.stock) {
+    var proceed = confirm('⚠️ Stock-এ মাত্র ' + p.stock + ' ' + (p.unit || 'pcs') + ' আছে।\n\nআপনি ' + qty + ' দিচ্ছেন।\n\nচালিয়ে যাবেন?');
+    if (!proceed) return;
   }
+  
   saleCart[idx].qty = qty;
   renderSales(document.getElementById('app'));
   console.log('✅ Qty set for item', idx, '→', qty);
