@@ -1711,7 +1711,10 @@ function addToCartById(productId) {
   
   // Stock warning (but allow add)
   if (p.stock <= 0) {
-    if (!confirm('⚠️ "' + p.name + '" এর stock শেষ!\n\nবাইরে থেকে এনে sale করবেন?\n\nOK চাপলে cart-এ যোগ হবে।')) return;
+var stockMsg = LANG === 'en' 
+  ? '⚠️ "' + p.name + '" is out of stock!\n\nWill you arrange from outside?\n\nOK to add to cart.' 
+  : '⚠️ "' + p.name + '" এর stock শেষ!\n\nবাইরে থেকে এনে sale করবেন?\n\nOK চাপলে cart-এ যোগ হবে।';
+if (!confirm(stockMsg)) return;
   }
   
   saleCart.push({productId: p.id, name: p.name, price: p.sellPrice, buyPrice: p.buyPrice, qty: 1, unit: p.unit || 'pcs', stockAtSale: p.stock || 0});
@@ -1741,10 +1744,8 @@ function updateCartQty(idx, delta) {
   for (var i = 0; i < products.length; i++) if (products[i].id === saleCart[idx].productId) p = products[i];
   saleCart[idx].qty += delta;
   if (saleCart[idx].qty < 1) saleCart[idx].qty = 1;
-  if (p && saleCart[idx].qty > p.stock) { saleCart[idx].qty = p.stock; alert('Stock: ' + p.stock); }
   renderSales(document.getElementById('app'));
 }
-
 function setCartQty(idx, newQty) {
   if (!saleCart[idx]) return;
   var qty = parseFloat(newQty) || 1;
@@ -1755,9 +1756,12 @@ function setCartQty(idx, newQty) {
   
   // Stock warning (allow, but inform)
   if (p && !saleCart[idx].isCustom && p.stock > 0 && qty > p.stock) {
-    var proceed = confirm('⚠️ Stock-এ মাত্র ' + p.stock + ' ' + (p.unit || 'pcs') + ' আছে।\n\nআপনি ' + qty + ' দিচ্ছেন।\n\nচালিয়ে যাবেন?');
-    if (!proceed) return;
-  }
+  var qtyMsg = LANG === 'en'
+    ? '⚠️ Only ' + p.stock + ' ' + (p.unit || 'pcs') + ' available in stock.\n\nYou are entering ' + qty + '.\n\nContinue?'
+    : '⚠️ Stock-এ মাত্র ' + p.stock + ' ' + (p.unit || 'pcs') + ' আছে।\n\nআপনি ' + qty + ' দিচ্ছেন।\n\nচালিয়ে যাবেন?';
+  var proceed = confirm(qtyMsg);
+  if (!proceed) return;
+}
   
   saleCart[idx].qty = qty;
   renderSales(document.getElementById('app'));
