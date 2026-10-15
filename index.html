@@ -1914,7 +1914,14 @@ var custId = window.selectedCustomerId || +document.getElementById('saleCustSele
   html += '<h3>🧾 Billing Details</h3>';
   html += '<div style="background:#f0f2f5;padding:10px;border-radius:8px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>' + fmt(subtotal) + '</b></div></div>';
 html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="" placeholder="0" oninput="calcBilling()">';
-  html += '<label style="font-size:11px;color:#666">💸 Discount (%)</label><input id="billDiscount" type="number" value="0" oninput="calcBilling()">';
+  html += '<label style="font-size:11px;color:#666">💸 Discount</label>';
+html += '<div style="display:flex;gap:6px;margin-bottom:7px">';
+html += '<input id="billDiscount" type="number" value="0" oninput="calcBilling()" style="flex:1;margin:0">';
+html += '<select id="billDiscountType" onchange="calcBilling()" style="width:70px;font-weight:700;margin:0">';
+html += '<option value="pct">%</option>';
+html += '<option value="flat">৳</option>';
+html += '</select>';
+html += '</div>';
   html += '<label style="font-size:11px;color:#666">📊 VAT (%)</label><input id="billVat" type="number" value="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">🚚 Transport / Carrying Cost (৳)</label><input id="billTransport" type="number" value="0" oninput="calcBilling()">';
   html += '<div id="billSummary" style="background:#e3f2fd;padding:12px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.8"></div>';
@@ -1927,12 +1934,21 @@ html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input
 }
 function calcBilling() {
   var subtotal = window._billSubtotal || 0;
-  var discountPct = +document.getElementById('billDiscount').value || 0;
+  var discountInput = +document.getElementById('billDiscount').value || 0;
+var discountType = (document.getElementById('billDiscountType') || {}).value || 'pct';
+var discountPct = 0;
+var discountAmount = 0;
+if (discountType === 'pct') {
+  discountPct = discountInput;
+  discountAmount = subtotal * discountPct / 100;
+} else {
+  discountAmount = discountInput;
+  discountPct = subtotal > 0 ? (discountAmount / subtotal * 100) : 0;
+}
+if (discountAmount > subtotal) discountAmount = subtotal;
   var vatPct = +document.getElementById('billVat').value || 0;
   var transport = +document.getElementById('billTransport').value || 0;
   var paid = +document.getElementById('billPaid').value || 0;
-  var discountAmount = subtotal * discountPct / 100;
-  if (discountAmount > subtotal) discountAmount = subtotal;
   var afterDiscount = subtotal - discountAmount;
   var vatAmount = afterDiscount * vatPct / 100;
   var grandTotal = afterDiscount + vatAmount + transport;
@@ -1940,7 +1956,7 @@ function calcBilling() {
   if (due < 0) due = 0;
   var transportLine = transport > 0 ? '🚚 Transport: <b style="color:#e67e22">+ ' + fmt(transport) + '</b><br>' : '';
   document.getElementById('billSummary').innerHTML =
-    'Subtotal: <b>' + fmt(subtotal) + '</b><br>Discount (' + discountPct + '%): <b style="color:#ff4757">− ' + fmt(discountAmount) + '</b><br>VAT (' + vatPct + '%): <b style="color:#ffa502">+ ' + fmt(vatAmount) + '</b><br>' + transportLine + '<hr style="margin:5px 0;border:none;border-top:1px dashed #ccc"><span style="font-size:15px">Grand Total: <b>' + fmt(grandTotal) + '</b></span><br>Paid: <b style="color:#2ed573">' + fmt(paid) + '</b><br>Due: <b style="color:#ff4757">' + fmt(due) + '</b>';
+    'Subtotal: <b>' + fmt(subtotal) + '</b><br>Discount (' + (discountType === 'pct' ? discountPct + '%' : '৳') + '): <b style="color:#ff4757">− ' + fmt(discountAmount) + '</b><br>VAT (' + vatPct + '%): <b style="color:#ffa502">+ ' + fmt(vatAmount) + '</b><br>' + transportLine + '<hr style="margin:5px 0;border:none;border-top:1px dashed #ccc"><span style="font-size:15px">Grand Total: <b>' + fmt(grandTotal) + '</b></span><br>Paid: <b style="color:#2ed573">' + fmt(paid) + '</b><br>Due: <b style="color:#ff4757">' + fmt(due) + '</b>';
   var awEnabled = SETTINGS.get('amountWordsEnabled', true);
   var wordsBox = document.getElementById('billWordsBox');
   if (awEnabled && wordsBox && grandTotal > 0) {
@@ -1948,7 +1964,7 @@ function calcBilling() {
     wordsBox.style.display = 'block';
     wordsBox.innerHTML = '<span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span>';
   } else if (wordsBox) wordsBox.style.display = 'none';
-window._billCalc = {subtotal: subtotal, discount: discountAmount, discountPct: discountPct, vatPct: vatPct, vatAmount: vatAmount, transport: transport, grandTotal: grandTotal, paid: paid, due: due};
+window._billCalc = {subtotal: subtotal, discount: discountAmount, discountPct: discountPct, discountType: discountType, vatPct: vatPct, vatAmount: vatAmount, transport: transport, grandTotal: grandTotal, paid: paid, due: due};
 }
 function finalizeSale(custId, cost) {
   var c = window._billCalc;
@@ -2035,7 +2051,10 @@ function showInvoice(saleId) {
   var sub = s.subtotal || s.total;
   html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><div style="min-width:280px;font-size:13px">';
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
- if (s.discount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>Discount (' + (s.discountPct || 0) + '%):</span><b>− ' + fmt(s.discount) + '</b></div>';
+ if (s.discount > 0) {
+  var discLabel = (s.discountType === 'flat') ? 'Discount (৳):' : 'Discount (' + (s.discountPct || 0) + '%):';
+  html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
+}
   if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
   if (s.discount > 0 || s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #ccc;margin-top:5px;font-weight:600"><span>Subtotal:</span><b>' + fmt((s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0)) + '</b></div>';
   if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport/Carrying:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
