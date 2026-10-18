@@ -9712,7 +9712,7 @@ window.renderLedgerPage = function(app) {
   html += '<p style="font-size:11px; color:#666; margin-top:4px;">মোট বাকিদার: <b>' + dueCustomers.length + '</b> জন</p>';
   html += '</div>';
 
-  html += '<div class="grid2" style="display:grid; grid-template-columns: 1fr 1.5fr; gap:10px;">';
+ html += '<div class="grid2" style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">';
 
   // বাম দিকের কলাম: কাস্টমার লিস্ট
   html += '<div class="card" style="padding:8px; max-height:70vh; overflow-y:auto;">';
@@ -9745,7 +9745,7 @@ window.renderLedgerPage = function(app) {
   html += '</div>'; // End Grid
   app.innerHTML = html;
 
-  // যদি আগে থেকে কোনো কাস্টমার সিলেক্ট করা থাকে, তবে ডাটা লোড করো
+    // যদি আগে থেকে কোনো কাস্টমার সিলেক্ট করা থাকে, তবে ডাটা লোড করো
   if (window._activeLedgerCustId) {
     setTimeout(function() {
       var found = false;
@@ -9754,11 +9754,9 @@ window.renderLedgerPage = function(app) {
         loadCustomerLedger(window._activeLedgerCustId);
       } else {
         window._activeLedgerCustId = 0;
-        document.getElementById('ledgerDetailsArea').innerHTML = '<div style="text-align:center; padding:40px 10px; color:#888; font-size:12px;">👈 কাস্টমার সিলেক্ট করুন</div>';
       }
     }, 50);
   }
-};
 
 window.loadCustomerLedger = function(custId) {
   window._activeLedgerCustId = custId;
@@ -9871,8 +9869,18 @@ window.loadCustomerLedger = function(custId) {
     }
   }
   
-  detailArea.innerHTML = html;
-  renderLedgerPage(document.getElementById('app')); // বর্ডার একটিভ করার জন্য রি-রেন্ডার
+    detailArea.innerHTML = html;
+  
+  // বাম দিকের একটিভ বর্ডার আপডেট করার জন্য
+  var custCards = document.querySelectorAll('#app .grid2 > div:first-child div[onclick^="loadCustomerLedger"]');
+  for (var k = 0; k < custCards.length; k++) {
+    custCards[k].style.background = '#fff';
+    custCards[k].style.border = '1px solid #eee';
+    if (custCards[k].getAttribute('onclick').indexOf(custId) !== -1) {
+      custCards[k].style.background = '#e3f2fd';
+      custCards[k].style.border = '2px solid #2a5298';
+    }
+  }
 };
 </script>
 </body>
