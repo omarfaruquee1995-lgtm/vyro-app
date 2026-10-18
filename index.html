@@ -1668,7 +1668,7 @@ function viewImage(imgId, customerId) {
   else for (var n = 0; n < sales.length; n++) {
     var s = sales[n];
     html += '<div class="list-item" style="cursor:pointer">';
-    html += '<div class="info" onclick="showInvoice(' + s.id + ')"><b>#' + s.id + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + ' ' + (s.time||'') + ' • ' + (s.items?s.items.length:0) + ' items</small></div>';
+html += '<div class="info" onclick="showInvoice(' + s.id + ')"><b>' + (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + ' ' + (s.time||'') + ' • ' + (s.items?s.items.length:0) + ' items</small></div>';
     html += '<div style="text-align:right"><b>' + fmt(s.total) + '</b><br><span class="pill ' + (s.due>0?'pill-due':'pill-paid') + '">' + (s.due>0?'Due: '+fmt(s.due):'Paid') + '</span>';
     html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showInvoice(' + s.id + ')">👁️</button> ';
     html += '<button class="btn-sm btn-warning" onclick="editInvoice(' + s.id + ')">✏️</button> ';
