@@ -1405,7 +1405,7 @@ function renderCustomers(app) {
   if (customers.length === 0) html += '<p style="text-align:center;color:#888;font-size:12px;padding:15px">' + t('noCustomers') + '</p>';
   else for (var i = 0; i < customers.length; i++) {
     var c = customers[i];
-    html += '<div class="list-item"><div class="info"><b>' + c.name + '</b><small>📞 ' + (c.phone||'-') + (c.address ? ' • ' + c.address : '') + '</small></div>';
+html += '<div class="list-item"><div class="info" onclick="showCustomerLedger(' + c.id + ')" style="cursor:pointer"><b>' + c.name + ' <span style="font-size:10px;color:#2a5298">(Ledger)</span></b><small>📞 ' + (c.phone||'-') + (c.address ? ' • ' + c.address : '') + '</small></div>';
     html += '<div style="text-align:right">';
     if (c.due > 0) html += '<span class="pill pill-due">Due: ' + fmt(c.due) + '</span>';
     else html += '<span class="pill pill-paid">Paid</span>';
@@ -9519,6 +9519,162 @@ loadQuotationById = function(id) {
   }, 150);
 };
 // ============ END QUOTATION LOAD FIX ============
+// ============================================================
+// CUSTOMER LEDGER MODULE (Advanced)
+// ============================================================
+window.showCustomerLedger = function(id) {
+  closeModal();
+  var customers = DB.get('customers');
+  var c = null;
+  for (var i = 0; i < customers.length; i++) if (customers[i].id === id) c = customers[i];
+  if (!c) return;
+
+  window._currentLedgerCustId = id;
+
+  var html = '<div class="modal-overlay" id="ledgerModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal" style="max-width:700px;padding-bottom:0">';
+  
+  // Header
+  html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">';
+  html += '<div>';
+  html += '<h3 style="margin:0;color:#2a5298;font-size:16px">📋 ' + c.name + '</h3>';
+  if (c.phone) html += '<div style="font-size:11px;color:#666;margin-top:2px">📞 ' + c.phone + '</div>';
+  if (c.address) html += '<div style="font-size:11px;color:#666">📍 ' + c.address + '</div>';
+  html += '</div>';
+  html += '<button onclick="document.getElementById(\'ledgerModal\').remove()" style="background:none;border:none;font-size:20px;color:#888;cursor:pointer">✕</button>';
+  html += '</div>';
+
+  // Summary Cards
+  html += '<div class="grid2" style="margin:10px 0">';
+  html += '<div class="stat" style="border-left:4px solid #ff4757"><div class="num" style="color:#ff4757">' + fmt(c.due) + '</div><div class="lbl">Total Due</div></div>';
+  html += '<div class="stat" style="border-left:4px solid #2ed573"><div class="num" style="color:#2ed573">' + fmt(c.paid) + '</div><div class="lbl">Total Paid</div></div>';
+  html += '</div>';
+
+  // Filters
+  html += '<div style="background:#f8f9fa;padding:10px;border-radius:8px;margin-bottom:10px">';
+  html += '<div style="font-size:11px;font-weight:700;color:#666;margin-bottom:6px">🔍 Filter Ledger</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px">';
+  html += '<select id="ledgerMonth" onchange="renderLedgerData()" style="padding:6px;font-size:11px;margin:0"><option value="">All Months</option></select>';
+  html += '<select id="ledgerType" onchange="renderLedgerData()" style="padding:6px;font-size:11px;margin:0">';
+  html += '<option value="all">All Types</option>';
+  html += '<option value="sale">Only Invoices</option>';
+  html += '<option value="payment">Only Payments</option>';
+  html += '</select>';
+  html += '</div>';
+  html += '</div>';
+
+  // Ledger Table Area
+  html += '<div id="ledgerTableArea" style="max-height:50vh;overflow-y:auto;border:1px solid #eee;border-radius:8px;margin-bottom:10px"></div>';
+
+  // Action Buttons
+  html += '<div style="padding:10px 0;border-top:1px dashed #ddd;background:#fff;position:sticky;bottom:0">';
+  html += '<button class="btn-success" style="width:100%;margin-bottom:6px" onclick="openPaymentModal(' + id + ')">💵 Receive Payment</button>';
+  html += '<button class="btn-primary" style="background:#888;width:100%" onclick="document.getElementById(\'ledgerModal\').remove()">Close</button>';
+  html += '</div>';
+
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+
+  renderLedgerData();
+};
+
+window.renderLedgerData = function() {
+  var custId = window._currentLedgerCustId;
+  var sales = DB.get('sales').filter(function(s){ return s.customerId === custId; });
+  var payments = DB.get('payments').filter(function(p){ return p.customerId === custId; });
+  
+  var filterType = document.getElementById('ledgerType').value;
+  var filterMonth = document.getElementById('ledgerMonth').value;
+
+  // Populate months
+  var monthSelect = document.getElementById('ledgerMonth');
+  if (monthSelect.options.length <= 1) {
+    var months = {};
+    for (var i = 0; i < sales.length; i++) if (sales[i].date) months[sales[i].date.slice(0,7)] = true;
+    for (var j = 0; j < payments.length; j++) if (payments[j].date) months[payments[j].date.slice(0,7)] = true;
+    var sortedMonths = Object.keys(months).sort().reverse();
+    for (var k = 0; k < sortedMonths.length; k++) {
+      var opt = document.createElement('option');
+      opt.value = sortedMonths[k];
+      opt.textContent = sortedMonths[k];
+      monthSelect.appendChild(opt);
+    }
+  }
+
+  // Combine data
+  var allData = [];
+  for (var s = 0; s < sales.length; s++) {
+    allData.push({
+      type: 'sale',
+      date: sales[s].date,
+      time: sales[s].time || '',
+      id: sales[s].id,
+      invoiceNo: sales[s].invoiceNo || ('INV-' + sales[s].id),
+      desc: 'Sale Invoice',
+      cash: sales[s].paid || 0,
+      due: sales[s].due || 0,
+      total: sales[s].total || 0,
+      items: sales[s].items || []
+    });
+  }
+  for (var p = 0; p < payments.length; p++) {
+    allData.push({
+      type: 'payment',
+      date: payments[p].date,
+      time: payments[p].time || '',
+      id: payments[p].id,
+      invoiceNo: 'PAY-' + payments[p].id,
+      desc: 'Payment Received',
+      cash: payments[p].amount || 0,
+      due: 0,
+      total: payments[p].amount || 0,
+      items: []
+    });
+  }
+
+  // Filter
+  if (filterType !== 'all') allData = allData.filter(function(x){ return x.type === filterType; });
+  if (filterMonth) allData = allData.filter(function(x){ return (x.date || '').indexOf(filterMonth) === 0; });
+
+  // Sort desc
+  allData.sort(function(a, b) {
+    var dc = (b.date || '').localeCompare(a.date || '');
+    if (dc !== 0) return dc;
+    return b.id - a.id;
+  });
+
+  var html = '<table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead style="position:sticky;top:0;background:#2a5298;color:#fff;z-index:10">';
+  html += '<tr><th style="padding:8px;text-align:left">Date</th><th style="padding:8px;text-align:left">Ref</th><th style="padding:8px;text-align:right">Total</th><th style="padding:8px;text-align:right">Cash</th><th style="padding:8px;text-align:right">Due</th></tr>';
+  html += '</thead><tbody>';
+
+  if (allData.length === 0) {
+    html += '<tr><td colspan="5" style="text-align:center;padding:20px;color:#888">No records found</td></tr>';
+  } else {
+    for (var d = 0; d < allData.length; d++) {
+      var row = allData[d];
+      var rowBg = row.type === 'payment' ? '#f0fff4' : '#fff';
+      html += '<tr style="border-bottom:1px solid #eee;background:' + rowBg + '">';
+      
+      html += '<td style="padding:8px">';
+      html += '<div style="font-weight:700;color:#2a5298">' + (row.date || '-') + '</div>';
+      html += '<div style="font-size:9px;color:#888">' + (row.time || '') + '</div>';
+      html += '</td>';
+      
+      html += '<td style="padding:8px">';
+      html += '<div style="font-weight:700;color:' + (row.type === 'payment' ? '#2ed573' : '#ff4757') + '">' + row.invoiceNo + '</div>';
+      html += '<div style="font-size:9px;color:#888">' + row.desc + '</div>';
+      html += '</td>';
+      
+      html += '<td style="padding:8px;text-align:right">' + fmt(row.total) + '</td>';
+      html += '<td style="padding:8px;text-align:right;color:#2ed573;font-weight:700">' + fmt(row.cash) + '</td>';
+      html += '<td style="padding:8px;text-align:right;color:#ff4757;font-weight:700">' + (row.due > 0 ? fmt(row.due) : '-') + '</td>';
+      html += '</tr>';
+    }
+  }
+  html += '</tbody></table>';
+  document.getElementById('ledgerTableArea').innerHTML = html;
+};
 </script>
 </body>
 </html>
