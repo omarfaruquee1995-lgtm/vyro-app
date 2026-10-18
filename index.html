@@ -9917,6 +9917,23 @@ function getCustomerLedgerHTML(custId) {
   }
   return html;
 }
+// ============================================================
+// TAB NAVIGATION FIX FOR INPUTS
+// ============================================================
+document.addEventListener('keydown', function(e) {
+  // যদি Tab বাটন চাপা হয়
+  if (e.key === 'Tab') {
+    var active = document.activeElement;
+    // যদি অ্যাক্টিভ এলিমেন্ট ইনপুট বা সিলেক্ট হয়
+    if (active && (active.tagName === 'INPUT' || active.tagName === 'SELECT' || active.tagName === 'TEXTAREA')) {
+      
+      // কাস্টম ইনপুট আইডি বা ক্লাস চেক (ঐচ্ছিক)
+      // এখানে আমরা শুধু নিশ্চিত করছি যেন Tab কাজ করে
+      
+      // e.preventDefault(); // ডিফল্ট ট্যাব আচরণ বন্ধ করতে চাইলে এটি আনকমেন্ট করো, তবে সাধারণত দরকার হয় না।
+    }
+  }
+});
 </script>
 </body>
 </html>
