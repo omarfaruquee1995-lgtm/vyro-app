@@ -4656,7 +4656,7 @@ window.openAddProduct = function(barcode) {
   var html = '<div class="modal-overlay" id="prodModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
   html += '<h3>📦 ' + t('newProduct') + '</h3>';
   html += '<input id="pName" placeholder="' + t('productName') + ' *">';
-html += '<input id="pSize" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
+  html += '<input id="pSize" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
   html += '<input id="pSku" placeholder="' + t('sku') + '">';
   html += '<input id="pBarcode" placeholder="' + t('barcode') + '" value="' + (barcode||'') + '">';
   html += '<input id="pBuy" type="number" placeholder="' + t('buyPrice') + '">';
@@ -4687,6 +4687,7 @@ window.editProduct = function(id) {
   var html = '<div class="modal-overlay" id="prodModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
   html += '<h3>✏️ Edit Product</h3>';
   html += '<input id="pName" value="' + p.name + '">';
+  html += '<input id="pSize" value="' + (p.size || '') + '" placeholder="Size">';
   html += '<input id="pSku" value="' + (p.sku||'') + '">';
   html += '<input id="pBarcode" value="' + (p.barcode||'') + '">';
   html += '<input id="pBuy" type="number" value="' + p.buyPrice + '">';
@@ -4705,7 +4706,6 @@ window.editProduct = function(id) {
     if (sel) sel.innerHTML = buildUOMOptions(p.unit || 'pcs');
   }, 10);
 };
-
 // ---------- FIX 3: Stock Search (live, no focus loss) ----------
 window._invSearchValue = '';
 
