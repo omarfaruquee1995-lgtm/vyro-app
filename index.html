@@ -1318,6 +1318,8 @@ function quickReceiveDue(customerId) {
     }
   }
   DB.set('sales', sales);
+  // রিসিপ্ট দেখানোর জন্য
+  setTimeout(function() { showMoneyReceipt(payments[payments.length - 1].id); }, 300);
   render();
 }
 function renderInventory(app) {
@@ -1625,6 +1627,8 @@ function openPaymentModal(customerId) {
     }
   }
   DB.set('sales', sales);
+  // রিসিপ্ট দেখানোর জন্য
+  setTimeout(function() { showMoneyReceipt(payments[payments.length - 1].id); }, 300);
   render();
 }
 function sendWhatsAppDue(customerId) {
@@ -9966,6 +9970,126 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+// ============================================================
+// MONEY RECEIPT MODULE
+// ============================================================
+
+window.showMoneyReceipt = function(paymentId) {
+  var payments = DB.get('payments');
+  var p = null;
+  for (var i = 0; i < payments.length; i++) if (payments[i].id === paymentId) p = payments[i];
+  if (!p) { alert('Payment record not found'); return; }
+
+  var customers = DB.get('customers');
+  var c = null;
+  for (var j = 0; j < customers.length; j++) if (customers[j].id === p.customerId) c = customers[j];
+  if (!c) return;
+
+  var theme = SETTINGS.get('invoiceTheme', 'blue');
+  var font = SETTINGS.get('invoiceFont', 'arial');
+  var receiptNo = 'MR-' + String(p.id).slice(-6);
+
+  var html = '<div class="modal-overlay" id="moneyReceiptModal">';
+  html += '<div class="modal" style="max-width:600px;padding:0;max-height:95vh">';
+  html += '<div id="moneyReceiptPrint" class="theme-' + theme + ' font-' + font + '" style="padding:30px;background:#fff;color:#000">';
+  
+  // Header
+  html += '<div style="display:flex;justify-content:space-between;border-bottom:3px double var(--inv-primary,#1e3c72);padding-bottom:15px;margin-bottom:20px">';
+  html += '<div>';
+  html += '<h1 style="color:var(--inv-primary,#1e3c72);font-size:22px;margin:0">' + currentShop.name + '</h1>';
+  html += '<p style="font-size:11px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
+  html += '<p style="font-size:11px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p>';
+  html += '</div>';
+  html += '<div style="text-align:right">';
+  html += '<h2 style="color:#2ed573;margin:0;font-size:22px;letter-spacing:1px">MONEY RECEIPT</h2>';
+  html += '<p style="font-size:13px;margin:8px 0 0"><b>' + receiptNo + '</b></p>';
+  html += '<p style="font-size:11px;color:#666;margin:3px 0 0">Date: ' + p.date + ' ' + (p.time || '') + '</p>';
+  html += '</div></div>';
+
+  // Customer Info
+  html += '<div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-bottom:20px;border-left:4px solid #2ed573">';
+  html += '<p style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Received From</p>';
+  html += '<p style="font-size:16px;font-weight:700;margin:0">' + c.name + '</p>';
+  if (c.phone) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📞 ' + c.phone + '</p>';
+  if (c.address) html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📍 ' + c.address + '</p>';
+  html += '</div>';
+
+  // Payment Details
+  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px">';
+  html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Payment Method:</td><td style="padding:10px;text-align:right;font-weight:700">Cash / Hand Cash</td></tr>';
+  html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Received Amount:</td><td style="padding:10px;text-align:right;font-weight:800;color:#2ed573;font-size:16px">' + fmt(p.amount) + '</td></tr>';
+  html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Current Due (After Payment):</td><td style="padding:10px;text-align:right;font-weight:700;color:#ff4757">' + fmt(c.due) + '</td></tr>';
+  html += '</table>';
+
+  // Amount in words
+  if (SETTINGS.get('amountWordsEnabled', true)) {
+    html += '<div style="background:#fff9e6;border-left:4px solid #ffa502;padding:10px;margin:10px 0;font-size:12px;color:#856404;font-style:italic">';
+    html += '<b>In Words:</b> ' + amountToWords(p.amount);
+    html += '</div>';
+  }
+
+  // Signatures
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;margin-top:60px;padding-top:20px">';
+  html += '<div style="text-align:center;border-top:1px solid #333;padding-top:8px;font-size:12px;font-weight:600">Customer Signature</div>';
+  html += '<div style="text-align:center;border-top:1px solid #333;padding-top:8px;font-size:12px;font-weight:600">Authorized Signature</div>';
+  html += '</div>';
+
+  html += '<div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px dashed #ccc;font-size:10px;color:#888">Powered by VYRO</div>';
+  html += '</div>'; // End Print Area
+
+  // Buttons
+  html += '<div style="padding:15px;background:#f8f9fa;border-top:2px solid #eee">';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  html += '<button class="btn-primary" onclick="printMoneyReceipt()">🖨️ Print</button>';
+  html += '<button class="btn-info" style="background:#25D366" onclick="shareReceiptWhatsApp(' + p.id + ')">📱 WhatsApp</button>';
+  html += '</div>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'moneyReceiptModal\').remove();render()">Close</button>';
+  html += '</div>';
+
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.printMoneyReceipt = function() {
+  var content = document.getElementById('moneyReceiptPrint').innerHTML;
+  var theme = SETTINGS.get('invoiceTheme', 'blue');
+  var w = window.open('', '_blank');
+  w.document.write('<html><head><title>Money Receipt</title>');
+  w.document.write('<style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;margin:0;padding:0}');
+  w.document.write('.theme-blue{--inv-primary:#1e3c72}.theme-green{--inv-primary:#1e7e34}.theme-red{--inv-primary:#8b1e1e}.theme-purple{--inv-primary:#4a148c}.theme-orange{--inv-primary:#e65100}.theme-black{--inv-primary:#000}');
+  w.document.write('</style></head><body><div class="theme-' + theme + '">' + content + '</div></body></html>');
+  w.document.close();
+  setTimeout(function() { w.print(); }, 400);
+};
+
+window.shareReceiptWhatsApp = function(paymentId) {
+  var payments = DB.get('payments');
+  var p = null;
+  for (var i = 0; i < payments.length; i++) if (payments[i].id === paymentId) p = payments[i];
+  if (!p) return;
+  var customers = DB.get('customers');
+  var c = null;
+  for (var j = 0; j < customers.length; j++) if (customers[j].id === p.customerId) c = customers[j];
+  if (!c) return;
+
+  var msg = '*' + currentShop.name + '*\n━━━━━━━━━━━━━━━━\n';
+  msg += '*MONEY RECEIPT*\n';
+  msg += 'MR-' + String(p.id).slice(-6) + '\n';
+  msg += 'Date: ' + p.date + '\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += 'Received From: ' + c.name + '\n';
+  msg += '📞 ' + (c.phone || '-') + '\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += '*Amount Received: ' + fmt(p.amount) + '*\n';
+  msg += 'Current Due: ' + fmt(c.due) + '\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += 'ধন্যবাদ! 🙏';
+
+  var phone = (c.phone || '').replace(/[^0-9]/g, '');
+  if (phone && phone.indexOf('880') !== 0) phone = '880' + phone.replace(/^0/, '');
+  var url = phone ? 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg) : 'https://wa.me/?text=' + encodeURIComponent(msg);
+  window.open(url, '_blank');
+};
 </script>
 </body>
 </html>
