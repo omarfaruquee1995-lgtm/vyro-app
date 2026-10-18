@@ -1290,6 +1290,7 @@ function openAddProduct(barcode) {
   var html = '<div class="modal-overlay" id="prodModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
   html += '<h3>📦 ' + t('newProduct') + '</h3>';
   html += '<input id="pName" placeholder="' + t('productName') + ' *">';
+html += '<input id="pSize" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
   html += '<input id="pSku" placeholder="' + t('sku') + '">';
   html += '<input id="pBarcode" placeholder="' + t('barcode') + '" value="' + (barcode||'') + '">';
   html += '<input id="pBuy" type="number" placeholder="' + t('buyPrice') + '">';
@@ -1308,7 +1309,7 @@ function saveProduct() {
   var stock = +document.getElementById('pStock').value || 0;
   var unit = document.getElementById('pUnit').value || 'pcs';
   var id = uid();
-  products.push({id: id, name: name, sku: document.getElementById('pSku').value.trim(), barcode: document.getElementById('pBarcode').value.trim(), buyPrice: +document.getElementById('pBuy').value || 0, sellPrice: +document.getElementById('pSell').value || 0, stock: stock, unit: unit, lowAlert: +document.getElementById('pLow').value || 5});
+  products.push({id: id, name: name,size: size, sku: document.getElementById('pSku').value.trim(), barcode: document.getElementById('pBarcode').value.trim(), buyPrice: +document.getElementById('pBuy').value || 0, sellPrice: +document.getElementById('pSell').value || 0, stock: stock, unit: unit, lowAlert: +document.getElementById('pLow').value || 5});
   DB.set('products', products);
    // ☁️ Cloud sync to D1
   if (VYRO_TOKEN) {
@@ -1330,6 +1331,7 @@ function editProduct(id) {
   var html = '<div class="modal-overlay" id="prodModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
   html += '<h3>✏️ Edit Product</h3>';
   html += '<input id="pName" value="' + p.name + '">';
+html += '<input id="pSize" value="' + (p.size || '') + '" placeholder="Size">';
   html += '<input id="pSku" value="' + (p.sku||'') + '">';
   html += '<input id="pBarcode" value="' + (p.barcode||'') + '">';
   html += '<input id="pBuy" type="number" value="' + p.buyPrice + '">';
@@ -1350,6 +1352,9 @@ function updateProduct(id) {
     var oldStock = products[i].stock || 0;
     var newStock = +document.getElementById('pStock').value || 0;
     products[i].name = document.getElementById('pName').value.trim();
+    if (document.getElementById('pSize')) {
+      products[i].size = document.getElementById('pSize').value.trim();
+    }
     products[i].sku = document.getElementById('pSku').value.trim();
     products[i].barcode = document.getElementById('pBarcode').value.trim();
     products[i].buyPrice = +document.getElementById('pBuy').value || 0;
