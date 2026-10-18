@@ -299,6 +299,7 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
   <div class="nav-item active" onclick="nav('dashboard')"><span class="icon">🏠</span><span id="navHome">Home</span></div>
   <div class="nav-item" onclick="nav('inventory')"><span class="icon">📦</span><span id="navStock">Stock</span></div>
   <div class="nav-item" onclick="nav('customers')"><span class="icon">👥</span><span id="navParty">Party</span></div>
+  <div class="nav-item" onclick="nav('ledger')"><span class="icon">📒</span><span id="navLedger">Ledger</span></div>
   <div class="nav-item" onclick="nav('sales')"><span class="icon">🧾</span><span id="navSales">Sales</span></div>
   <div class="nav-item" onclick="nav('reports')"><span class="icon">📊</span><span id="navReports">Reports</span></div>
 </div>
@@ -1154,6 +1155,7 @@ function render() {
   if (currentPage === 'dashboard') renderDashboard(app);
   else if (currentPage === 'inventory') renderInventory(app);
   else if (currentPage === 'customers') renderCustomers(app);
+else if (currentPage === 'ledger') renderLedgerPage(app);
   else if (currentPage === 'sales') renderSales(app);
   else if (currentPage === 'reports') renderReports(app);
   else if (currentPage === 'quotation') renderQuotation(app);
@@ -1187,7 +1189,7 @@ function goToDashboard() {
   currentPage = page;
   var items = document.querySelectorAll('.nav-item');
   for (var i = 0; i < items.length; i++) items[i].classList.remove('active');
-  var map = {dashboard:0, inventory:1, customers:2, sales:3, reports:4};
+var map = {dashboard:0, inventory:1, customers:2, ledger:3, sales:4, reports:5};
   if (items[map[page]]) items[map[page]].classList.add('active');
   render();
   window.scrollTo(0,0);
@@ -9691,6 +9693,186 @@ window.renderLedgerData = function() {
   }
   html += '</tbody></table>';
   document.getElementById('ledgerTableArea').innerHTML = html;
+};
+// ============================================================
+// NEW DEDICATED CUSTOMER LEDGER PAGE
+// ============================================================
+
+window._activeLedgerCustId = 0;
+
+window.renderLedgerPage = function(app) {
+  var customers = DB.get('customers');
+  
+  // Due থাকা কাস্টমারদের ফিল্টার এবং বড় Due থেকে ছোট Due অনুযায়ী সাজানো
+  var dueCustomers = customers.filter(function(c) { return (c.due || 0) > 0; });
+  dueCustomers.sort(function(a, b) { return (b.due || 0) - (a.due || 0); });
+
+  var html = '<div class="card" style="padding:10px; margin-bottom:10px;">';
+  html += '<h3 style="margin:0; color:#2a5298; font-size:15px;">📒 Customer Ledger</h3>';
+  html += '<p style="font-size:11px; color:#666; margin-top:4px;">মোট বাকিদার: <b>' + dueCustomers.length + '</b> জন</p>';
+  html += '</div>';
+
+  html += '<div class="grid2" style="display:grid; grid-template-columns: 1fr 1.5fr; gap:10px;">';
+
+  // বাম দিকের কলাম: কাস্টমার লিস্ট
+  html += '<div class="card" style="padding:8px; max-height:70vh; overflow-y:auto;">';
+  if (dueCustomers.length === 0) {
+    html += '<p style="text-align:center; font-size:12px; color:#888; padding:20px;">কোনো বাকি নেই</p>';
+  } else {
+    for (var i = 0; i < dueCustomers.length; i++) {
+      var c = dueCustomers[i];
+      var isActive = window._activeLedgerCustId === c.id;
+      var bg = isActive ? '#e3f2fd' : '#fff';
+      var border = isActive ? '2px solid #2a5298' : '1px solid #eee';
+      
+      html += '<div onclick="loadCustomerLedger(' + c.id + ')" style="background:' + bg + '; border:' + border + '; border-radius:6px; padding:8px; margin-bottom:6px; cursor:pointer;">';
+      html += '<div style="font-size:11px; font-weight:700; color:#2a5298;">' + (i+1) + '. ' + c.name + '</div>';
+      html += '<div style="font-size:10px; color:#ff4757; font-weight:700; margin-top:2px;">Due: ' + fmt(c.due) + '</div>';
+      html += '</div>';
+    }
+  }
+  html += '</div>';
+
+  // ডান দিকের কলাম: লেজার ডিটেইলস (Dynamic)
+  html += '<div class="card" id="ledgerDetailsArea" style="padding:10px;">';
+  if (window._activeLedgerCustId) {
+    html += '<div style="text-align:center; padding:20px; color:#888;">লোড হচ্ছে...</div>';
+  } else {
+    html += '<div style="text-align:center; padding:40px 10px; color:#888; font-size:12px;">👈 বাম দিক থেকে কাস্টমার সিলেক্ট করুন</div>';
+  }
+  html += '</div>';
+
+  html += '</div>'; // End Grid
+  app.innerHTML = html;
+
+  // যদি আগে থেকে কোনো কাস্টমার সিলেক্ট করা থাকে, তবে ডাটা লোড করো
+  if (window._activeLedgerCustId) {
+    setTimeout(function() {
+      var found = false;
+      for (var j=0; j<dueCustomers.length; j++) if (dueCustomers[j].id === window._activeLedgerCustId) found = true;
+      if (found) {
+        loadCustomerLedger(window._activeLedgerCustId);
+      } else {
+        window._activeLedgerCustId = 0;
+        document.getElementById('ledgerDetailsArea').innerHTML = '<div style="text-align:center; padding:40px 10px; color:#888; font-size:12px;">👈 কাস্টমার সিলেক্ট করুন</div>';
+      }
+    }, 50);
+  }
+};
+
+window.loadCustomerLedger = function(custId) {
+  window._activeLedgerCustId = custId;
+  
+  // কাস্টমার লিস্ট রিফ্রেশ করা যাতে একটিভ বর্ডার ঠিক দেখায়
+  var app = document.getElementById('app');
+  var mainGrid = app.querySelector('.grid2');
+  
+  // ডান দিকের এরিয়াটা খুঁজে বের করা
+  var detailArea = document.getElementById('ledgerDetailsArea');
+  if (!detailArea) return;
+  detailArea.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">লোড হচ্ছে...</div>';
+
+  var customers = DB.get('customers');
+  var c = null;
+  for (var i = 0; i < customers.length; i++) if (customers[i].id === custId) c = customers[i];
+  if (!c) return;
+
+  var sales = DB.get('sales').filter(function(s){ return s.customerId === custId; });
+  var payments = DB.get('payments').filter(function(p){ return p.customerId === custId; });
+
+  // সব ডেটা একসাথে করা
+  var allData = [];
+  for (var s = 0; s < sales.length; s++) {
+    var itemsStr = '';
+    var itemNames = (sales[s].items || []).map(function(it){ return it.name + ' ('+it.qty+')'; });
+    if (itemNames.length) itemsStr = itemNames.join(', ');
+    
+    allData.push({
+      type: 'sale',
+      date: sales[s].date,
+      time: sales[s].time || '',
+      id: sales[s].id,
+      invoiceNo: sales[s].invoiceNo || ('INV-' + sales[s].id),
+      items: itemsStr,
+      cash: sales[s].paid || 0,
+      due: sales[s].due || 0,
+      total: sales[s].total || 0
+    });
+  }
+  for (var p = 0; p < payments.length; p++) {
+    allData.push({
+      type: 'payment',
+      date: payments[p].date,
+      time: payments[p].time || '',
+      id: payments[p].id,
+      invoiceNo: 'PAY-' + payments[p].id,
+      items: 'Payment Received',
+      cash: payments[p].amount || 0,
+      due: 0,
+      total: payments[p].amount || 0
+    });
+  }
+
+  // তারিখ অনুযায়ী সাজানো (নতুনটা আগে)
+  allData.sort(function(a, b) {
+    var dc = (b.date || '').localeCompare(a.date || '');
+    if (dc !== 0) return dc;
+    return b.id - a.id;
+  });
+
+  var html = '';
+  html += '<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; border-left:4px solid #2a5298;">';
+  html += '<div style="font-size:14px; font-weight:800; color:#2a5298;">' + c.name + '</div>';
+  if (c.phone) html += '<div style="font-size:11px; color:#666;">📞 ' + c.phone + '</div>';
+  html += '<div style="font-size:12px; color:#ff4757; font-weight:800; margin-top:4px;">Total Due: ' + fmt(c.due) + '</div>';
+  html += '</div>';
+
+  if (allData.length === 0) {
+    html += '<div style="text-align:center; padding:20px; color:#888; font-size:12px;">কোনো লেনদেন নেই</div>';
+  } else {
+    // ডাটা গ্রুপ করা (মাস অনুযায়ী)
+    var groups = {};
+    for (var d = 0; d < allData.length; d++) {
+      var monthStr = allData[d].date ? allData[d].date.substring(0, 7) : 'Unknown';
+      if (!groups[monthStr]) groups[monthStr] = [];
+      groups[monthStr].push(allData[d]);
+    }
+
+    var months = Object.keys(groups).sort().reverse();
+
+    for (var m = 0; m < months.length; m++) {
+      var mKey = months[m];
+      var monthData = groups[mKey];
+      
+      html += '<div style="background:#e3f2fd; color:#2a5298; font-size:11px; font-weight:700; padding:4px 8px; border-radius:4px; margin:10px 0 6px;">📅 ' + mKey + '</div>';
+      
+      for (var x = 0; x < monthData.length; x++) {
+        var row = monthData[x];
+        var isPay = row.type === 'payment';
+        var borderColor = isPay ? '#2ed573' : '#ff4757';
+        var bgLight = isPay ? '#f0fff4' : '#fff';
+
+        html += '<div style="border-left:3px solid ' + borderColor + '; background:' + bgLight + '; padding:6px; border-radius:6px; margin-bottom:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+        
+        html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+        html += '<div style="font-size:11px; font-weight:800; color:' + borderColor + ';">' + row.invoiceNo + '</div>';
+        html += '<div style="font-size:10px; color:#888;">' + row.date + '</div>';
+        html += '</div>';
+        
+        html += '<div style="font-size:10px; color:#444; margin:4px 0;">' + (row.items || '') + '</div>';
+        
+        html += '<div style="display:flex; justify-content:space-between; border-top:1px dashed #eee; padding-top:4px; margin-top:4px;">';
+        html += '<div style="font-size:10px;">Cash: <b style="color:#2ed573">' + fmt(row.cash) + '</b></div>';
+        html += '<div style="font-size:10px;">Due: <b style="color:#ff4757">' + fmt(row.due) + '</b></div>';
+        html += '</div>';
+        
+        html += '</div>';
+      }
+    }
+  }
+  
+  detailArea.innerHTML = html;
+  renderLedgerPage(document.getElementById('app')); // বর্ডার একটিভ করার জন্য রি-রেন্ডার
 };
 </script>
 </body>
