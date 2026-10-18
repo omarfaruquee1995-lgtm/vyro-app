@@ -1306,20 +1306,37 @@ html += '<input id="pSize" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
 function saveProduct() {
   var name = document.getElementById('pName').value.trim();
   if (!name) { alert('Product name required'); return; }
+  
   var products = DB.get('products');
   var stock = +document.getElementById('pStock').value || 0;
   var unit = document.getElementById('pUnit').value || 'pcs';
   var id = uid();
   var sizeVal = document.getElementById('pSize') ? document.getElementById('pSize').value.trim() : '';
-    products.push({id: id, name: name, size: sizeVal, sku: document.getElementById('pSku').value.trim(), barcode: document.getElementById('pBarcode').value.trim(), buyPrice: +document.getElementById('pBuy').value || 0, sellPrice: +document.getElementById('pSell').value || 0, stock: stock, unit: unit, lowAlert: +document.getElementById('pLow').value || 5});
+  
+  var newProduct = {
+    id: id,
+    name: name,
+    size: sizeVal,
+    sku: document.getElementById('pSku').value.trim(),
+    barcode: document.getElementById('pBarcode').value.trim(),
+    buyPrice: +document.getElementById('pBuy').value || 0,
+    sellPrice: +document.getElementById('pSell').value || 0,
+    stock: stock,
+    unit: unit,
+    lowAlert: +document.getElementById('pLow').value || 5
+  };
+  
+  products.push(newProduct);
   DB.set('products', products);
-   // ☁️ Cloud sync to D1
+  
+  // ☁️ Cloud sync to D1
   if (VYRO_TOKEN) {
-    vyroApiCall('/api/save', 'POST', { products: [products[products.length - 1]] }).then(function(r) {
+    vyroApiCall('/api/save', 'POST', { products: [newProduct] }).then(function(r) {
       if (r && r.success) console.log('✅ Product synced to cloud');
       else console.warn('⚠️ Cloud sync failed:', r && r.error);
     });
   }
+  
   if (stock > 0) addStockJournal(id, 'purchase', stock, +document.getElementById('pBuy').value || 0, 'Initial stock', today());
   document.getElementById('prodModal').remove();
   render();
@@ -4693,21 +4710,28 @@ window.editProduct = function(id) {
 window._invSearchValue = '';
 
 window.renderInventory = function(app) {
-  products = products.filter(function(p) {
-  var name = (p.name || '').toLowerCase();
-  var size = (p.size || '').toLowerCase();
-  var fullName = size ? (size + ' ' + name) : name;
-  var barcode = (p.barcode || '').toLowerCase();
-  var sku = (p.sku || '').toLowerCase();
-  for (var i = 0; i < terms.length; i++) {
-    var term = terms[i];
-    if (fullName.indexOf(term) !== -1) return true;
-    if (barcode.indexOf(term) !== -1) return true;
-    if (sku.indexOf(term) !== -1) return true;
+  var products = DB.get('products');
+  var search = window._invSearchValue || '';
+  
+  if (search) {
+    var terms = search.toLowerCase().split(' ').filter(function(x){ return x; });
+    products = products.filter(function(p) {
+      var name = (p.name || '').toLowerCase();
+      var size = (p.size || '').toLowerCase();
+      var fullName = size ? (size + ' ' + name) : name;
+      var barcode = (p.barcode || '').toLowerCase();
+      var sku = (p.sku || '').toLowerCase();
+      
+      for (var i = 0; i < terms.length; i++) {
+        var term = terms[i];
+        if (fullName.indexOf(term) !== -1) return true;
+        if (barcode.indexOf(term) !== -1) return true;
+        if (sku.indexOf(term) !== -1) return true;
+      }
+      return false;
+    });
   }
-  return false;
-});
-  }
+  // ... বাকি কোড ...  }
   var html = '<div class="card"><h3>📦 ' + t('productList') + ' <button class="btn-sm btn-primary" style="width:auto" onclick="openAddProduct()">+ Add</button></h3>';
   html += '<div style="display:flex;gap:6px;margin-bottom:8px">';
   html += '<input id="invSearch" placeholder="🔍 Search (1st word will match)..." value="' + search + '" oninput="onInventorySearch(this.value)" style="margin:0">';
