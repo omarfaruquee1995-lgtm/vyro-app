@@ -4844,7 +4844,8 @@ function buildInventoryListHTML(products, search) {
   for (var i = 0; i < products.length; i++) {
     var p = products[i];
     var low = p.stock <= (p.lowAlert||5);
-    html += '<div class="list-item"><div class="info"><b>' + highlightSearch(p.name, search) + '</b><small>' + (p.barcode||p.sku||'-') + ' • ' + fmt(p.buyPrice) + ' → ' + fmt(p.sellPrice) + '</small></div>';
+    var displayName = p.size ? (p.size + ' ' + p.name) : p.name;
+    html += '<div class="list-item"><div class="info"><b>' + highlightSearch(displayName, search) + '</b><small>' + (p.barcode||p.sku||'-') + ' • ' + fmt(p.buyPrice) + ' → ' + fmt(p.sellPrice) + '</small></div>';
     html += '<div style="text-align:right"><b style="color:' + (low?'#ff4757':'#2ed573') + '">' + p.stock + ' ' + (p.unit||'pcs') + '</b>';
     html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showProductHistory(' + p.id + ')">📜</button> ';
     html += '<button class="btn-sm btn-warning" onclick="openPurchaseEntry(' + p.id + ')">📥</button> ';
