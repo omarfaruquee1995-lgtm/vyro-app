@@ -4741,7 +4741,7 @@ function buildInventoryListHTML(products, search) {
   return html;
 }
 
-window.onInventorySearch = function(value) {
+//window.onInventorySearch = function(value) {
   window._invSearchValue = value;
   var products = DB.get('products');
   if (value) {
@@ -4764,7 +4764,15 @@ window.onInventorySearch = function(value) {
   var stats = document.getElementById('invStats');
   if (stats) stats.innerHTML = value ? '🔍 "' + value + '" — ' + products.length + ' found' : '📊 ' + products.length + ' products total';
 };
-
+  // নতুন লাইন: সার্চ বক্সে ফোকাস ফিরিয়ে আনা
+  setTimeout(function() {
+    var sb = document.getElementById('invSearch');
+    if (sb && document.activeElement !== sb) {
+      sb.focus();
+      sb.setSelectionRange(sb.value.length, sb.value.length);
+    }
+  }, 10);
+}
 // ---------- FIX 4: Purchase Entry UOM ----------
 window.openPurchaseEntry = function(prodId) {
   closeModal();
