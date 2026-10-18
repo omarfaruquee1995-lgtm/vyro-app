@@ -1265,26 +1265,23 @@ function quickReceiveDue(customerId) {
 }
 function renderInventory(app) {
   var products = DB.get('products');
-  var search = window._invSearch || '';
-  if (search) products = products.filter(function(p){ return (p.name||'').toLowerCase().indexOf(search.toLowerCase()) !== -1 || (p.barcode||'').indexOf(search) !== -1; });
+  var search = window._invSearchValue || '';
+  
   var html = '<div class="card"><h3>📦 ' + t('productList') + ' <button class="btn-sm btn-primary" style="width:auto" onclick="openAddProduct()">+ Add</button></h3>';
   html += '<div style="display:flex;gap:6px;margin-bottom:8px">';
-  html += '<input id="invSearch" placeholder="🔍 Search..." value="' + search + '" oninput="window._invSearch=this.value;renderInventory(document.getElementById(\'app\'))" style="margin:0">';
+  html += '<input id="invSearch" placeholder="🔍 Search..." value="' + search + '" oninput="onInventorySearch(this.value)" style="margin:0">';
   html += '<button class="btn-sm btn-info" onclick="openScanner(\'inventory\')" style="width:auto">📷</button></div>';
-  if (products.length === 0) html += '<p style="text-align:center;color:#888;font-size:12px;padding:15px">' + t('noProducts') + '</p>';
-  else for (var i = 0; i < products.length; i++) {
-    var p = products[i];
-    var low = p.stock <= (p.lowAlert||5);
-var displayName = p.size ? (p.size + ' ' + p.name) : p.name;
-    html += '<div class="list-item"><div class="info"><b>' + displayName + '</b><small>' + (p.barcode||p.sku||'-') + ' • ' + fmt(p.buyPrice) + ' → ' + fmt(p.sellPrice) + '</small></div>';
-    html += '<div style="text-align:right"><b style="color:' + (low?'#ff4757':'#2ed573') + '">' + p.stock + ' ' + (p.unit||'pcs') + '</b>';
-    html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showProductHistory(' + p.id + ')">📜</button> ';
-    html += '<button class="btn-sm btn-warning" onclick="openPurchaseEntry(' + p.id + ')">📥</button> ';
-    html += '<button class="btn-sm btn-primary" onclick="editProduct(' + p.id + ')">✏️</button> ';
-    html += '<button class="btn-sm btn-danger" onclick="deleteProduct(' + p.id + ')">🗑️</button></div></div></div>';
-  }
+  html += '<div id="invStats" style="font-size:11px;color:#888;margin-bottom:6px;padding-left:4px">';
+  html += search ? '🔍 "' + search + '" — ' + products.length + ' found' : '📊 ' + products.length + ' products total';
+  html += '</div>';
+  html += '<div id="invListArea">' + buildInventoryListHTML(products, search) + '</div>';
   html += '</div>';
   app.innerHTML = html;
+  
+  setTimeout(function() {
+    var sb = document.getElementById('invSearch');
+    if (sb && search) { sb.focus(); sb.setSelectionRange(sb.value.length, sb.value.length); }
+  }, 5);
 }
 function openAddProduct(barcode) {
   closeModal();
