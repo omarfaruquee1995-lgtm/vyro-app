@@ -1330,12 +1330,14 @@ function saveProduct() {
   var stock = +document.getElementById('pStock').value || 0;
   var unit = document.getElementById('pUnit').value || 'pcs';
   var id = uid();
+  
+  // সাইজ ভ্যালু নেওয়া হচ্ছে
   var sizeVal = document.getElementById('pSize') ? document.getElementById('pSize').value.trim() : '';
   
   var newProduct = {
     id: id,
     name: name,
-    size: sizeVal,
+    size: sizeVal, // <--- এখানে size যোগ করা হলো
     sku: document.getElementById('pSku').value.trim(),
     barcode: document.getElementById('pBarcode').value.trim(),
     buyPrice: +document.getElementById('pBuy').value || 0,
@@ -1347,7 +1349,7 @@ function saveProduct() {
   
   products.push(newProduct);
   DB.set('products', products);
-  
+  // ... (বাকি কোড আগের মতোই থাকবে)  
   // ☁️ Cloud sync to D1
   if (VYRO_TOKEN) {
     vyroApiCall('/api/save', 'POST', { products: [newProduct] }).then(function(r) {
