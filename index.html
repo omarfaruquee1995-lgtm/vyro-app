@@ -1333,7 +1333,7 @@ function editProduct(id) {
   var html = '<div class="modal-overlay" id="prodModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
   html += '<h3>✏️ Edit Product</h3>';
   html += '<input id="pName" value="' + p.name + '">';
-html += '<input id="pSize" value="' + (p.size || '') + '" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
+html += '<input id="pSize" value="' + (p.size || '') + '" placeholder="Size">';
   html += '<input id="pSku" value="' + (p.sku||'') + '">';
   html += '<input id="pBarcode" value="' + (p.barcode||'') + '">';
   html += '<input id="pBuy" type="number" value="' + p.buyPrice + '">';
@@ -4693,22 +4693,20 @@ window.editProduct = function(id) {
 window._invSearchValue = '';
 
 window.renderInventory = function(app) {
-  var products = DB.get('products');
-  var search = window._invSearchValue || '';
-  if (search) {
-    var terms = search.toLowerCase().split(' ').filter(function(x){ return x; });
-    products = products.filter(function(p) {
-      var name = (p.name || '').toLowerCase();
-      var barcode = (p.barcode || '').toLowerCase();
-      var sku = (p.sku || '').toLowerCase();
-      for (var i = 0; i < terms.length; i++) {
-        var term = terms[i];
-        if (name.indexOf(term) !== -1) return true;
-        if (barcode.indexOf(term) !== -1) return true;
-        if (sku.indexOf(term) !== -1) return true;
-      }
-      return false;
-    });
+  products = products.filter(function(p) {
+  var name = (p.name || '').toLowerCase();
+  var size = (p.size || '').toLowerCase();
+  var fullName = size ? (size + ' ' + name) : name;
+  var barcode = (p.barcode || '').toLowerCase();
+  var sku = (p.sku || '').toLowerCase();
+  for (var i = 0; i < terms.length; i++) {
+    var term = terms[i];
+    if (fullName.indexOf(term) !== -1) return true;
+    if (barcode.indexOf(term) !== -1) return true;
+    if (sku.indexOf(term) !== -1) return true;
+  }
+  return false;
+});
   }
   var html = '<div class="card"><h3>📦 ' + t('productList') + ' <button class="btn-sm btn-primary" style="width:auto" onclick="openAddProduct()">+ Add</button></h3>';
   html += '<div style="display:flex;gap:6px;margin-bottom:8px">';
