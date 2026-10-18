@@ -667,15 +667,32 @@ var uid = function() { return Date.now() + Math.floor(Math.random()*100000); };
 // ============ INVOICE NUMBER GENERATOR ============
 function getNextInvoiceNo() {
   if (!DB.currentShopId) return 'INV-0001';
-  var year = new Date().getFullYear();
-  var counterKey = 'smp_invoice_seq_' + DB.currentShopId + '_' + year;
+  
+  // ১. দোকানের নামের প্রথম ২ অক্ষর বের করা (যেমন: Om)
+  var shopName = currentShop && currentShop.name ? currentShop.name.trim() : 'SH';
+  var prefix = shopName.substring(0, 2);
+  // প্রথম অক্ষর বড় হাতের করা
+  prefix = prefix.charAt(0).toUpperCase() + prefix.slice(1).toLowerCase();
+
+  // ২. তারিখ বের করা (DDMMYY ফরম্যাটে, যেমন: 181026)
+  var d = new Date();
+  var day = String(d.getDate()).padStart(2, '0');
+  var month = String(d.getMonth() + 1).padStart(2, '0');
+  var year = String(d.getFullYear()).slice(-2); // শুধু শেষের ২ ডিজিট
+  var dateStr = day + month + year;
+
+  // ৩. সিরিয়াল নম্বর তৈরি করা (প্রতিদিন ১ থেকে শুরু হবে)
+  var counterKey = 'smp_invoice_seq_' + DB.currentShopId + '_' + dateStr;
   var lastNum = +localStorage.getItem(counterKey) || 0;
   var nextNum = lastNum + 1;
+  
+  // নতুন নম্বর সেভ করা
   localStorage.setItem(counterKey, nextNum);
-  return 'OE-' + year + '-' + String(nextNum).padStart(4, '0');
+  
+  // ফরম্যাট: Om-181026-01
+  return prefix + '-' + dateStr + '-' + String(nextNum).padStart(2, '0');
 }
 // ============ END INVOICE NUMBER ============
-
 // ============ CUSTOMER-PRODUCT HISTORY ============
 function getCustomerProductHistory(customerId, productId) {
   if (!customerId || !productId) return [];
