@@ -1040,7 +1040,7 @@ function calcDashboardStats() {
   for (var i = 0; i < sales.length; i++) {
     var s = sales[i];
     if (s.date === t0) { todaySales += s.total || 0; todayProfit += s.profit || 0; }
-    if (s.due > 0) unpaidInvoices++;
+    if ((s.due || 0) > 0) unpaidInvoices++;
   }
   for (var j = 0; j < customers.length; j++) { totalDue += customers[j].due || 0; if (customers[j].due > 0) overdueCustomers++; }
   for (var k = 0; k < products.length; k++) {
@@ -1270,16 +1270,54 @@ function quickReceiveDue(customerId) {
   var c = null;
   for (var i = 0; i < customers.length; i++) if (customers[i].id === customerId) c = customers[i];
   if (!c) return;
+  
   var amount = prompt('Receive payment from ' + c.name + '\nDue: ' + fmt(c.due) + '\n\nAmount:');
   if (!amount || isNaN(+amount) || +amount <= 0) return;
+  
+  var payAmt = +amount;
+
+  // ১. পেমেন্ট সেভ করা
   var payments = DB.get('payments');
-  payments.push({id: uid(), customerId: customerId, amount: +amount, date: today(), time: nowTime()});
+  payments.push({id: uid(), customerId: customerId, amount: payAmt, date: today(), time: nowTime()});
   DB.set('payments', payments);
+
+  // ২. কাস্টমারের মোট বাকি আপডেট
   for (var j = 0; j < customers.length; j++) if (customers[j].id === customerId) {
-    customers[j].due = Math.max(0, (customers[j].due||0) - +amount);
-    customers[j].paid = (customers[j].paid||0) + +amount;
+    customers[j].due = Math.max(0, (customers[j].due||0) - payAmt);
+    customers[j].paid = (customers[j].paid||0) + payAmt;
   }
   DB.set('customers', customers);
+
+  // ৩. ইনভয়েসগুলোতে টাকা সমন্বয় (Smart Adjustment)
+  var sales = DB.get('sales');
+  var remainingToAdjust = payAmt;
+  var custSales = sales.filter(function(s){ return s.customerId === customerId && (s.due || 0) > 0; });
+  custSales.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
+  
+  for (var k = 0; k < custSales.length; k++) {
+    if (remainingToAdjust <= 0) break;
+    var sale = custSales[k];
+    var saleDue = sale.due || 0;
+    
+    if (remainingToAdjust >= saleDue) {
+      remainingToAdjust -= saleDue;
+      sale.paid = (sale.paid || 0) + saleDue;
+      sale.due = 0;
+    } else {
+      sale.paid = (sale.paid || 0) + remainingToAdjust;
+      sale.due = saleDue - remainingToAdjust;
+      remainingToAdjust = 0;
+    }
+    
+    for (var m = 0; m < sales.length; m++) {
+      if (sales[m].id === sale.id) {
+        sales[m].paid = sale.paid;
+        sales[m].due = sale.due;
+        break;
+      }
+    }
+  }
+  DB.set('sales', sales);
   render();
 }
 function renderInventory(app) {
@@ -1544,12 +1582,12 @@ function openPaymentModal(customerId) {
   
   var payAmt = +amount;
   
-  // ১. পেমেন্ট সেভ করা
+  // ১. পেমেন্ট সেভ
   var payments = DB.get('payments');
   payments.push({id: uid(), customerId: customerId, amount: payAmt, date: today(), time: nowTime()});
   DB.set('payments', payments);
 
-  // ২. কাস্টমারের মোট বাকি আপডেট করা
+  // ২. কাস্টমার আপডেট
   var customers = DB.get('customers');
   for (var i = 0; i < customers.length; i++) if (customers[i].id === customerId) {
     customers[i].due = Math.max(0, (customers[i].due||0) - payAmt);
@@ -1557,11 +1595,9 @@ function openPaymentModal(customerId) {
   }
   DB.set('customers', customers);
 
-  // ৩. কাস্টমারের পুরনো ইনভয়েসগুলোতে (Sale) টাকা সমন্বয় করা
+  // ৩. ইনভয়েসগুলোতে টাকা সমন্বয়
   var sales = DB.get('sales');
   var remainingToAdjust = payAmt;
-  
-  // পুরনো ইনভয়েস আগে খুঁজবো (তারিখ অনুযায়ী)
   var custSales = sales.filter(function(s){ return s.customerId === customerId && (s.due || 0) > 0; });
   custSales.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
   
@@ -1571,18 +1607,15 @@ function openPaymentModal(customerId) {
     var saleDue = sale.due || 0;
     
     if (remainingToAdjust >= saleDue) {
-      // পুরো বাকি পরিশোধ হয়ে গেলো
       remainingToAdjust -= saleDue;
       sale.paid = (sale.paid || 0) + saleDue;
       sale.due = 0;
     } else {
-      // আংশিক পরিশোধ
       sale.paid = (sale.paid || 0) + remainingToAdjust;
       sale.due = saleDue - remainingToAdjust;
       remainingToAdjust = 0;
     }
     
-    // মেইন ডেটাবেসে আপডেট করা
     for (var k = 0; k < sales.length; k++) {
       if (sales[k].id === sale.id) {
         sales[k].paid = sale.paid;
@@ -1592,7 +1625,6 @@ function openPaymentModal(customerId) {
     }
   }
   DB.set('sales', sales);
-
   render();
 }
 function sendWhatsAppDue(customerId) {
