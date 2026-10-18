@@ -3882,8 +3882,14 @@ function saveQuotationDraft() {
   var found = false;
   for (var i=0;i<quotations.length;i++) if (quotations[i].qNo === q.qNo) { quotations[i] = q; found = true; break; }
   if (!found) { quotations.push(q); commitQuotationNo(); }
-  DB.set('quotations', quotations);
-  alert('✅ Quotation saved: ' + q.qNo);
+    DB.set('quotations', quotations);
+  // Save success visual confirmation
+  alert('✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo);
+  
+  // Optional: Refresh the current page to reflect saved state
+  if (typeof openQuotationList === 'function') {
+     // If you are in the list modal, you might want to reload it
+  }
 }
 
 function newQuotationForm() {
