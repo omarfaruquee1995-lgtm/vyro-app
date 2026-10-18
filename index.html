@@ -1310,8 +1310,8 @@ function saveProduct() {
   var stock = +document.getElementById('pStock').value || 0;
   var unit = document.getElementById('pUnit').value || 'pcs';
   var id = uid();
-  var size = document.getElementById('pSize') ? document.getElementById('pSize').value.trim() : '';
-  products.push({id: id, name: name,size: size, sku: document.getElementById('pSku').value.trim(), barcode: document.getElementById('pBarcode').value.trim(), buyPrice: +document.getElementById('pBuy').value || 0, sellPrice: +document.getElementById('pSell').value || 0, stock: stock, unit: unit, lowAlert: +document.getElementById('pLow').value || 5});
+  var sizeVal = document.getElementById('pSize') ? document.getElementById('pSize').value.trim() : '';
+    products.push({id: id, name: name, size: sizeVal, sku: document.getElementById('pSku').value.trim(), barcode: document.getElementById('pBarcode').value.trim(), buyPrice: +document.getElementById('pBuy').value || 0, sellPrice: +document.getElementById('pSell').value || 0, stock: stock, unit: unit, lowAlert: +document.getElementById('pLow').value || 5});
   DB.set('products', products);
    // ☁️ Cloud sync to D1
   if (VYRO_TOKEN) {
