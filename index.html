@@ -1590,7 +1590,6 @@ function viewImage(imgId, customerId) {
   html += '<button class="btn-primary" style="background:#ff4757;margin-top:10px;width:100%" onclick="document.getElementById(\'viewImgModal\').remove()">Close</button></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
-function renderSales(app) {
   function renderSales(app) {
   var products = DB.get('products');
   var customers = DB.get('customers');
