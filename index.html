@@ -4140,10 +4140,21 @@ function loadQuotationById(id) {
   currentPage = 'quotation';
   var items = document.querySelectorAll('.nav-item');
   for (var j = 0; j < items.length; j++) items[j].classList.remove('active');
-  render();
+  
+  render(); // ফর্ম রেন্ডার হবে
+  
+  // নতুন সংযোজন: ফর্ম রেন্ডার হওয়ার পর ডাটা ইনপুট ফিল্ডে বসানো
+  setTimeout(function() {
+    var custPick = document.getElementById('qCustPick');
+    if (custPick && q.customer && q.customer.customerId) {
+      custPick.value = q.customer.customerId;
+    }
+    if (typeof renderQuoteItems === 'function') renderQuoteItems();
+    if (typeof updateQuote === 'function') updateQuote();
+  }, 100);
+
   window.scrollTo(0, 0);
 }
-
 function printQuotationFromList(id) {
   var quotations = DB.get('quotations');
   var q = null;
