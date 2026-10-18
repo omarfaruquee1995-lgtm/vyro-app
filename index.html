@@ -4119,13 +4119,12 @@ function openQuotationList() {
       html += '<span class="pill" style="background:' + statusColor + '20;color:' + statusColor + ';font-weight:700">' + (q.status || 'Draft') + '</span>';
       html += '</div></div>';
 
-      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">';
-      html += '<button class="btn-sm btn-primary" style="padding:6px;font-size:11px" onclick="loadQuotationById(' + q.id + ')">✏️ Open</button>';
-      html += '<button class="btn-sm btn-info" style="padding:6px;font-size:11px" onclick="printQuotationFromList(' + q.id + ')">🖨️ Print</button>';
-      html += '<button class="btn-sm" style="padding:6px;font-size:11px;background:#25D366;color:#fff" onclick="whatsappQuotationById(' + q.id + ')">📱 WA</button>';
-      html += '<button class="btn-sm btn-danger" style="padding:6px;font-size:11px" onclick="deleteQuotationById(' + q.id + ')">🗑️</button>';
-      html += '</div>';
-      html += '</div>';
+     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px">';
+html += '<button class="btn-sm btn-info" style="padding:6px;font-size:10px" onclick="printQuotationFromList(' + q.id + ')">👁️ View</button>';
+html += '<button class="btn-sm btn-warning" style="padding:6px;font-size:10px" onclick="editQuotationById(' + q.id + ')">✏️ Edit</button>';
+html += '<button class="btn-sm" style="padding:6px;font-size:10px;background:#25D366;color:#fff" onclick="whatsappQuotationById(' + q.id + ')">📱 WA</button>';
+html += '<button class="btn-sm btn-danger" style="padding:6px;font-size:10px" onclick="deleteQuotationById(' + q.id + ')">🗑️</button>';
+html += '</div>';
     }
   }
 
@@ -4134,6 +4133,40 @@ function openQuotationList() {
   document.body.insertAdjacentHTML('beforeend', html);
 }
 
+function editQuotationById(id) {
+  var quotations = DB.get('quotations');
+  var q = null;
+  for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
+  if (!q) return;
+  
+  currentQuotation = q;
+  currentPage = 'quotation';
+  
+  // Popup বন্ধ করুন
+  var modal = document.getElementById('quoteListModal');
+  if (modal) modal.remove();
+  
+  // পেজ রেন্ডার করুন
+  render();
+  
+  // কাস্টমার ড্রপডাউন এবং ডাটা লোড করুন
+  setTimeout(function() {
+    var custPick = document.getElementById('qCustPick');
+    if (custPick && q.customer) {
+      var custs = DB.get('customers');
+      for (var k = 0; k < custs.length; k++) {
+        if (custs[k].name === q.customer.name || custs[k].id == q.customer.customerId) {
+          custPick.value = custs[k].id;
+          break;
+        }
+      }
+    }
+    if (typeof renderQuoteItems === 'function') renderQuoteItems();
+    if (typeof updateQuote === 'function') updateQuote();
+  }, 200);
+  
+  window.scrollTo(0, 0);
+}
 function loadQuotationById(id) {
   var quotations = DB.get('quotations');
   var q = null;
