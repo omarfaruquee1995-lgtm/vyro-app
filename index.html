@@ -1941,7 +1941,11 @@ html += '<div id="customItemProfitDisplay" style="background:#d4f5dd;padding:8px
     html += '<option value="' + uomList[u] + '">' + uomList[u] + '</option>';
   }
   html += '</select></div>';
-  html += '<button class="btn-success" onclick="addCustomItemToCart()">✅ Add to Cart</button>';
+    // বাটনগুলো গ্রিড আকারে পাশাপাশি বসানো হলো
+  html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:8px">';
+  html += '<button class="btn-success" style="font-size:11px; padding:10px" onclick="addCustomItemToCart()">✅ Add to Cart</button>';
+  html += '<button class="btn-primary" style="background:#2a5298; font-size:11px; padding:10px" onclick="addCustomItemToStockAndCart()">📦 Add to Stock</button>';
+  html += '</div>';
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'customItemModal\').remove()">Cancel</button>';
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
@@ -1973,7 +1977,64 @@ function addCustomItemToCart() {
   renderSales(document.getElementById('app'));
   console.log('✅ Custom item added:', name, '| Buy:', buyPrice, '| Sale:', price, '| Profit/unit:', price - buyPrice);
 }
+function addCustomItemToStockAndCart() {
+  var name = document.getElementById('customItemName').value.trim();
+  var buyPrice = +document.getElementById('customItemBuyPrice').value || 0;
+  var price = +document.getElementById('customItemPrice').value || 0;
+  var qty = +document.getElementById('customItemQty').value || 1;
+  var unit = document.getElementById('customItemUnit').value || 'pcs';
+  
+  if (!name) { alert('❌ Item name required'); return; }
+  if (price <= 0) { alert('❌ Sale Price must be greater than 0'); return; }
+  if (qty <= 0) { alert('❌ Quantity must be greater than 0'); return; }
 
+  // ১. ডেটাবেসে নতুন প্রোডাক্ট হিসেবে যোগ করা
+  var products = DB.get('products');
+  var newProductId = uid();
+  
+  var newProduct = {
+    id: newProductId,
+    name: name,
+    size: '',
+    sku: '',
+    barcode: '',
+    buyPrice: buyPrice,
+    sellPrice: price,
+    stock: qty,
+    unit: unit,
+    lowAlert: 5
+  };
+  
+  products.push(newProduct);
+  DB.set('products', products);
+  
+  // স্টক জার্নালে এন্ট্রি দেওয়া
+  if (typeof addStockJournal === 'function') {
+    addStockJournal(newProductId, 'purchase', qty, buyPrice, 'Added via Custom Item', today());
+  }
+
+  // ২. কার্টে যোগ করা
+  saleCart.push({
+    productId: newProductId,
+    name: name,
+    price: price,
+    buyPrice: buyPrice,
+    qty: qty,
+    unit: unit,
+    isCustom: false // এটি এখন স্টকের প্রোডাক্ট
+  });
+  
+  // ৩. পপআপ বন্ধ করে কার্ট রেন্ডার করা
+  document.getElementById('customItemModal').remove();
+  renderSales(document.getElementById('app'));
+  
+  // সাকসেস মেসেজ
+  if (typeof showToast === 'function') {
+    showToast('✅ Stock-এ যোগ হয়েছে এবং Cart-এ রাখা হয়েছে!');
+  } else {
+    alert('✅ Stock-এ যোগ হয়েছে এবং Cart-এ রাখা হয়েছে!');
+  }
+}
 function calcCustomProfit() {
   var buyP = +document.getElementById('customItemBuyPrice').value || 0;
   var sellP = +document.getElementById('customItemPrice').value || 0;
