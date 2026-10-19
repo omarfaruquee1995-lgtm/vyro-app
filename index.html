@@ -1040,7 +1040,15 @@ function calcDashboardStats() {
   for (var i = 0; i < sales.length; i++) {
     var s = sales[i];
     if (s.date === t0) { todaySales += s.total || 0; todayProfit += s.profit || 0; }
-    if ((s.due || 0) > 0) unpaidInvoices++;
+    // চেক করা হচ্ছে কাস্টমারের মেইন অ্যাকাউন্টে বাকি আছে কি না অথবা ইনভয়েসে বাকি আছে কি না
+var custObj = null;
+for (var ci = 0; ci < customers.length; ci++) {
+  if (customers[ci].id === s.customerId) { custObj = customers[ci]; break; }
+}
+// যদি কাস্টমারের সামগ্রিক বাকি ০ এর বেশি হয় অথবা ইনভয়েসের বাকি ০ এর বেশি হয়
+if ((custObj && custObj.due > 0) || (s.due || 0) > 0) {
+  unpaidInvoices++;
+}
   }
   for (var j = 0; j < customers.length; j++) { totalDue += customers[j].due || 0; if (customers[j].due > 0) overdueCustomers++; }
   for (var k = 0; k < products.length; k++) {
