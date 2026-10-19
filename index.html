@@ -1294,7 +1294,7 @@ function quickReceiveDue(customerId) {
 
   // ১. পেমেন্ট সেভ করা
   var payments = DB.get('payments');
-  payments.push({id: uid(), customerId: customerId, amount: payAmt, date: today(), time: nowTime()});
+payments.push({id: uid(), paymentNo: generatePaymentNo(c.name), customerId: customerId, amount: payAmt, date: today(), time: nowTime()});
   DB.set('payments', payments);
 
   // ২. কাস্টমারের মোট বাকি আপডেট
@@ -10206,6 +10206,25 @@ document.addEventListener('click', function(e) {
     }
   }
 });
+// ============================================================
+// CUSTOM PAYMENT RECEIPT NUMBER GENERATOR
+// ============================================================
+function generatePaymentNo(customerName) {
+  if (!customerName) customerName = 'Cash';
+  
+  // কাস্টমারের নামের প্রথম শব্দটুকু নেওয়া (যেমন: Cotton Field থেকে Cotton)
+  var firstWord = customerName.trim().split(' ')[0];
+  
+  // নামের ভেতরে যদি কোনো স্পেশাল ক্যারেক্টার থাকে, তা সরিয়ে ফেলা
+  firstWord = firstWord.replace(/[^a-zA-Z0-9\u0980-\u09FF]/g, '');
+  
+  // প্রতিটা পেমেন্টের জন্য আলাদা সিরিয়াল নম্বর তৈরি করা
+  var payments = DB.get('payments');
+  var nextSeq = payments.length + 1;
+  var seqStr = String(nextSeq).padStart(3, '0');
+  
+  return firstWord + '-' + seqStr; // রেজাল্ট: Cotton-001
+}
 </script>
 </body>
 </html>
