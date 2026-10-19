@@ -46,6 +46,10 @@ body.dark-mode .settings-item .value { color:#aaa; }
 .biz-title #bizLogo { font-size:20px; }
 .biz-info { font-size:10px; opacity:.9; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .biz-header-right { display:flex; gap:6px; align-items:center; }
+.header-search-wrap input::placeholder { color: rgba(255,255,255,0.7); }
+body.dark-mode #globalSearchResults { background: #1e1e1e; border: 1px solid #333; }
+body.dark-mode #globalSearchResults div { background: #1e1e1e !important; border-bottom-color: #333 !important; }
+body.dark-mode #globalSearchResults div:hover { background: #2a2a2a !important; }
 .biz-icon-btn { background:rgba(255,255,255,.15); border:none; color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; position:relative; transition:all .2s; }
 .biz-icon-btn:hover { background:rgba(255,255,255,.3); transform:scale(1.05); }
 .biz-icon-btn .notif-dot { position:absolute; top:-2px; right:-2px; background:#ff4757; color:#fff; font-size:9px; font-weight:700; padding:2px 5px; border-radius:10px; min-width:16px; text-align:center; }
@@ -285,7 +289,11 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
     </div>
     <div class="biz-info" id="bizInfo">Powered by O-FR Pro Software</div>
   </div>
-  <div class="biz-header-right">
+  <div class="header-search-wrap" style="flex:1; max-width:350px; margin:0 10px; display:flex; position:relative;">
+    <input type="text" id="globalSearchInput" placeholder="🔍 Search invoice, party, date..." style="width:100%; padding:8px 12px; border-radius:20px; border:none; font-size:12px; margin:0; background:rgba(255,255,255,0.15); color:#fff; outline:none; transition:all 0.3s;" oninput="handleGlobalSearch(this.value)" onfocus="this.style.background='#fff'; this.style.color='#333';" onblur="setTimeout(function(){ var inp=document.getElementById('globalSearchInput'); if(inp && inp.value===''){ inp.style.background='rgba(255,255,255,0.15)'; inp.style.color='#fff'; } }, 250)">
+    <div id="globalSearchResults" class="card" style="display:none; position:absolute; top:100%; left:0; right:0; margin-top:5px; z-index:9999; max-height:400px; overflow-y:auto; padding:5px; box-shadow:0 10px 25px rgba(0,0,0,0.2);"></div>
+  </div>  
+<div class="biz-header-right">
     <button class="biz-lang-btn" onclick="toggleLang()" id="langBtn">EN</button>
     <button class="biz-icon-btn" onclick="showNotifications()" title="Notifications">🔔<span class="notif-dot" id="notifCount">0</span></button>
     <button class="biz-icon-btn" onclick="showUserMenu()" title="Profile" id="topbarAvatar">👤</button>
@@ -10098,6 +10106,106 @@ window.shareReceiptWhatsApp = function(paymentId) {
   var url = phone ? 'https://wa.me/' + phone + '?text=' + encodeURIComponent(msg) : 'https://wa.me/?text=' + encodeURIComponent(msg);
   window.open(url, '_blank');
 };
+// ============================================================
+// GLOBAL SEARCH BAR FUNCTIONALITY
+// ============================================================
+window.handleGlobalSearch = function(query) {
+  var resultsDiv = document.getElementById('globalSearchResults');
+  if (!resultsDiv) return;
+  
+  query = (query || '').trim().toLowerCase();
+  if (query.length < 1) {
+    resultsDiv.style.display = 'none';
+    resultsDiv.innerHTML = '';
+    return;
+  }
+
+  var sales = DB.get('sales');
+  var payments = DB.get('payments');
+  var results = [];
+
+  // ১. সেলস ইনভয়েস সার্চ
+  for (var i = 0; i < sales.length; i++) {
+    var s = sales[i];
+    var invNo = (s.invoiceNo || '').toLowerCase();
+    var custName = (s.customerName || '').toLowerCase();
+    var sDate = (s.date || '').toLowerCase();
+    
+    if (invNo.indexOf(query) !== -1 || custName.indexOf(query) !== -1 || sDate.indexOf(query) !== -1) {
+      results.push({
+        type: 'sale',
+        title: s.invoiceNo || ('INV-' + s.id),
+        subtitle: (s.customerName || 'Cash') + ' • 📅 ' + s.date,
+        amount: s.total || 0,
+        icon: '🧾',
+        action: 'showInvoice(' + s.id + ')'
+      });
+    }
+  }
+
+  // ২. কাস্টমার পেমেন্ট সার্চ
+  for (var j = 0; j < payments.length; j++) {
+    var p = payments[j];
+    var payDate = (p.date || '').toLowerCase();
+    var payAmt = String(p.amount);
+    var custId = p.customerId;
+    var custName2 = '';
+    var customers = DB.get('customers');
+    for (var k = 0; k < customers.length; k++) {
+      if (customers[k].id === custId) { custName2 = customers[k].name.toLowerCase(); break; }
+    }
+    
+    if (payDate.indexOf(query) !== -1 || payAmt.indexOf(query) !== -1 || custName2.indexOf(query) !== -1) {
+      results.push({
+        type: 'payment',
+        title: 'PAY-' + p.id,
+        subtitle: (custName2 ? custName2 : 'Customer') + ' • 📅 ' + p.date,
+        amount: p.amount || 0,
+        icon: '💰',
+        action: 'showMoneyReceipt(' + p.id + ')'
+      });
+    }
+  }
+
+  // যদি রেজাল্ট খালি থাকে
+  if (results.length === 0) {
+    resultsDiv.innerHTML = '<div style="padding:15px; text-align:center; color:#888; font-size:12px;">কোনো রেজাল্ট পাওয়া যায়নি</div>';
+    resultsDiv.style.display = 'block';
+    return;
+  }
+
+  // মোটামুটি ১০-১৫টা রেজাল্ট দেখাবে
+  results = results.slice(0, 15);
+
+  var html = '';
+  for (var r = 0; r < results.length; r++) {
+    var item = results[r];
+    html += '<div onclick="document.getElementById(\'globalSearchResults\').style.display=\'none\'; ' + item.action + '" style="padding:10px; border-bottom:1px solid #eee; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#fff; border-radius:6px; margin-bottom:3px;">';
+    
+    html += '<div style="flex:1; min-width:0; text-align:left;">';
+    html += '<div style="font-size:12px; font-weight:700; color:#2a5298;">' + item.icon + ' ' + item.title + '</div>';
+    html += '<div style="font-size:10px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">' + item.subtitle + '</div>';
+    html += '</div>';
+    
+    html += '<div style="font-size:12px; font-weight:800; color:' + (item.type === 'payment' ? '#2ed573' : '#ff4757') + ';">';
+    html += (item.type === 'payment' ? '+' : '') + fmt(item.amount);
+    html += '</div></div>';
+  }
+  
+  resultsDiv.innerHTML = html;
+  resultsDiv.style.display = 'block';
+};
+
+// ক্লিক করলে সার্চ রেজাল্ট বন্ধ হয়ে যাবে
+document.addEventListener('click', function(e) {
+  var searchWrap = document.querySelector('.header-search-wrap');
+  var resultsDiv = document.getElementById('globalSearchResults');
+  if (searchWrap && resultsDiv) {
+    if (!searchWrap.contains(e.target)) {
+      resultsDiv.style.display = 'none';
+    }
+  }
+});
 </script>
 </body>
 </html>
