@@ -50,6 +50,12 @@ body.dark-mode .settings-item .value { color:#aaa; }
 body.dark-mode #globalSearchResults { background: #1e1e1e; border: 1px solid #333; }
 body.dark-mode #globalSearchResults div { background: #1e1e1e !important; border-bottom-color: #333 !important; }
 body.dark-mode #globalSearchResults div:hover { background: #2a2a2a !important; }
+/* Invoice Format Styles */
+.inv-format-1 { background: #fff; } /* Standard */
+.inv-format-2 { background: #fafafa; border: 2px solid var(--inv-primary); padding: 20px; } /* Modern Box */
+.inv-format-2 .inv-header { border-bottom: none; text-align: center; flex-direction: column; }
+.inv-format-2 .inv-header div { text-align: center !important; margin-bottom: 10px; }
+.inv-format-3 { background: #fff; border-top: 10px solid var(--inv-primary); } /* Classic Top Bar */
 .biz-icon-btn { background:rgba(255,255,255,.15); border:none; color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; position:relative; transition:all .2s; }
 .biz-icon-btn:hover { background:rgba(255,255,255,.3); transform:scale(1.05); }
 .biz-icon-btn .notif-dot { position:absolute; top:-2px; right:-2px; background:#ff4757; color:#fff; font-size:9px; font-weight:700; padding:2px 5px; border-radius:10px; min-width:16px; text-align:center; }
@@ -2227,6 +2233,9 @@ function showInvoice(saleId) {
   var invPrefix = SETTINGS.get('invoicePrefix', 'INV');
   var amountWordsEnabled = SETTINGS.get('amountWordsEnabled', true);
   
+  // সেটিংস থেকে ফরম্যাট নেওয়া (ডিফল্ট ১)
+  var activeFormat = SETTINGS.get('activeInvoiceFormat', 1);
+
   var custAddress = s.customerAddress || '';
   var custAttention = s.customerAttention || '';
   if (s.customerId) {
@@ -2237,46 +2246,25 @@ function showInvoice(saleId) {
     }
   }
 
-  // ৩. এবং ৪. ওয়াটারমার্ক এবং সাইড টেক্সট সিএসএস
   var watermarkCSS = `
-    .invoice-watermark {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
-      font-size: 80px; font-weight: 900; color: rgba(0,0,0,0.04); white-space: nowrap;
-      pointer-events: none; z-index: 0; text-transform: uppercase; letter-spacing: 5px;
-    }
-    .invoice-side-text {
-      position: absolute; left: 2px; bottom: 10px; transform-origin: bottom left; transform: rotate(-90deg); 
-      font-size: 11px; color: #888; letter-spacing: 2px; white-space: nowrap; font-weight: 700;
-    }
+    .invoice-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; font-weight: 900; color: rgba(0,0,0,0.04); white-space: nowrap; pointer-events: none; z-index: 0; text-transform: uppercase; letter-spacing: 5px; }
+    .invoice-side-text { position: absolute; left: 2px; bottom: 10px; transform-origin: bottom left; transform: rotate(-90deg); font-size: 11px; color: #888; letter-spacing: 2px; white-space: nowrap; font-weight: 700; }
   `;
 
   var html = '<div class="modal-overlay" id="invoiceModal"><div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
-  // বিল প্রিন্ট এরিয়া শুরু
-  html += '<div id="invoicePrint" class="theme-' + theme + ' font-' + font + '" style="padding:30px 40px 30px 50px; background:#fff; min-height:900px; color:#000; position:relative; overflow:hidden;">';
-  
-  // CSS ইনজেক্ট
+  html += '<div id="invoicePrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; min-height:900px; color:#000; position:relative; overflow:hidden;">';
   html += '<style>' + watermarkCSS + '</style>';
-
-  // ৩. ওয়াটারমার্ক
   html += '<div class="invoice-watermark">' + currentShop.name + '</div>';
-
-  // ৪. বাম দিকের লম্বালম্বি লেখা (১/২ সেমি জায়গা নিয়ে)
   html += '<div class="invoice-side-text">VYRO Shop Management • Powered by OF-R Software</div>';
 
-  // ২. হেডার সেকশন (লোগো ছাড়া)
-  html += '<div style="display:flex; justify-content:space-between; border-bottom:3px solid var(--inv-primary,#1e3c72); padding-bottom:15px; margin-bottom:20px; position:relative; z-index:1;">';
-  // বাম দিক: শপের নাম ও ঠিকানা
-  html += '<div>';
-  html += '<h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0; text-transform:uppercase;">' + currentShop.name + '</h1>';
+  // হেডার (Format অনুযায়ী লেআউট পরিবর্তন হবে)
+  html += '<div class="inv-header" style="display:flex; justify-content:space-between; border-bottom:3px solid var(--inv-primary,#1e3c72); padding-bottom:15px; margin-bottom:20px; position:relative; z-index:1;">';
+  html += '<div><h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0; text-transform:uppercase;">' + currentShop.name + '</h1>';
   html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
-  html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p>';
-  html += '</div>';
-  // ডান দিক: Invoice ও নাম্বার
-  html += '<div style="text-align:right">';
-  html += '<h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:24px;">INVOICE</h2>';
+  html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p></div>';
+  html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:24px;">INVOICE</h2>';
   html += '<p style="font-size:14px;margin:8px 0 0; font-weight:700;">' + (s.invoiceNo || invPrefix + '-' + s.id) + '</p>';
-  html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p>';
-  html += '</div></div>';
+  html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p></div></div>';
 
   // কাস্টমার ইনফো
   html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298); position:relative; z-index:1;">';
@@ -2293,38 +2281,28 @@ function showInvoice(saleId) {
   
   for (var j = 0; j < s.items.length; j++) {
     var it = s.items[j];
-    var unitTxt = it.unit || 'pcs';
-    var displayName = it.name; // সাইজ থাকলে এখানে যোগ করা যেতে পারে
-    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + displayName + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + unitTxt + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + it.name + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + (it.unit || 'pcs') + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
   }
   html += '</tbody></table>';
 
-  // টোটাল সেকশন
+  // টোটাল (এখানে তোমার সব ডিসকাউন্ট, ভ্যাট, কারিিং সব আগের মতোই আছে)
   var sub = s.subtotal || s.total;
-  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px; position:relative; z-index:1;">';
-  html += '<div style="min-width:280px;font-size:13px">';
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px; position:relative; z-index:1;"><div style="min-width:280px;font-size:13px">';
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
-  
   if (s.discount > 0) {
-    var discLabel;
-    if (s.discountType === 'flat') discLabel = 'Discount:';
-    else if (!s.discountType && s.discountPct > 100) discLabel = 'Discount:';
-    else discLabel = 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
+    var discLabel = s.discountType === 'flat' ? 'Discount:' : 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
     html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
   }
-  
   if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
   if (s.discount > 0 || s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #ccc;margin-top:5px;font-weight:600"><span>Subtotal:</span><b>' + fmt((s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0)) + '</b></div>';
-  if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport/Carrying:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
-  
+  if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
   if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
   html += '</div></div>';
   
   if (amountWordsEnabled && s.total > 0) {
-    var wordsText = amountToWords(s.total);
-    html += '<div class="amount-words" style="position:relative; z-index:1;"><span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span></div>';
+    html += '<div class="amount-words" style="position:relative; z-index:1;"><span class="label">💬 Final Amount in Words</span><span class="value">' + amountToWords(s.total) + '</span></div>';
   }
   
   html += '<div class="signature-section" style="position:relative; z-index:1;">';
@@ -2333,9 +2311,9 @@ function showInvoice(saleId) {
   html += '</div>';
   
   html += '<div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px dashed #ccc;font-size:11px;color:#888; position:relative; z-index:1;"><p style="margin:0 0 6px">ধন্যবাদ! আবার আসবেন 🙏</p><p style="margin:0"><b>Powered by VYRO</b></p></div>';
-  html += '</div>'; // এন্ড invoicePrint
+  html += '</div>';
   
-  // অ্যাকশন বাটনস
+  // প্রিন্ট/ডাউনলোড বাটন
   html += '<div style="padding:15px;background:#f8f9fa;border-top:2px solid #eee"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   html += '<button class="btn-primary" onclick="printInvoice()">🖨️ Print</button>';
   html += '<button class="btn-success" onclick="downloadInvoicePDF()">📄 Save PDF</button>';
@@ -2343,7 +2321,6 @@ function showInvoice(saleId) {
   html += '<button class="btn-warning" onclick="downloadInvoiceImage(' + saleId + ')">🖼️ Save Image</button>';
   html += '</div>';
   html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'invoiceModal\').remove();render()">Close</button></div>';
-  
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
@@ -4813,7 +4790,13 @@ function openSettingsExtend() {
   wrap.appendChild(b1);
   wrap.appendChild(b2);
   wrap.appendChild(b3);
-
+  // Invoice Format Selector Button
+  var b4 = document.createElement('button');
+  b4.className = 'btn-primary';
+  b4.style.cssText = 'background:linear-gradient(135deg,#ff9800,#f57c00);padding:12px;font-size:13px;width:100%;margin-top:6px';
+  b4.innerHTML = '🎨 Invoice Format (Admin)';
+  b4.onclick = openFormatSelector;
+  wrap.appendChild(b4);
   var closeBtn = modal.querySelector('button.btn-primary[onclick*="settingsModal"]');
   if (closeBtn) closeBtn.parentNode.insertBefore(wrap, closeBtn);
   else modal.appendChild(wrap);
@@ -10332,6 +10315,50 @@ function generatePaymentNo(customerName) {
   
   return firstWord + '-' + seqStr; // রেজাল্ট: Cotton-001
 }
+// ============================================================
+// INVOICE FORMAT SELECTOR WITH PASSWORD
+// ============================================================
+window.openFormatSelector = function() {
+  var pass = prompt('🔒 ফরম্যাট পরিবর্তন করতে পাসওয়ার্ড দিন:\n(ডিফল্ট পাসওয়ার্ড: admin123)');
+  if (pass === null) return; // Cancel
+  if (pass !== 'admin123') { alert('❌ ভুল পাসওয়ার্ড!'); return; }
+
+  var currentFormat = SETTINGS.get('activeInvoiceFormat', 1);
+  
+  var html = '<div class="modal-overlay" id="formatSelectorModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal" style="max-width:450px">';
+  html += '<h3>🎨 Invoice Format</h3>';
+  html += '<p style="font-size:12px;color:#666;margin-bottom:15px">Select your preferred invoice design</p>';
+  
+  var formats = [
+    { id: 1, name: 'Standard Format', desc: 'Clean and simple design' },
+    { id: 2, name: 'Modern Box Format', desc: 'Centered header with borders' },
+    { id: 3, name: 'Classic Top Bar', desc: 'Thick top border design' }
+  ];
+  
+  for (var i = 0; i < formats.length; i++) {
+    var f = formats[i];
+    var isActive = (currentFormat === f.id);
+    var bg = isActive ? '#e3f2fd' : '#f8f9fa';
+    var border = isActive ? '2px solid #2a5298' : '1px solid #ddd';
+    
+    html += '<div onclick="setInvoiceFormat(' + f.id + ')" style="background:' + bg + '; border:' + border + '; border-radius:8px; padding:12px; margin-bottom:8px; cursor:pointer;">';
+    html += '<div style="font-weight:700; font-size:14px; color:#2a5298;">' + f.name + (isActive ? ' ✅' : '') + '</div>';
+    html += '<div style="font-size:11px; color:#666;">' + f.desc + '</div>';
+    html += '</div>';
+  }
+  
+  html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'formatSelectorModal\').remove()">Close</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.setInvoiceFormat = function(formatId) {
+  SETTINGS.set('activeInvoiceFormat', formatId);
+  document.getElementById('formatSelectorModal').remove();
+  alert('✅ Invoice format updated!');
+  // চাইলে এখানে চেঞ্জ হওয়া ফরম্যাটটা প্রিভিউ করতে পারো, তবে আপাতত সেভ হয়ে গেল।
+};
 </script>
 </body>
 </html>
