@@ -2219,12 +2219,14 @@ function showInvoice(saleId) {
   var s = null;
   for (var i = 0; i < sales.length; i++) if (sales[i].id === saleId) s = sales[i];
   if (!s) return;
+  
   var theme = SETTINGS.get('invoiceTheme', 'blue');
   var font = SETTINGS.get('invoiceFont', 'arial');
   var sigPrepared = SETTINGS.get('sigPrepared', '');
   var sigAuthorized = SETTINGS.get('sigAuthorized', '');
   var invPrefix = SETTINGS.get('invoicePrefix', 'INV');
   var amountWordsEnabled = SETTINGS.get('amountWordsEnabled', true);
+  
   var custAddress = s.customerAddress || '';
   var custAttention = s.customerAttention || '';
   if (s.customerId) {
@@ -2234,63 +2236,106 @@ function showInvoice(saleId) {
       if (!custAttention) custAttention = customers[ci].attention || '';
     }
   }
+
+  // ৩. এবং ৪. ওয়াটারমার্ক এবং সাইড টেক্সট সিএসএস
+  var watermarkCSS = `
+    .invoice-watermark {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 80px; font-weight: 900; color: rgba(0,0,0,0.04); white-space: nowrap;
+      pointer-events: none; z-index: 0; text-transform: uppercase; letter-spacing: 5px;
+    }
+    .invoice-side-text {
+      position: absolute; left: 2px; bottom: 10px; transform-origin: bottom left; transform: rotate(-90deg); 
+      font-size: 11px; color: #888; letter-spacing: 2px; white-space: nowrap; font-weight: 700;
+    }
+  `;
+
   var html = '<div class="modal-overlay" id="invoiceModal"><div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
-  html += '<div id="invoicePrint" data-sale-id="' + s.id + '" class="theme-' + theme + ' font-' + font + '" style="padding:30px;background:#fff;min-height:900px;color:#000">';
-  html += '<div style="display:flex;justify-content:space-between;border-bottom:3px solid var(--inv-primary,#1e3c72);padding-bottom:15px;margin-bottom:20px">';
-  html += '<div style="display:flex;gap:15px;align-items:center">';
-  html += '<img src="vyro-logo.png" style="width:70px;height:70px;border-radius:14px" onerror="this.style.display=\'none\'">';
-  html += '<div><h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0">' + currentShop.name + '</h1>';
+  // বিল প্রিন্ট এরিয়া শুরু
+  html += '<div id="invoicePrint" class="theme-' + theme + ' font-' + font + '" style="padding:30px 40px 30px 50px; background:#fff; min-height:900px; color:#000; position:relative; overflow:hidden;">';
+  
+  // CSS ইনজেক্ট
+  html += '<style>' + watermarkCSS + '</style>';
+
+  // ৩. ওয়াটারমার্ক
+  html += '<div class="invoice-watermark">' + currentShop.name + '</div>';
+
+  // ৪. বাম দিকের লম্বালম্বি লেখা (১/২ সেমি জায়গা নিয়ে)
+  html += '<div class="invoice-side-text">VYRO Shop Management • Powered by OF-R Software</div>';
+
+  // ২. হেডার সেকশন (লোগো ছাড়া)
+  html += '<div style="display:flex; justify-content:space-between; border-bottom:3px solid var(--inv-primary,#1e3c72); padding-bottom:15px; margin-bottom:20px; position:relative; z-index:1;">';
+  // বাম দিক: শপের নাম ও ঠিকানা
+  html += '<div>';
+  html += '<h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0; text-transform:uppercase;">' + currentShop.name + '</h1>';
   html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
-  html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p></div></div>';
-  html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:20px">INVOICE</h2>';
-  html += '<p style="font-size:13px;margin:8px 0 0"><b>' + (s.invoiceNo || invPrefix + '-' + s.id) + '</b></p>';
-  html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p></div></div>';
-  html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298)">';
+  html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p>';
+  html += '</div>';
+  // ডান দিক: Invoice ও নাম্বার
+  html += '<div style="text-align:right">';
+  html += '<h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:24px;">INVOICE</h2>';
+  html += '<p style="font-size:14px;margin:8px 0 0; font-weight:700;">' + (s.invoiceNo || invPrefix + '-' + s.id) + '</p>';
+  html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p>';
+  html += '</div></div>';
+
+  // কাস্টমার ইনফো
+  html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298); position:relative; z-index:1;">';
   html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Bill To</p>';
   html += '<p style="font-size:15px;font-weight:700;margin:0">' + (s.customerName || 'Cash / Walk-in') + '</p>';
   if (custAddress) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📍 ' + custAddress + '</p>';
   if (custAttention) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">👤 <b>Attention:</b> ' + custAttention + '</p>';
   html += '</div>';
-  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px">';
+
+  // টেবিল
+  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px; position:relative; z-index:1;">';
   html += '<thead><tr style="background:var(--inv-primary,#1e3c72);color:#fff">';
   html += '<th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Item</th><th style="padding:10px;text-align:center">Qty</th><th style="padding:10px;text-align:right">Rate</th><th style="padding:10px;text-align:right">Amount</th></tr></thead><tbody>';
+  
   for (var j = 0; j < s.items.length; j++) {
     var it = s.items[j];
     var unitTxt = it.unit || 'pcs';
-    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + it.name + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + unitTxt + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
+    var displayName = it.name; // সাইজ থাকলে এখানে যোগ করা যেতে পারে
+    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + displayName + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + unitTxt + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
   }
   html += '</tbody></table>';
+
+  // টোটাল সেকশন
   var sub = s.subtotal || s.total;
-  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px"><div style="min-width:280px;font-size:13px">';
+  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px; position:relative; z-index:1;">';
+  html += '<div style="min-width:280px;font-size:13px">';
   html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
- if (s.discount > 0) {
-  var discLabel;
-  if (s.discountType === 'flat') {
-    discLabel = 'Discount:';
-  } else if (!s.discountType && s.discountPct > 100) {
-    discLabel = 'Discount:';
-  } else {
-    discLabel = 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
+  
+  if (s.discount > 0) {
+    var discLabel;
+    if (s.discountType === 'flat') discLabel = 'Discount:';
+    else if (!s.discountType && s.discountPct > 100) discLabel = 'Discount:';
+    else discLabel = 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
+    html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
   }
-  html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
-}
+  
   if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
   if (s.discount > 0 || s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #ccc;margin-top:5px;font-weight:600"><span>Subtotal:</span><b>' + fmt((s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0)) + '</b></div>';
   if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport/Carrying:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
+  
   html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
   html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
   if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
   html += '</div></div>';
+  
   if (amountWordsEnabled && s.total > 0) {
     var wordsText = amountToWords(s.total);
-    html += '<div class="amount-words"><span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span></div>';
+    html += '<div class="amount-words" style="position:relative; z-index:1;"><span class="label">💬 Final Amount in Words</span><span class="value">' + wordsText + '</span></div>';
   }
-  html += '<div class="signature-section">';
+  
+  html += '<div class="signature-section" style="position:relative; z-index:1;">';
   html += '<div class="signature-box">' + (sigPrepared || 'Prepared by') + '<small>Prepared by</small></div>';
   html += '<div class="signature-box">' + (sigAuthorized || 'Authorized') + '<small>Authorized</small></div>';
   html += '</div>';
-  html += '<div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px dashed #ccc;font-size:11px;color:#888"><p style="margin:0 0 6px">ধন্যবাদ! আবার আসবেন 🙏</p><p style="margin:0"><b>Powered by VYRO</b></p></div>';
-  html += '</div>';
+  
+  html += '<div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px dashed #ccc;font-size:11px;color:#888; position:relative; z-index:1;"><p style="margin:0 0 6px">ধন্যবাদ! আবার আসবেন 🙏</p><p style="margin:0"><b>Powered by VYRO</b></p></div>';
+  html += '</div>'; // এন্ড invoicePrint
+  
+  // অ্যাকশন বাটনস
   html += '<div style="padding:15px;background:#f8f9fa;border-top:2px solid #eee"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   html += '<button class="btn-primary" onclick="printInvoice()">🖨️ Print</button>';
   html += '<button class="btn-success" onclick="downloadInvoicePDF()">📄 Save PDF</button>';
@@ -2298,6 +2343,7 @@ function showInvoice(saleId) {
   html += '<button class="btn-warning" onclick="downloadInvoiceImage(' + saleId + ')">🖼️ Save Image</button>';
   html += '</div>';
   html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'invoiceModal\').remove();render()">Close</button></div>';
+  
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
