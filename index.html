@@ -2636,43 +2636,38 @@ function openBrandingEdit() {
 }
 function saveBrandingEdit() {
   var shops = DB.getGlobal('shops');
-  for (var i = 0; i < shops.length; i++) if (shops[i].id === currentShop.id) {
-    shops[i].logo = document.getElementById('brandLogo').value.trim() || '🏪';
-    shops[i].name = document.getElementById('brandName').value.trim() || shops[i].name;
-    
-    // সাবটাইটেল ভ্যালু নেওয়া
-    var subEl = document.getElementById('brandSubtitle');
-    shops[i].subtitle = subEl ? subEl.value.trim() : '';
-    
-    shops[i].address = document.getElementById('brandAddress').value.trim();
-    shops[i].phone = document.getElementById('brandPhone').value.trim();
-  }
-  DB.setGlobal('shops', shops);
-  // vyro_shop লোডাল স্টোরেজেও আপডেট করা (হেডারের জন্য)
-  var cloudShop = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
-  if (cloudShop && cloudShop.id === currentShop.id) {
-    cloudShop.subtitle = shops[i].subtitle;
-    localStorage.setItem('vyro_shop', JSON.stringify(cloudShop));
-  }
+  var newSubtitle = document.getElementById('brandSubtitle') ? document.getElementById('brandSubtitle').value.trim() : '';
   
-  // currentShop আপডেট
-  currentShop = DB.findShop(currentShop.id);
-  if (currentShop) {
-    var freshShops = DB.getGlobal('shops');
-    for (var f = 0; f < freshShops.length; f++) {
-      if (freshShops[f].id === currentShop.id) {
-        currentShop.subtitle = freshShops[f].subtitle;
-        break;
-      }
+  for (var i = 0; i < shops.length; i++) {
+    if (shops[i].id === currentShop.id) {
+      shops[i].logo = document.getElementById('brandLogo').value.trim() || '🏪';
+      shops[i].name = document.getElementById('brandName').value.trim() || shops[i].name;
+      shops[i].subtitle = newSubtitle;
+      shops[i].address = document.getElementById('brandAddress').value.trim();
+      shops[i].phone = document.getElementById('brandPhone').value.trim();
     }
   }
+  DB.setGlobal('shops', shops);
+  
+  // currentShop ভেরিয়েবল আপডেট
+  currentShop = DB.findShop(currentShop.id);
+  if (currentShop) currentShop.subtitle = newSubtitle;
+  
+  // vyro_shop (ক্লাউড স্টোরেজ) আপডেট
+  try {
+    var cloudShop = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
+    if (cloudShop && cloudShop.id === currentShop.id) {
+      cloudShop.subtitle = newSubtitle;
+      cloudShop.logo = shops[i-1] ? shops[i-1].logo : '🏪';
+      cloudShop.name = shops[i-1] ? shops[i-1].name : currentShop.name;
+      cloudShop.phone = shops[i-1] ? shops[i-1].phone : currentShop.phone;
+      cloudShop.address = shops[i-1] ? shops[i-1].address : currentShop.address;
+      localStorage.setItem('vyro_shop', JSON.stringify(cloudShop));
+    }
+  } catch(e) {}
   
   document.getElementById('brandingModal').remove();
   alert('✅ Shop info সেভ হয়েছে');
-  // currentShop ভেরিয়েবল আপডেট করা (রিলোডের আগে)
-  currentShop = DB.findShop(currentShop.id);
-  
-  // ১.৫ সেকেন্ড পর পেজ রিলোড হবে
   setTimeout(function() { location.reload(); }, 1500);
 }
 function editInvoicePrefix() {
