@@ -1035,17 +1035,32 @@ var salesChartInstance = null;
 
 function updateBusinessHeader() {
   if (!currentShop) return;
+  
+  // ডেটাবেস থেকে লেটেস্ট শপ ডেটা নিয়ে আসা
+  var latestShops = DB.getGlobal('shops');
+  for (var i = 0; i < latestShops.length; i++) {
+    if (latestShops[i].id === currentShop.id) {
+      currentShop = latestShops[i]; // currentShop আপডেট করা
+      break;
+    }
+  }
+
   var logoEl = document.getElementById('bizLogo');
   var nameEl = document.getElementById('bizShopName');
   var infoEl = document.getElementById('bizInfo');
+  
   if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
   if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
-   
- if (infoEl) {
+  
+  if (infoEl) {
     var parts = [];
-    if (currentShop.subtitle) parts.push(currentShop.subtitle);
+    // সাবটাইটেল থাকলে দেখাবে
+    if (currentShop.subtitle && currentShop.subtitle.trim() !== '') {
+      parts.push(currentShop.subtitle);
+    }
     if (currentShop.phone) parts.push('📞 ' + currentShop.phone);
     if (currentShop.address) parts.push('📍 ' + currentShop.address);
+    
     infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
   }
 }
