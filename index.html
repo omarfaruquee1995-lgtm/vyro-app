@@ -1187,6 +1187,11 @@ function render() {
   if (savedSubtitle !== null) {
     currentShop.subtitle = savedSubtitle;
   }
+  // Address এবং Phone সরাসরি localStorage থেকে নেওয়া
+  var savedAddress = localStorage.getItem('smp_address_' + currentShop.id);
+  var savedPhone = localStorage.getItem('smp_phone_' + currentShop.id);
+  if (savedAddress !== null) currentShop.address = savedAddress;
+  if (savedPhone !== null) currentShop.phone = savedPhone;
 
   // হেডারে লেটেস্ট শপ ডেটা দেখানো
   if (currentShop) {
