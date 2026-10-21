@@ -4506,8 +4506,7 @@ function editQuotationById(id) {
   
   window.scrollTo(0, 0);
 }
-function loadQuotationById(id) {
-window.loadQuotationById = loadQuotationById;
+window.loadQuotationById = function(id) {
   var quotations = DB.get('quotations');
   var q = null;
   for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
@@ -4519,10 +4518,7 @@ window.loadQuotationById = loadQuotationById;
   currentPage = 'quotation';
   var items = document.querySelectorAll('.nav-item');
   for (var j = 0; j < items.length; j++) items[j].classList.remove('active');
-  
-  render(); // ফর্ম রেন্ডার হবে
-  
-  // নতুন সংযোজন: ফর্ম রেন্ডার হওয়ার পর ডাটা ইনপুট ফিল্ডে বসানো
+  render();
   setTimeout(function() {
     var custPick = document.getElementById('qCustPick');
     if (custPick && q.customer && q.customer.customerId) {
@@ -4531,9 +4527,9 @@ window.loadQuotationById = loadQuotationById;
     if (typeof renderQuoteItems === 'function') renderQuoteItems();
     if (typeof updateQuote === 'function') updateQuote();
   }, 100);
-
   window.scrollTo(0, 0);
-}
+};
+
 function printQuotationFromList(id) {
   var quotations = DB.get('quotations');
   var q = null;
@@ -10464,6 +10460,33 @@ window.setInvoiceFormat = function(formatId) {
   document.getElementById('formatSelectorModal').remove();
   alert('✅ Invoice format updated!');
   // চাইলে এখানে চেঞ্জ হওয়া ফরম্যাটটা প্রিভিউ করতে পারো, তবে আপাতত সেভ হয়ে গেল।
+};
+// ============================================================
+// GLOBAL ERROR FIX & SAFE INITIALIZATION
+// ============================================================
+window.addEventListener('DOMContentLoaded', function() {
+  // LANG ভেরিয়েবল সেফটি চেক
+  if (typeof LANG === 'undefined') {
+    window.LANG = localStorage.getItem('smp_lang') || 'bn';
+  }
+  
+  // currentUser সেফটি চেক
+  if (typeof currentUser === 'undefined') {
+    window.currentUser = null;
+  }
+
+  // যদি loadQuotationById ফাংশনটা গ্লোবালি না থাকে, তবে সেটা অ্যাসাইন করা
+  if (typeof loadQuotationById !== 'undefined' && typeof window.loadQuotationById === 'undefined') {
+    window.loadQuotationById = loadQuotationById;
+  }
+
+  console.log('✅ Global initialization complete.');
+});
+
+// গ্লোবাল এরর হ্যান্ডলার (যাতে সাদা স্ক্রিন না আসে)
+window.onerror = function(msg, url, lineNo, columnNo, error) {
+  console.warn('⚠️ Global Error: ' + msg + ' at line ' + lineNo);
+  return false; // স্ক্রিপ্ট চলতে দেবে
 };
 </script>
 </body>
