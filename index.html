@@ -2271,7 +2271,7 @@ function showInvoice(saleId) {
     // ==========================================
     html += '<div class="ns-header" style="position:relative; z-index:1;">';
     html += '<div><h1 style="color:#8b1e1e; font-size:26px; margin:0; font-weight:900; letter-spacing:-0.5px;">' + currentShop.name + '</h1>';
-    html += '<p style="font-size:12px; color:#444; margin:2px 0 0; font-weight:600;">Total Solution of Fire Safety & Security...</p></div>';
+    html += '<p style="font-size:12px; color:#444; margin:2px 0 0; font-weight:600;">' + (currentShop.subtitle || '') + '</p></div>';
     html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
     html += '<b>INVOICE</b><br>';
     html += 'Invoice #: ' + (s.invoiceNo || s.id) + '<br>';
@@ -2573,6 +2573,7 @@ function openBrandingEdit() {
   html += '<h3>🏪 Shop Information</h3>';
   html += '<label style="font-size:11px;color:#666">Logo (Emoji)</label><input id="brandLogo" value="' + (currentShop.logo || '🏪') + '">';
   html += '<label style="font-size:11px;color:#666">Shop Name</label><input id="brandName" value="' + currentShop.name + '">';
+  html += '<label style="font-size:11px;color:#666">Subtitle (Slogan)</label><input id="brandSubtitle" value="' + (currentShop.subtitle || '') + '" placeholder="e.g. Total Solution of Fire Safety...">';
   html += '<label style="font-size:11px;color:#666">Address</label><input id="brandAddress" value="' + (currentShop.address || '') + '">';
   html += '<label style="font-size:11px;color:#666">Phone</label><input id="brandPhone" value="' + (currentShop.phone || '') + '">';
   html += '<button class="btn-primary" onclick="saveBrandingEdit()">💾 Save</button>';
@@ -2584,6 +2585,7 @@ function saveBrandingEdit() {
   for (var i = 0; i < shops.length; i++) if (shops[i].id === currentShop.id) {
     shops[i].logo = document.getElementById('brandLogo').value.trim() || '🏪';
     shops[i].name = document.getElementById('brandName').value.trim() || shops[i].name;
+    shops[i].subtitle = document.getElementById('brandSubtitle') ? document.getElementById('brandSubtitle').value.trim() : '';
     shops[i].address = document.getElementById('brandAddress').value.trim();
     shops[i].phone = document.getElementById('brandPhone').value.trim();
   }
