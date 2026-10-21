@@ -8141,128 +8141,106 @@ window.showChallan = function(challanId) {
   var sigPrepared = SETTINGS.get('sigPrepared', '');
   var sigAuthorized = SETTINGS.get('sigAuthorized', '');
   
+  // কোন ফরম্যাট সিলেক্ট করা আছে সেটা দেখা
+  var activeFormat = SETTINGS.get('activeInvoiceFormat', 1);
+  var chDate = new Date(c.date).toLocaleDateString('en-GB');
+
+  // লেটেস্ট শপ ডেটা
+  var savedAddress = localStorage.getItem('smp_address_' + currentShop.id) || currentShop.address || '';
+  var savedPhone = localStorage.getItem('smp_phone_' + currentShop.id) || currentShop.phone || '';
+  var savedSubtitle = localStorage.getItem('smp_subtitle_' + currentShop.id) || currentShop.subtitle || '';
+  
   var html = '<div class="modal-overlay" id="challanModal">';
   html += '<div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
-  html += '<div id="challanPrint" class="theme-' + theme + ' font-' + font + '" style="padding:30px;background:#fff;color:#000;min-height:900px">';
-  
-  // Header
-  html += '<div style="display:flex;justify-content:space-between;border-bottom:3px double var(--inv-primary,#1e3c72);padding-bottom:15px;margin-bottom:20px">';
-  html += '<div style="display:flex;gap:15px;align-items:center">';
-  html += '<img src="vyro-logo.png" style="width:60px;height:60px;border-radius:12px" onerror="this.style.display=\'none\'">';
-  html += '<div>';
-  html += '<h1 style="color:var(--inv-primary,#1e3c72);font-size:22px;margin:0">' + currentShop.name + '</h1>';
-  html += '<p style="font-size:11px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
-  html += '<p style="font-size:11px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p>';
-  html += '</div></div>';
-  html += '<div style="text-align:right">';
-  html += '<h2 style="color:#ff9800;margin:0;font-size:22px;letter-spacing:1px">DELIVERY CHALLAN</h2>';
-  html += '<div style="background:#ff9800;color:#fff;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;display:inline-block;margin-top:6px">' + c.status.toUpperCase() + '</div>';
-  html += '<p style="font-size:14px;margin:8px 0 0"><b>' + c.challanNo + '</b></p>';
-  html += '<p style="font-size:11px;color:#666;margin:3px 0 0">Date: ' + c.date + ' ' + (c.time || '') + '</p>';
-  html += '<p style="font-size:11px;color:#666;margin:2px 0 0">Against INV #' + c.saleId + '</p>';
-  html += '</div></div>';
-  
-  // Customer Info
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">';
-  html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;border-left:4px solid #ff9800">';
-  html += '<p style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Deliver To</p>';
-  html += '<p style="font-size:15px;font-weight:700;margin:0">' + c.customerName + '</p>';
-  if (c.customerPhone) html += '<p style="font-size:11px;color:#666;margin:4px 0 0">📞 ' + c.customerPhone + '</p>';
-  if (c.customerAddress) html += '<p style="font-size:11px;color:#666;margin:2px 0 0">📍 ' + c.customerAddress + '</p>';
-  if (c.customerAttention) html += '<p style="font-size:11px;color:#666;margin:2px 0 0">👤 Attn: ' + c.customerAttention + '</p>';
-  html += '</div>';
-  
-  html += '<div style="background:#fff3cd;padding:12px 15px;border-radius:8px;border-left:4px solid #ffc107">';
-  html += '<p style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Delivery Details</p>';
-  if (c.deliveryDate) html += '<p style="font-size:11px;color:#666;margin:2px 0"><b>Delivery Date:</b> ' + c.deliveryDate + '</p>';
-  if (c.deliveryLocation) html += '<p style="font-size:11px;color:#666;margin:2px 0"><b>Location:</b> ' + c.deliveryLocation + '</p>';
-  if (c.deliveryPerson) html += '<p style="font-size:11px;color:#666;margin:2px 0"><b>Delivery Person:</b> ' + c.deliveryPerson + '</p>';
-  if (c.vehicleNo) html += '<p style="font-size:11px;color:#666;margin:2px 0"><b>Vehicle:</b> ' + c.vehicleNo + ' (' + (c.vehicleType || '') + ')</p>';
-  if (c.transportCost > 0) html += '<p style="font-size:11px;color:#666;margin:2px 0"><b>Transport Cost:</b> ' + fmt(c.transportCost) + '</p>';
-  if (!c.deliveryDate && !c.deliveryLocation && !c.deliveryPerson && !c.vehicleNo) {
-    html += '<p style="font-size:11px;color:#999;margin:2px 0;font-style:italic">Not yet specified</p>';
-  }
-  html += '</div>';
-  html += '</div>';
-  
-  // Items table
-  html += '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:20px">';
-  html += '<thead><tr style="background:var(--inv-primary,#1e3c72);color:#fff">';
-  html += '<th style="padding:10px;text-align:left">#</th>';
-  html += '<th style="padding:10px;text-align:left">Item Description</th>';
-  html += '<th style="padding:10px;text-align:center">Quantity</th>';
-  html += '<th style="padding:10px;text-align:center">Unit</th>';
-  html += '<th style="padding:10px;text-align:center">Check ✓</th>';
-  html += '</tr></thead><tbody>';
-  
-  for (var j = 0; j < c.items.length; j++) {
-    var it = c.items[j];
-    html += '<tr style="border-bottom:1px solid #eee">';
-    html += '<td style="padding:10px">' + (j + 1) + '</td>';
-    html += '<td style="padding:10px"><b>' + it.name + '</b></td>';
-    html += '<td style="padding:10px;text-align:center;font-size:14px;font-weight:700">' + it.qty + '</td>';
-    html += '<td style="padding:10px;text-align:center">' + (it.unit || 'pcs') + '</td>';
-    html += '<td style="padding:10px;text-align:center"><span style="display:inline-block;width:20px;height:20px;border:2px solid #999;border-radius:3px"></span></td>';
-    html += '</tr>';
-  }
-  
-  // Summary row
-  html += '<tr style="background:#f0f2f5;font-weight:700">';
-  html += '<td colspan="2" style="padding:10px;text-align:right">Total Quantity:</td>';
-  html += '<td style="padding:10px;text-align:center;font-size:14px;color:var(--inv-primary,#1e3c72)">' + c.totalQty + '</td>';
-  html += '<td colspan="2"></td>';
-  html += '</tr>';
-  
-  html += '</tbody></table>';
-  
-  // Notes
-  html += '<div style="background:#e3f2fd;padding:12px;border-radius:8px;margin-bottom:20px;font-size:12px;border-left:4px solid #2196f3">';
-  html += '<b>📋 Terms & Conditions:</b><br>';
-  html += '১. মালামাল গ্রহণের সময় ভালোভাবে চেক করে নিন।<br>';
-  html += '২. কোনো ড্যামেজ থাকলে সাথে সাথে জানাতে হবে।<br>';
-  html += '৩. Delivery চালান মালামালের মূল্য পরিশোধের প্রমাণ নয়।<br>';
-  html += '৪. Invoice আলাদাভাবে প্রদান করা হয়েছে।';
-  html += '</div>';
-  
-  if (c.note) {
-    html += '<div style="background:#fff3cd;padding:10px;border-radius:8px;margin-bottom:20px;font-size:11px;color:#856404">';
-    html += '<b>📝 Note:</b> ' + c.note;
+  html += '<div id="challanPrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; background:#fff; color:#000; position:relative; overflow:hidden;">';
+
+  if (activeFormat === 4) {
+    // ==========================================
+    // FORMAT 4 - NS SAFETY STYLE
+    // ==========================================
+    html += '<div class="ns-header" style="position:relative; z-index:1;">';
+    html += '<div><h1 style="color:#8b1e1e; font-size:26px; margin:0; font-weight:900; letter-spacing:-0.5px;">' + currentShop.name + '</h1>';
+    html += '<p style="font-size:12px; color:#444; margin:2px 0 0; font-weight:600;">' + savedSubtitle + '</p>';
+    html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📍 ' + savedAddress + ' | 📞 ' + savedPhone + '</p></div>';
+    html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
+    html += '<h2 style="color:#ff9800; margin:0; font-size:22px; letter-spacing:1px;">DELIVERY CHALLAN</h2>';
+    html += '<p style="font-size:13px; margin:8px 0 0;"><b>' + c.challanNo + '</b></p>';
+    html += '<p style="font-size:11px; color:#666; margin:3px 0 0;">Date: ' + chDate + '</p>';
+    html += '</div></div>';
+
+    html += '<div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:12px;">';
+    html += '<div style="width:50%;"><b style="font-size:11px; text-transform:uppercase;">DELIVER TO:</b><br>';
+    html += '<b style="font-size:14px;">' + (c.customerName || 'Cash') + '</b><br>';
+    if (c.customerAddress) html += '<div style="font-size:11px; color:#666;">📍 ' + c.customerAddress + '</div>';
     html += '</div>';
+    html += '<div style="width:50%; text-align:right;"><b>Contract Person:</b> ' + (c.customerAttention || 'N/A') + '<br>';
+    html += '<b>Cell:</b> ' + (c.customerPhone || 'N/A');
+    html += '</div></div>';
+
+    html += '<table class="ns-table" style="position:relative; z-index:1;">';
+    html += '<thead><tr><th style="width:5%;">SL.</th><th style="width:50%;">ITEMS / PRODUCT</th><th style="width:15%;">QTY</th><th style="width:15%;">UNIT</th><th style="width:15%;">CHECK ✓</th></tr></thead><tbody>';
+    for (var j = 0; j < c.items.length; j++) {
+      html += '<tr><td style="text-align:center;">' + (j + 1) + '</td><td>' + c.items[j].name + '</td><td style="text-align:center;">' + c.items[j].qty + '</td><td style="text-align:center;">' + (c.items[j].unit || 'pcs') + '</td><td style="text-align:center;"><span style="display:inline-block;width:18px;height:18px;border:1.5px solid #999;border-radius:3px;"></span></td></tr>';
+    }
+    html += '</tbody></table>';
+    html += '<div style="margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffa500; color:#856404; font-weight:bold;">Total Quantity: ' + c.totalQty + '</div>';
+  } else {
+    // ==========================================
+    // FORMAT 1, 2, 3
+    // ==========================================
+    html += '<div class="inv-header" style="display:flex; justify-content:space-between; border-bottom:3px solid var(--inv-primary,#1e3c72); padding-bottom:15px; margin-bottom:20px;">';
+    html += '<div><h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0; text-transform:uppercase;">' + currentShop.name + '</h1>';
+    html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + savedAddress + '</p>';
+    html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + savedPhone + '</p></div>';
+    html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:24px;">DELIVERY CHALLAN</h2>';
+    html += '<p style="font-size:14px;margin:8px 0 0; font-weight:700;">' + c.challanNo + '</p>';
+    html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + chDate + '</p></div></div>';
+
+    html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298);">';
+    html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Deliver To</p>';
+    html += '<p style="font-size:15px;font-weight:700;margin:0">' + (c.customerName || 'Cash') + '</p>';
+    if (c.customerAddress) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📍 ' + c.customerAddress + '</p>';
+    if (c.customerAttention) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">👤 <b>Attention:</b> ' + c.customerAttention + '</p>';
+    html += '</div>';
+
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px;">';
+    html += '<thead><tr style="background:var(--inv-primary,#1e3c72);color:#fff">';
+    html += '<th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Item</th><th style="padding:10px;text-align:center">Qty</th><th style="padding:10px;text-align:center">Unit</th><th style="padding:10px;text-align:center">Check ✓</th></tr></thead><tbody>';
+    for (var k = 0; k < c.items.length; k++) {
+      html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (k + 1) + '</td><td style="padding:10px">' + c.items[k].name + '</td><td style="padding:10px;text-align:center">' + c.items[k].qty + '</td><td style="padding:10px;text-align:center">' + (c.items[k].unit || 'pcs') + '</td><td style="padding:10px;text-align:center"><span style="display:inline-block;width:18px;height:18px;border:1.5px solid #999;border-radius:3px;"></span></td></tr>';
+    }
+    html += '</tbody></table>';
+    
+    html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px;"><div style="min-width:280px;font-size:13px;background:#f0f2f5;padding:10px;border-radius:8px;">';
+    html += '<div style="display:flex;justify-content:space-between;"><span>Total Quantity:</span><b>' + c.totalQty + '</b></div>';
+    html += '</div></div>';
   }
-  
-  // Signatures
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px;margin-top:60px;padding-top:20px">';
-  html += '<div style="text-align:center;border-top:1.5px solid #333;padding-top:8px">';
-  html += '<div style="font-size:12px;font-weight:600">' + (sigPrepared || 'Prepared by') + '</div>';
-  html += '<small style="font-size:10px;color:#888">Prepared By</small>';
-  html += '</div>';
-  html += '<div style="text-align:center;border-top:1.5px solid #333;padding-top:8px">';
-  html += '<div style="font-size:12px;font-weight:600">' + (c.deliveryPerson || 'Delivery Person') + '</div>';
-  html += '<small style="font-size:10px;color:#888">Delivered By</small>';
-  html += '</div>';
-  html += '<div style="text-align:center;border-top:1.5px solid #333;padding-top:8px">';
-  html += '<div style="font-size:12px;font-weight:600">' + (sigAuthorized || 'Receiver') + '</div>';
-  html += '<small style="font-size:10px;color:#888">Received By</small>';
-  html += '</div>';
+
+  if (c.note) {
+    html += '<div style="margin-top:10px; font-size:11px; color:#666;">📝 <b>Note:</b> ' + c.note + '</div>';
+  }
+
+  html += '<div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center; font-size:12px;">';
+  html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>' + (sigPrepared || 'Prepared By') + '</b></div><small style="color:#666;">Prepared By</small></div>';
+  html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>' + (c.deliveryPerson || 'Delivery Person') + '</b></div><small style="color:#666;">Delivered By</small></div>';
+  html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>' + (sigAuthorized || 'Receiver') + '</b></div><small style="color:#666;">Received By</small></div>';
   html += '</div>';
   
-  // Footer
-  html += '<div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px dashed #ccc;font-size:10px;color:#888">';
-  html += '<p style="margin:0 0 4px">এই চালান মালামাল প্রাপ্তির প্রমাণপত্র। অনুগ্রহ করে সংরক্ষণ করুন।</p>';
-  html += '<p style="margin:0"><b>Powered by VYRO</b></p>';
+  html += '<div style="text-align:center; margin-top:30px; padding-top:15px; border-top:1px dashed #ccc; font-size:11px; color:#888;">';
+  html += '<p style="margin:0 0 6px;">ধন্যবাদ! আবার আসবেন 🙏</p><p style="margin:0;"><b>Powered by VYRO</b></p>';
   html += '</div>';
   
-  html += '</div>'; // end challanPrint
+  html += '</div>';
   
-  // Action buttons
-  html += '<div style="padding:15px;background:#f8f9fa;border-top:2px solid #eee">';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  // বাটনগুলো
+  html += '<div style="padding:15px; background:#f8f9fa; border-top:2px solid #eee">';
+  html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">';
   html += '<button class="btn-primary" onclick="printChallan()">🖨️ Print</button>';
   html += '<button class="btn-success" onclick="downloadChallanPDF()">📄 Save PDF</button>';
   html += '<button class="btn-info" onclick="openChallanEdit(' + c.id + ')">✏️ Edit Details</button>';
   html += '<button class="btn-warning" onclick="shareChallanWhatsApp(' + c.id + ')">📱 WhatsApp</button>';
   html += '</div>';
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">';
+  html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">';
   html += '<button class="btn-sm" style="background:#25D366;color:#fff;padding:10px" onclick="markChallanStatus(' + c.id + ',\'Delivered\')">✅ Mark Delivered</button>';
   html += '<button class="btn-sm" style="background:#ff4757;color:#fff;padding:10px" onclick="markChallanStatus(' + c.id + ',\'Cancelled\')">❌ Cancel</button>';
   html += '</div>';
@@ -8272,22 +8250,25 @@ window.showChallan = function(challanId) {
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 };
-
 // ---------- Print Challan ----------
 window.printChallan = function() {
   var content = document.getElementById('challanPrint').innerHTML;
   var theme = SETTINGS.get('invoiceTheme', 'blue');
   var font = SETTINGS.get('invoiceFont', 'arial');
+  var activeFormat = SETTINGS.get('activeInvoiceFormat', 1);
+  
   var w = window.open('', '_blank');
   w.document.write('<html><head><title>Delivery Challan</title>');
   w.document.write('<style>@page{size:A4;margin:10mm}body{font-family:Arial,sans-serif;margin:0;padding:0}');
   w.document.write('.theme-blue{--inv-primary:#1e3c72}.theme-green{--inv-primary:#1e7e34}.theme-red{--inv-primary:#8b1e1e}.theme-purple{--inv-primary:#4a148c}.theme-orange{--inv-primary:#e65100}.theme-black{--inv-primary:#000}');
-  w.document.write('table{width:100%;border-collapse:collapse}');
-  w.document.write('</style></head><body><div class="theme-' + theme + ' font-' + font + '">' + content + '</div></body></html>');
+  w.document.write('.inv-format-4 .ns-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }');
+  w.document.write('.inv-format-4 .ns-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }');
+  w.document.write('.inv-format-4 .ns-table th { border: 1px solid #000; padding: 6px; background: #f0f0f0; text-align: center; font-weight: bold; color: #000; }');
+  w.document.write('.inv-format-4 .ns-table td { border: 1px solid #000; padding: 6px; }');
+  w.document.write('</style></head><body><div class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '">' + content + '</div></body></html>');
   w.document.close();
   setTimeout(function() { w.print(); }, 400);
 };
-
 // ---------- Download Challan as PDF ----------
 window.downloadChallanPDF = function() {
   if (!window.jspdf || !window.html2canvas) { alert('PDF library loading...'); return; }
