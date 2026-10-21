@@ -982,6 +982,14 @@ async function doLogin() {
   currentUser = found;
   DB.currentShopId = shopId;
   currentShop = DB.findShop(shopId);
+// লেটেস্ট শপ ডেটা লোড করা (সাবটাইটেল আপডেটের জন্য)
+var latestShops = DB.getGlobal('shops');
+for (var ls = 0; ls < latestShops.length; ls++) {
+  if (latestShops[ls].id === currentShop.id) {
+    currentShop = latestShops[ls];
+    break;
+  }
+}
   localStorage.setItem('smp_session', JSON.stringify({userId: found.id, shopId: shopId}));
   err.textContent = '';
   document.getElementById('loginScreen').style.display = 'none';
@@ -1049,14 +1057,24 @@ var salesChartInstance = null;
 
 function updateBusinessHeader() {
   if (!currentShop) return;
+
+  // লেটেস্ট ডেটা সরাসরি localStorage থেকে পড়া (নিশ্চিত করার জন্য)
+  var allShops = [];
+  try {
+    allShops = JSON.parse(localStorage.getItem('smp_global_shops') || '[]');
+  } catch(e) {}
   
-  // ডেটাবেস থেকে লেটেস্ট শপ ডেটা নিয়ে আসা (সাবটাইটেল আপডেটের জন্য)
-  var latestShops = DB.getGlobal('shops');
-  for (var i = 0; i < latestShops.length; i++) {
-    if (latestShops[i].id === currentShop.id) {
-      currentShop = latestShops[i]; 
+  var freshShop = null;
+  for (var i = 0; i < allShops.length; i++) {
+    if (allShops[i].id === currentShop.id) {
+      freshShop = allShops[i];
       break;
     }
+  }
+  
+  // যদি localStorage এ নতুন ডেটা পাওয়া যায়, তবে currentShop আপডেট করা
+  if (freshShop) {
+    currentShop = freshShop;
   }
 
   var logoEl = document.getElementById('bizLogo');
@@ -1078,7 +1096,6 @@ function updateBusinessHeader() {
     infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
   }
 }
-
 function calcDashboardStats() {
   var sales = DB.get('sales');
   var products = DB.get('products');
@@ -2644,6 +2661,9 @@ function saveBrandingEdit() {
   }
   document.getElementById('brandingModal').remove();
     alert('✅ Shop info সেভ হয়েছে');
+  localStorage.setItem('smp_force_reload_subtitle', '1');
+  // আপডেট নিশ্চিত করা
+  localStorage.setItem('smp_force_reload_subtitle', '1');
 setTimeout(function() { location.reload(); }, 800);
 }
 function editInvoicePrefix() {
@@ -10512,6 +10532,17 @@ window.loadQuotationById = function(id) {
   window.currentPage = 'quotation';
   if (typeof render === 'function') render();
 };
+window.addEventListener('DOMContentLoaded', function() {
+  if (typeof window.LANG === 'undefined') window.LANG = 'bn';
+  if (typeof window.currentUser === 'undefined') window.currentUser = null;
+  if (typeof window.SETTINGS === 'undefined') {
+    window.SETTINGS = {
+      get: function(k, d) { return d; },
+      set: function(k, v) {}
+    };
+  }
+  console.log('✅ Global safety net active');
+});
 </script>
 </body>
 </html>
