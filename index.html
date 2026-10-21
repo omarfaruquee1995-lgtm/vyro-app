@@ -550,6 +550,18 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
 
 var SECRET_KEY = 'OMARFARUQUE1995SHOP';
 window.LANG = localStorage.getItem('smp_lang') || 'bn';
+var SETTINGS = {
+  get: function(key, def) {
+    if (!window.DB || !DB.currentShopId) return def;
+    var v = localStorage.getItem('smp_set_' + key + '_' + DB.currentShopId);
+    if (v === null) return def;
+    try { return JSON.parse(v); } catch(e) { return v; }
+  },
+  set: function(key, val) {
+    if (!window.DB || !DB.currentShopId) return;
+    localStorage.setItem('smp_set_' + key + '_' + DB.currentShopId, JSON.stringify(val));
+  }
+};
 
 var SETTINGS = {
   get: function(key, def) {
@@ -746,6 +758,7 @@ function getCustomerProductHistory(customerId, productId) {
 var nowTime = function() { return new Date().toLocaleTimeString('en-BD', {hour:'2-digit', minute:'2-digit'}); };
 
 var currentUser = null;
+window.currentUser = currentUser;
 var currentShop = null;
 var currentPage = 'dashboard';
 var LANG = localStorage.getItem('smp_lang') || 'bn';
@@ -10487,6 +10500,17 @@ window.addEventListener('DOMContentLoaded', function() {
 window.onerror = function(msg, url, lineNo, columnNo, error) {
   console.warn('⚠️ Global Error: ' + msg + ' at line ' + lineNo);
   return false; // স্ক্রিপ্ট চলতে দেবে
+};
+window.loadQuotationById = function(id) {
+  var quotations = DB.get('quotations') || [];
+  var q = null;
+  for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
+  if (!q) { alert('Quotation পাওয়া যায়নি'); return; }
+  var modal = document.getElementById('quoteListModal');
+  if (modal) modal.remove();
+  window.currentQuotation = q;
+  window.currentPage = 'quotation';
+  if (typeof render === 'function') render();
 };
 </script>
 </body>
