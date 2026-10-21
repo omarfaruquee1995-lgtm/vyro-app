@@ -2604,11 +2604,21 @@ function saveBrandingEdit() {
   }
   DB.setGlobal('shops', shops);
   currentShop = DB.findShop(currentShop.id);
+  // currentShop ভেরিয়েবলে সাবটাইটেল আপডেট করা
+  if (currentShop) {
+    for (var k = 0; k < shops.length; k++) {
+      if (shops[k].id === currentShop.id) {
+        currentShop.subtitle = shops[k].subtitle;
+        break;
+      }
+    }
+  }
   document.getElementById('brandingModal').remove();
   updateBusinessHeader();
   render();
   openSettings();
   alert('✅ Shop info সেভ হয়েছে');
+setTimeout(function() { location.reload(); }, 800);
 }
 function editInvoicePrefix() {
   var current = SETTINGS.get('invoicePrefix', 'INV');
