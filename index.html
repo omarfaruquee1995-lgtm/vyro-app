@@ -549,6 +549,13 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
 // ============================================================
 
 var SECRET_KEY = 'OMARFARUQUE1995SHOP';
+// Global variable safety check
+if (typeof LANG === 'undefined') {
+  window.LANG = localStorage.getItem('smp_lang') || 'bn';
+}
+if (typeof currentUser === 'undefined') {
+  window.currentUser = null;
+}
 
 var SETTINGS = {
   get: function(key, def) {
@@ -4507,6 +4514,7 @@ function editQuotationById(id) {
   window.scrollTo(0, 0);
 }
 function loadQuotationById(id) {
+window.loadQuotationById = loadQuotationById;
   var quotations = DB.get('quotations');
   var q = null;
   for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
