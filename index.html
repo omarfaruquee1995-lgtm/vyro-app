@@ -56,6 +56,14 @@ body.dark-mode #globalSearchResults div:hover { background: #2a2a2a !important; 
 .inv-format-2 .inv-header { border-bottom: none; text-align: center; flex-direction: column; }
 .inv-format-2 .inv-header div { text-align: center !important; margin-bottom: 10px; }
 .inv-format-3 { background: #fff; border-top: 10px solid var(--inv-primary); } /* Classic Top Bar */
+/* Format 4 - NS Safety Style */
+.inv-format-4 { background: #fff; font-family: 'Segoe UI', Arial, sans-serif; }
+.inv-format-4 .ns-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+.inv-format-4 .ns-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 10px; }
+.inv-format-4 .ns-table th { border: 1px solid #000; padding: 6px; background: #f0f0f0; text-align: center; font-weight: bold; color: #000; }
+.inv-format-4 .ns-table td { border: 1px solid #000; padding: 6px; }
+.inv-format-4 .ns-summary-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: -1px; }
+.inv-format-4 .ns-summary-table td { border: 1px solid #000; padding: 4px 8px; }
 .biz-icon-btn { background:rgba(255,255,255,.15); border:none; color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; position:relative; transition:all .2s; }
 .biz-icon-btn:hover { background:rgba(255,255,255,.3); transform:scale(1.05); }
 .biz-icon-btn .notif-dot { position:absolute; top:-2px; right:-2px; background:#ff4757; color:#fff; font-size:9px; font-weight:700; padding:2px 5px; border-radius:10px; min-width:16px; text-align:center; }
@@ -2257,58 +2265,115 @@ function showInvoice(saleId) {
   html += '<div class="invoice-watermark">' + currentShop.name + '</div>';
   html += '<div class="invoice-side-text">VYRO Shop Management • Powered by OF-R Software</div>';
 
-  // হেডার (Format অনুযায়ী লেআউট পরিবর্তন হবে)
-  html += '<div class="inv-header" style="display:flex; justify-content:space-between; border-bottom:3px solid var(--inv-primary,#1e3c72); padding-bottom:15px; margin-bottom:20px; position:relative; z-index:1;">';
-  html += '<div><h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0; text-transform:uppercase;">' + currentShop.name + '</h1>';
-  html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
-  html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p></div>';
-  html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:24px;">INVOICE</h2>';
-  html += '<p style="font-size:14px;margin:8px 0 0; font-weight:700;">' + (s.invoiceNo || invPrefix + '-' + s.id) + '</p>';
-  html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p></div></div>';
+  if (activeFormat === 4) {
+    // ==========================================
+    // FORMAT 4 - NS SAFETY STYLE
+    // ==========================================
+    html += '<div class="ns-header" style="position:relative; z-index:1;">';
+    html += '<div><h1 style="color:#8b1e1e; font-size:26px; margin:0; font-weight:900; letter-spacing:-0.5px;">' + currentShop.name + '</h1>';
+    html += '<p style="font-size:12px; color:#444; margin:2px 0 0; font-weight:600;">Total Solution of Fire Safety & Security...</p></div>';
+    html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
+    html += '<b>INVOICE</b><br>';
+    html += 'Invoice #: ' + (s.invoiceNo || s.id) + '<br>';
+    html += 'Date: ' + s.date + '<br>';
+    html += 'Chalan No: ' + (s.challanNo || 'N/A');
+    html += '</div></div>';
 
-  // কাস্টমার ইনফো
-  html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298); position:relative; z-index:1;">';
-  html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Bill To</p>';
-  html += '<p style="font-size:15px;font-weight:700;margin:0">' + (s.customerName || 'Cash / Walk-in') + '</p>';
-  if (custAddress) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📍 ' + custAddress + '</p>';
-  if (custAttention) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">👤 <b>Attention:</b> ' + custAttention + '</p>';
-  html += '</div>';
+    html += '<div style="display:flex; justify-content:space-between; margin-bottom:15px; position:relative; z-index:1; font-size:12px;">';
+    html += '<div style="width:50%;"><b style="font-size:11px; text-transform:uppercase;">BILL TO:</b><br>';
+    html += '<b style="font-size:14px;">' + (s.customerName || 'Cash') + '</b><br>';
+    html += (custAddress || '') + '</div>';
+    html += '<div style="width:50%; text-align:right;"><b>Contract Person:</b> ' + (custAttention || 'N/A') + '<br>';
+    html += '<b>Cell:</b> ' + (s.customerPhone || 'N/A');
+    html += '</div></div>';
 
-  // টেবিল
-  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px; position:relative; z-index:1;">';
-  html += '<thead><tr style="background:var(--inv-primary,#1e3c72);color:#fff">';
-  html += '<th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Item</th><th style="padding:10px;text-align:center">Qty</th><th style="padding:10px;text-align:right">Rate</th><th style="padding:10px;text-align:right">Amount</th></tr></thead><tbody>';
-  
-  for (var j = 0; j < s.items.length; j++) {
-    var it = s.items[j];
-    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + it.name + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + (it.unit || 'pcs') + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
-  }
-  html += '</tbody></table>';
+    html += '<table class="ns-table" style="position:relative; z-index:1;">';
+    html += '<thead><tr>';
+    html += '<th style="width:5%;">SL.</th><th style="width:35%;">ITEMS / PRODUCT</th><th style="width:15%;">MODEL/PART NO.</th><th style="width:15%;">BRAND</th><th style="width:10%;">QTY</th><th style="width:10%;">UNIT</th><th style="width:15%;">UNIT RATE</th><th style="width:15%;">AMOUNT</th>';
+    html += '</tr></thead><tbody>';
+    for (var j = 0; j < s.items.length; j++) {
+      var it = s.items[j];
+      html += '<tr>';
+      html += '<td style="text-align:center;">' + (j + 1) + '</td>';
+      html += '<td>' + it.name + '</td>';
+      html += '<td style="text-align:center;">' + (it.model || 'N/A') + '</td>';
+      html += '<td style="text-align:center;">' + (it.brand || 'N/A') + '</td>';
+      html += '<td style="text-align:center;">' + it.qty + '</td>';
+      html += '<td style="text-align:center;">' + (it.unit || 'pcs') + '</td>';
+      html += '<td style="text-align:right;">৳ ' + (it.price).toFixed(2) + '</td>';
+      html += '<td style="text-align:right;">৳ ' + (it.price * it.qty).toFixed(2) + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
 
-  // টোটাল (এখানে তোমার সব ডিসকাউন্ট, ভ্যাট, কারিিং সব আগের মতোই আছে)
-  var sub = s.subtotal || s.total;
-  html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px; position:relative; z-index:1;"><div style="min-width:280px;font-size:13px">';
-  html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
-  if (s.discount > 0) {
-    var discLabel = s.discountType === 'flat' ? 'Discount:' : 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
-    html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
+    html += '<table class="ns-summary-table" style="position:relative; z-index:1;">';
+    html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING CHARGE</td><td style="text-align:right; width:20%; border-left:none; border-right:none;">৳ 0.00</td><td style="text-align:right; width:20%;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">SUB TOTAL AMOUNT OF BILL IN BDT :</td><td style="text-align:right;">৳ ' + (s.subtotal || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">SPECIAL DISCOUNT :</td><td style="text-align:right;">৳ ' + (s.discount || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">VAT (as per govt. rules) :</td><td style="text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="text-align:right; font-weight:bold; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + (s.total || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="3" style="font-weight:bold; font-style:italic; border-top:none;">IN WORD : BDT ' + amountToWords(s.total).toUpperCase() + '</td></tr>';
+    html += '</table>';
+
+    html += '<div style="display:flex; justify-content:space-between; margin-top:60px; position:relative; z-index:1; font-size:12px; text-align:center;">';
+    html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>' + (sigPrepared || 'Prepared By') + '</b></div><small style="color:#666;">Prepared By</small></div>';
+    html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>' + (sigAuthorized || 'Authorized By') + '</b></div><small style="color:#666;">Authorised By</small></div>';
+    html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>Store Received</b></div><small style="color:#666;">Received By</small></div>';
+    html += '</div>';
+
+  } else {
+    // ==========================================
+    // আগের ফরম্যাট ১, ২, ৩ (Standard/Modern/Classic)
+    // ==========================================
+    html += '<div class="inv-header" style="display:flex; justify-content:space-between; border-bottom:3px solid var(--inv-primary,#1e3c72); padding-bottom:15px; margin-bottom:20px; position:relative; z-index:1;">';
+    html += '<div><h1 style="color:var(--inv-primary,#1e3c72);font-size:24px;margin:0; text-transform:uppercase;">' + currentShop.name + '</h1>';
+    html += '<p style="font-size:12px;color:#666;margin:4px 0 0">' + (currentShop.address || '') + '</p>';
+    html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📞 ' + (currentShop.phone || '') + '</p></div>';
+    html += '<div style="text-align:right"><h2 style="color:var(--inv-primary,#1e3c72);margin:0;font-size:24px;">INVOICE</h2>';
+    html += '<p style="font-size:14px;margin:8px 0 0; font-weight:700;">' + (s.invoiceNo || invPrefix + '-' + s.id) + '</p>';
+    html += '<p style="font-size:12px;color:#666;margin:3px 0 0">' + s.date + ' ' + (s.time || '') + '</p></div></div>';
+
+    html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298); position:relative; z-index:1;">';
+    html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Bill To</p>';
+    html += '<p style="font-size:15px;font-weight:700;margin:0">' + (s.customerName || 'Cash / Walk-in') + '</p>';
+    if (custAddress) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📍 ' + custAddress + '</p>';
+    if (custAttention) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">👤 <b>Attention:</b> ' + custAttention + '</p>';
+    html += '</div>';
+
+    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px; position:relative; z-index:1;">';
+    html += '<thead><tr style="background:var(--inv-primary,#1e3c72);color:#fff">';
+    html += '<th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Item</th><th style="padding:10px;text-align:center">Qty</th><th style="padding:10px;text-align:right">Rate</th><th style="padding:10px;text-align:right">Amount</th></tr></thead><tbody>';
+    for (var j = 0; j < s.items.length; j++) {
+      var it = s.items[j];
+      html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + it.name + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + (it.unit || 'pcs') + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
+    }
+    html += '</tbody></table>';
+
+    var sub = s.subtotal || s.total;
+    html += '<div style="display:flex;justify-content:flex-end;margin-bottom:20px; position:relative; z-index:1;"><div style="min-width:280px;font-size:13px">';
+    html += '<div style="display:flex;justify-content:space-between;padding:5px 0"><span>Subtotal:</span><b>' + fmt(sub) + '</b></div>';
+    if (s.discount > 0) {
+      var discLabel = s.discountType === 'flat' ? 'Discount:' : 'Discount (' + (s.discountPct || 0).toFixed(2) + '%):';
+      html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#c0392b"><span>' + discLabel + '</span><b>− ' + fmt(s.discount) + '</b></div>';
+    }
+    if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
+    if (s.discount > 0 || s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #ccc;margin-top:5px;font-weight:600"><span>Subtotal:</span><b>' + fmt((s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0)) + '</b></div>';
+    if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
+    html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
+    if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
+    html += '</div></div>';
+    
+    if (amountWordsEnabled && s.total > 0) {
+      html += '<div class="amount-words" style="position:relative; z-index:1;"><span class="label">💬 Final Amount in Words</span><span class="value">' + amountToWords(s.total) + '</span></div>';
+    }
+    
+    html += '<div class="signature-section" style="position:relative; z-index:1;">';
+    html += '<div class="signature-box">' + (sigPrepared || 'Prepared by') + '<small>Prepared by</small></div>';
+    html += '<div class="signature-box">' + (sigAuthorized || 'Authorized') + '<small>Authorized</small></div>';
+    html += '</div>';
   }
-  if (s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>VAT (' + (s.vatPct || 0) + '%):</span><b>+ ' + fmt(s.vatAmount) + '</b></div>';
-  if (s.discount > 0 || s.vatAmount > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px dashed #ccc;margin-top:5px;font-weight:600"><span>Subtotal:</span><b>' + fmt((s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0)) + '</b></div>';
-  if (s.transportCost > 0) html += '<div style="display:flex;justify-content:space-between;padding:5px 0;color:#e67e22"><span>🚚 Transport:</span><b>+ ' + fmt(s.transportCost) + '</b></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary,#1e3c72);font-size:16px;color:var(--inv-primary,#1e3c72)"><span><b>Grand Total:</b></span><b>' + fmt(s.total) + '</b></div>';
-  html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Paid:</span><b>' + fmt(s.paid) + '</b></div>';
-  if (s.due > 0) html += '<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>' + fmt(s.due) + '</b></div>';
-  html += '</div></div>';
-  
-  if (amountWordsEnabled && s.total > 0) {
-    html += '<div class="amount-words" style="position:relative; z-index:1;"><span class="label">💬 Final Amount in Words</span><span class="value">' + amountToWords(s.total) + '</span></div>';
-  }
-  
-  html += '<div class="signature-section" style="position:relative; z-index:1;">';
-  html += '<div class="signature-box">' + (sigPrepared || 'Prepared by') + '<small>Prepared by</small></div>';
-  html += '<div class="signature-box">' + (sigAuthorized || 'Authorized') + '<small>Authorized</small></div>';
-  html += '</div>';
   
   html += '<div style="text-align:center;margin-top:30px;padding-top:15px;border-top:1px dashed #ccc;font-size:11px;color:#888; position:relative; z-index:1;"><p style="margin:0 0 6px">ধন্যবাদ! আবার আসবেন 🙏</p><p style="margin:0"><b>Powered by VYRO</b></p></div>';
   html += '</div>';
@@ -2321,6 +2386,7 @@ function showInvoice(saleId) {
   html += '<button class="btn-warning" onclick="downloadInvoiceImage(' + saleId + ')">🖼️ Save Image</button>';
   html += '</div>';
   html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'invoiceModal\').remove();render()">Close</button></div>';
+  
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
@@ -10333,7 +10399,8 @@ window.openFormatSelector = function() {
   var formats = [
     { id: 1, name: 'Standard Format', desc: 'Clean and simple design' },
     { id: 2, name: 'Modern Box Format', desc: 'Centered header with borders' },
-    { id: 3, name: 'Classic Top Bar', desc: 'Thick top border design' }
+    { id: 3, name: 'Classic Top Bar', desc: 'Thick top border design' },
+{ id: 4, name: 'NS Safety Style', desc: 'Detailed boxed layout like NS Safety Tools' }
   ];
   
   for (var i = 0; i < formats.length; i++) {
