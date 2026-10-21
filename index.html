@@ -1055,47 +1055,6 @@ function showUserMenu() {
 var chartPeriod = '7days';
 var salesChartInstance = null;
 
-function updateBusinessHeader() {
-  if (!currentShop) return;
-
-  // লেটেস্ট ডেটা সরাসরি localStorage থেকে পড়া (নিশ্চিত করার জন্য)
-  var allShops = [];
-  try {
-    allShops = JSON.parse(localStorage.getItem('smp_global_shops') || '[]');
-  } catch(e) {}
-  
-  var freshShop = null;
-  for (var i = 0; i < allShops.length; i++) {
-    if (allShops[i].id === currentShop.id) {
-      freshShop = allShops[i];
-      break;
-    }
-  }
-  
-  // যদি localStorage এ নতুন ডেটা পাওয়া যায়, তবে currentShop আপডেট করা
-  if (freshShop) {
-    currentShop = freshShop;
-  }
-
-  var logoEl = document.getElementById('bizLogo');
-  var nameEl = document.getElementById('bizShopName');
-  var infoEl = document.getElementById('bizInfo');
-  
-  if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
-  if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
-  
-  if (infoEl) {
-    var parts = [];
-    // সাবটাইটেল থাকলে সেটা আগে দেখাবে
-    if (currentShop.subtitle && currentShop.subtitle.trim() !== '') {
-      parts.push(currentShop.subtitle);
-    }
-    if (currentShop.phone) parts.push('📞 ' + currentShop.phone);
-    if (currentShop.address) parts.push('📍 ' + currentShop.address);
-    
-    infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
-  }
-}
 function calcDashboardStats() {
   var sales = DB.get('sales');
   var products = DB.get('products');
@@ -1223,6 +1182,28 @@ function setChartPeriod(p) {
 
 function render() {
   if (!currentUser || !currentShop) return;
+  // হেডারে লেটেস্ট শপ ডেটা দেখানো
+  if (currentShop) {
+    var latestShops = JSON.parse(localStorage.getItem('smp_global_shops') || '[]');
+    for (var hs = 0; hs < latestShops.length; hs++) {
+      if (latestShops[hs].id === currentShop.id) {
+        currentShop = latestShops[hs];
+        break;
+      }
+    }
+    var logoEl = document.getElementById('bizLogo');
+    var nameEl = document.getElementById('bizShopName');
+    var infoEl = document.getElementById('bizInfo');
+    if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
+    if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
+    if (infoEl) {
+      var parts = [];
+      if (currentShop.subtitle && currentShop.subtitle.trim() !== '') parts.push(currentShop.subtitle);
+      if (currentShop.phone) parts.push('📞 ' + currentShop.phone);
+      if (currentShop.address) parts.push('📍 ' + currentShop.address);
+      infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
+    }
+  }
   var app = document.getElementById('app');
   updateBusinessHeader();
   var stats = calcDashboardStats();
@@ -2644,27 +2625,24 @@ function saveBrandingEdit() {
   for (var i = 0; i < shops.length; i++) if (shops[i].id === currentShop.id) {
     shops[i].logo = document.getElementById('brandLogo').value.trim() || '🏪';
     shops[i].name = document.getElementById('brandName').value.trim() || shops[i].name;
-    shops[i].subtitle = document.getElementById('brandSubtitle') ? document.getElementById('brandSubtitle').value.trim() : '';
+    
+    // সাবটাইটেল ভ্যালু নেওয়া
+    var subEl = document.getElementById('brandSubtitle');
+    shops[i].subtitle = subEl ? subEl.value.trim() : '';
+    
     shops[i].address = document.getElementById('brandAddress').value.trim();
     shops[i].phone = document.getElementById('brandPhone').value.trim();
   }
   DB.setGlobal('shops', shops);
+  
+  // currentShop আপডেট
   currentShop = DB.findShop(currentShop.id);
-  // currentShop ভেরিয়েবলে সাবটাইটেল আপডেট করা
-  if (currentShop) {
-    for (var k = 0; k < shops.length; k++) {
-      if (shops[k].id === currentShop.id) {
-        currentShop.subtitle = shops[k].subtitle;
-        break;
-      }
-    }
-  }
+  
   document.getElementById('brandingModal').remove();
-    alert('✅ Shop info সেভ হয়েছে');
-  localStorage.setItem('smp_force_reload_subtitle', '1');
-  // আপডেট নিশ্চিত করা
-  localStorage.setItem('smp_force_reload_subtitle', '1');
-setTimeout(function() { location.reload(); }, 800);
+  alert('✅ Shop info সেভ হয়েছে');
+  
+  // ১.৫ সেকেন্ড পর পেজ রিলোড হবে
+  setTimeout(function() { location.reload(); }, 1500);
 }
 function editInvoicePrefix() {
   var current = SETTINGS.get('invoicePrefix', 'INV');
