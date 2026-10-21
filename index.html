@@ -2290,6 +2290,14 @@ function finalizeSale(custId, cost) {
 function showInvoice(saleId) {
   var sales = DB.get('sales');
   var s = null;
+  // ইনভয়েসের জন্য লেটেস্ট ডেটা নেওয়া
+  var savedSubtitle = localStorage.getItem('smp_subtitle_' + currentShop.id);
+  var savedAddress = localStorage.getItem('smp_address_' + currentShop.id);
+  var savedPhone = localStorage.getItem('smp_phone_' + currentShop.id);
+  
+  if (savedSubtitle !== null) currentShop.subtitle = savedSubtitle;
+  if (savedAddress !== null) currentShop.address = savedAddress;
+  if (savedPhone !== null) currentShop.phone = savedPhone;
   for (var i = 0; i < sales.length; i++) if (sales[i].id === saleId) s = sales[i];
   if (!s) return;
   
@@ -2331,6 +2339,7 @@ function showInvoice(saleId) {
     html += '<div class="ns-header" style="position:relative; z-index:1;">';
     html += '<div><h1 style="color:#8b1e1e; font-size:26px; margin:0; font-weight:900; letter-spacing:-0.5px;">' + currentShop.name + '</h1>';
     html += '<p style="font-size:12px; color:#444; margin:2px 0 0; font-weight:600;">' + (currentShop.subtitle || '') + '</p></div>';
+html += '<p style="font-size:11px; color:#666; margin:2px 0 0; font-weight:400;">📍 ' + (currentShop.address || '') + ' | 📞 ' + (currentShop.phone || '') + '</p>';
     html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
     html += '<b>INVOICE</b><br>';
     html += 'Invoice #: ' + (s.invoiceNo || s.id) + '<br>';
