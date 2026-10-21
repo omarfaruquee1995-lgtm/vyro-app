@@ -1182,31 +1182,41 @@ function setChartPeriod(p) {
 
 function render() {
   if (!currentUser || !currentShop) return;
-  if (!currentShop) return;
-  if (!currentShop.subtitle) {
-    var _shops = DB.getGlobal('shops');
-    for (var _s = 0; _s < _shops.length; _s++) {
-      if (_shops[_s].id === currentShop.id) { currentShop = _shops[_s]; break; }
-    }
-  }
-  var app = document.getElementById('app');
   
-  // হেডারে শপের নাম ও সাবটাইটেল দেখানো
-  if (currentShop) {
-    var logoEl = document.getElementById('bizLogo');
-    var nameEl = document.getElementById('bizShopName');
-    var infoEl = document.getElementById('bizInfo');
-    if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
-    if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
-    if (infoEl) {
-      var parts = [];
-      if (currentShop.subtitle && currentShop.subtitle.trim() !== '') parts.push(currentShop.subtitle);
-      if (currentShop.phone) parts.push('📞 ' + currentShop.phone);
-      if (currentShop.address) parts.push('📍 ' + currentShop.address);
-      infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
+  // হেডারে লেটেস্ট শপ ডেটা (সাবটাইটেল) দেখানো
+  var latestShopsData = [];
+  try {
+    latestShopsData = JSON.parse(localStorage.getItem('smp_global_shops') || '[]');
+  } catch(e) {}
+  
+  if (latestShopsData.length > 0) {
+    for (var ls = 0; ls < latestShopsData.length; ls++) {
+      if (latestShopsData[ls].id === currentShop.id) {
+        currentShop = latestShopsData[ls];
+        break;
+      }
     }
   }
 
+  var logoEl = document.getElementById('bizLogo');
+  var nameEl = document.getElementById('bizShopName');
+  var infoEl = document.getElementById('bizInfo');
+  
+  if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
+  if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
+  
+  if (infoEl) {
+    var parts = [];
+    if (currentShop.subtitle && currentShop.subtitle.trim() !== '') {
+      parts.push(currentShop.subtitle);
+    }
+    if (currentShop.phone) parts.push('📞 ' + currentShop.phone);
+    if (currentShop.address) parts.push('📍 ' + currentShop.address);
+    
+    infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
+  }
+
+  var app = document.getElementById('app');
   var stats = calcDashboardStats();
   var notifTotal = stats.lowStock + stats.overdueCustomers + stats.overdueSupplierCount;
   var ncEl = document.getElementById('notifCount');
@@ -1220,7 +1230,7 @@ function render() {
   else if (currentPage === 'reports') renderReports(app);
   else if (currentPage === 'quotation') renderQuotation(app);
 
-  // ⬅️ Add Back button for non-dashboard pages
+  // Back button for non-dashboard pages
   if (currentPage !== 'dashboard') {
     var titles = {
       inventory: '📦 Stock / Inventory',
@@ -2649,6 +2659,8 @@ function saveBrandingEdit() {
   
   document.getElementById('brandingModal').remove();
   alert('✅ Shop info সেভ হয়েছে');
+  // currentShop ভেরিয়েবল আপডেট করা (রিলোডের আগে)
+  currentShop = DB.findShop(currentShop.id);
   
   // ১.৫ সেকেন্ড পর পেজ রিলোড হবে
   setTimeout(function() { location.reload(); }, 1500);
