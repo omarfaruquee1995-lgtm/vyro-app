@@ -1202,9 +1202,7 @@ function render() {
           if (latestShopsData[ls].subtitle) currentShop.subtitle = latestShopsData[ls].subtitle;
           if (latestShopsData[ls].logo) currentShop.logo = latestShopsData[ls].logo;
           if (latestShopsData[ls].name) currentShop.name = latestShopsData[ls].name;
-          if (latestShopsData[ls].phone) currentShop.phone = latestShopsData[ls].phone;
-          if (latestShopsData[ls].address) currentShop.address = latestShopsData[ls].address;
-          break;
+          
         }
       }
     } catch(e) {}
@@ -2643,11 +2641,13 @@ function openBrandingEdit() {
 }
 function saveBrandingEdit() {
   var shops = DB.getGlobal('shops');
-  var newSubtitle = document.getElementById('brandSubtitle') ? document.getElementById('brandSubtitle').value.trim() : '';
+  
+  // সব ইনপুট ভ্যালু একবারে নেওয়া
   var newLogo = document.getElementById('brandLogo').value.trim() || '🏪';
   var newName = document.getElementById('brandName').value.trim();
-  var newPhone = document.getElementById('brandPhone').value.trim();
+  var newSubtitle = document.getElementById('brandSubtitle').value.trim();
   var newAddress = document.getElementById('brandAddress').value.trim();
+  var newPhone = document.getElementById('brandPhone').value.trim();
   
   for (var i = 0; i < shops.length; i++) {
     if (shops[i].id === currentShop.id) {
@@ -2661,12 +2661,12 @@ function saveBrandingEdit() {
   }
   DB.setGlobal('shops', shops);
   
-  // currentShop আপডেট
-  currentShop.subtitle = newSubtitle;
+  // currentShop ভেরিয়েবল আপডেট
   currentShop.logo = newLogo;
   currentShop.name = newName || currentShop.name;
-  currentShop.phone = newPhone;
+  currentShop.subtitle = newSubtitle;
   currentShop.address = newAddress;
+  currentShop.phone = newPhone;
   
   // vyro_shop আপডেট
   try {
@@ -2681,8 +2681,10 @@ function saveBrandingEdit() {
     }
   } catch(e) {}
   
-  // সাবটাইটেল আলাদাভাবে সেভ করা (নিশ্চিত করার জন্য)
+  // আলাদাভাবে সেভ করা (নিশ্চিত করার জন্য)
   localStorage.setItem('smp_subtitle_' + currentShop.id, newSubtitle);
+  localStorage.setItem('smp_address_' + currentShop.id, newAddress);
+  localStorage.setItem('smp_phone_' + currentShop.id, newPhone);
   
   document.getElementById('brandingModal').remove();
   alert('✅ Shop info সেভ হয়েছে');
