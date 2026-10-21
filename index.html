@@ -1064,6 +1064,7 @@ function updateBusinessHeader() {
     infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
   }
 }
+}
 
 function calcDashboardStats() {
   var sales = DB.get('sales');
@@ -2629,10 +2630,7 @@ function saveBrandingEdit() {
     }
   }
   document.getElementById('brandingModal').remove();
-  updateBusinessHeader();
-  render();
-  openSettings();
-  alert('✅ Shop info সেভ হয়েছে');
+    alert('✅ Shop info সেভ হয়েছে');
 setTimeout(function() { location.reload(); }, 800);
 }
 function editInvoicePrefix() {
