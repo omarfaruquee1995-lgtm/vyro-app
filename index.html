@@ -1182,6 +1182,11 @@ function setChartPeriod(p) {
 
 function render() {
   if (!currentUser || !currentShop) return;
+  // সাবটাইটেল সরাসরি localStorage থেকে নেওয়া
+  var savedSubtitle = localStorage.getItem('smp_subtitle_' + currentShop.id);
+  if (savedSubtitle !== null) {
+    currentShop.subtitle = savedSubtitle;
+  }
 
   // হেডারে লেটেস্ট শপ ডেটা দেখানো
   if (currentShop) {
@@ -2634,34 +2639,45 @@ function openBrandingEdit() {
 function saveBrandingEdit() {
   var shops = DB.getGlobal('shops');
   var newSubtitle = document.getElementById('brandSubtitle') ? document.getElementById('brandSubtitle').value.trim() : '';
+  var newLogo = document.getElementById('brandLogo').value.trim() || '🏪';
+  var newName = document.getElementById('brandName').value.trim();
+  var newPhone = document.getElementById('brandPhone').value.trim();
+  var newAddress = document.getElementById('brandAddress').value.trim();
   
   for (var i = 0; i < shops.length; i++) {
     if (shops[i].id === currentShop.id) {
-      shops[i].logo = document.getElementById('brandLogo').value.trim() || '🏪';
-      shops[i].name = document.getElementById('brandName').value.trim() || shops[i].name;
+      shops[i].logo = newLogo;
+      shops[i].name = newName || shops[i].name;
       shops[i].subtitle = newSubtitle;
-      shops[i].address = document.getElementById('brandAddress').value.trim();
-      shops[i].phone = document.getElementById('brandPhone').value.trim();
+      shops[i].address = newAddress;
+      shops[i].phone = newPhone;
+      break;
     }
   }
   DB.setGlobal('shops', shops);
   
-  // currentShop ভেরিয়েবল আপডেট
-  currentShop = DB.findShop(currentShop.id);
-  if (currentShop) currentShop.subtitle = newSubtitle;
+  // currentShop আপডেট
+  currentShop.subtitle = newSubtitle;
+  currentShop.logo = newLogo;
+  currentShop.name = newName || currentShop.name;
+  currentShop.phone = newPhone;
+  currentShop.address = newAddress;
   
-  // vyro_shop (ক্লাউড স্টোরেজ) আপডেট
+  // vyro_shop আপডেট
   try {
     var cloudShop = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
     if (cloudShop && cloudShop.id === currentShop.id) {
       cloudShop.subtitle = newSubtitle;
-      cloudShop.logo = shops[i-1] ? shops[i-1].logo : '🏪';
-      cloudShop.name = shops[i-1] ? shops[i-1].name : currentShop.name;
-      cloudShop.phone = shops[i-1] ? shops[i-1].phone : currentShop.phone;
-      cloudShop.address = shops[i-1] ? shops[i-1].address : currentShop.address;
+      cloudShop.logo = newLogo;
+      cloudShop.name = newName || cloudShop.name;
+      cloudShop.phone = newPhone;
+      cloudShop.address = newAddress;
       localStorage.setItem('vyro_shop', JSON.stringify(cloudShop));
     }
   } catch(e) {}
+  
+  // সাবটাইটেল আলাদাভাবে সেভ করা (নিশ্চিত করার জন্য)
+  localStorage.setItem('smp_subtitle_' + currentShop.id, newSubtitle);
   
   document.getElementById('brandingModal').remove();
   alert('✅ Shop info সেভ হয়েছে');
