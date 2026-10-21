@@ -1040,8 +1040,10 @@ function updateBusinessHeader() {
   var infoEl = document.getElementById('bizInfo');
   if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
   if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
-  if (infoEl) {
+   
+ if (infoEl) {
     var parts = [];
+    if (currentShop.subtitle) parts.push(currentShop.subtitle);
     if (currentShop.phone) parts.push('📞 ' + currentShop.phone);
     if (currentShop.address) parts.push('📍 ' + currentShop.address);
     infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
