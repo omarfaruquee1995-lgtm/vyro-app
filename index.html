@@ -2375,11 +2375,11 @@ html += '<p style="font-size:11px; color:#666; margin:2px 0 0; font-weight:400;"
     html += '</tbody></table>';
 
     html += '<table class="ns-summary-table" style="position:relative; z-index:1;">';
-    html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING CHARGE</td><td style="text-align:right; width:20%; border-left:none; border-right:none;">৳ 0.00</td><td style="text-align:right; width:20%;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">SUB TOTAL AMOUNT OF BILL IN BDT :</td><td style="text-align:right;">৳ ' + (s.subtotal || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">SPECIAL DISCOUNT :</td><td style="text-align:right;">৳ ' + (s.discount || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">VAT (as per govt. rules) :</td><td style="text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
+html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING CHARGE</td><td style="text-align:right; width:20%; border-left:none; border-right:none;">৳ 0.00</td><td style="text-align:right; width:20%;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + (s.total || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="3" style="font-weight:bold; font-style:italic; border-top:none;">IN WORD : BDT ' + amountToWords(s.total).toUpperCase() + '</td></tr>';
     html += '</table>';
