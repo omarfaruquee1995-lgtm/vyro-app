@@ -549,6 +549,7 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
 // ============================================================
 
 var SECRET_KEY = 'OMARFARUQUE1995SHOP';
+window.LANG = localStorage.getItem('smp_lang') || 'bn';
 
 var SETTINGS = {
   get: function(key, def) {
@@ -1063,7 +1064,6 @@ function updateBusinessHeader() {
     
     infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
   }
-}
 }
 
 function calcDashboardStats() {
