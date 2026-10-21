@@ -2131,23 +2131,34 @@ function amountToWords(amount) {
   return numberToWordsEN(amount);
 }
 function completeSale() {
-  if (saleCart.length === 0) { alert('Cart empty'); return; }
-var custId = window.selectedCustomerId || +document.getElementById('saleCustSelect').value || 0;
+  // চেক করা হচ্ছে কার্টে আসলেই কিছু আছে কি না
+  if (typeof saleCart === 'undefined' || saleCart.length === 0) { 
+    alert('Cart empty'); 
+    return; 
+  }
+  
+  var custId = window.selectedCustomerId || +document.getElementById('saleCustSelect').value || 0;
   var subtotal = 0, cost = 0;
-  for (var j = 0; j < saleCart.length; j++) { subtotal += saleCart[j].price * saleCart[j].qty; cost += saleCart[j].buyPrice * saleCart[j].qty; }
+  
+  // টোটাল হিসাব করা
+  for (var j = 0; j < saleCart.length; j++) { 
+    subtotal += saleCart[j].price * saleCart[j].qty; 
+    cost += saleCart[j].buyPrice * saleCart[j].qty; 
+  }
+  
   closeModal();
   var html = '<div class="modal-overlay" id="billingModal"><div class="modal">';
   html += '<h3>🧾 Billing Details</h3>';
   html += '<div style="background:#f0f2f5;padding:10px;border-radius:8px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>' + fmt(subtotal) + '</b></div></div>';
-html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="" placeholder="0" oninput="calcBilling()">';
+  html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="" placeholder="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">💸 Discount</label>';
-html += '<div style="display:flex;gap:6px;margin-bottom:7px">';
-html += '<input id="billDiscount" type="number" value="0" oninput="calcBilling()" style="flex:1;margin:0">';
-html += '<select id="billDiscountType" onchange="calcBilling()" style="width:70px;font-weight:700;margin:0">';
-html += '<option value="pct">%</option>';
-html += '<option value="flat">৳</option>';
-html += '</select>';
-html += '</div>';
+  html += '<div style="display:flex;gap:6px;margin-bottom:7px">';
+  html += '<input id="billDiscount" type="number" value="0" oninput="calcBilling()" style="flex:1;margin:0">';
+  html += '<select id="billDiscountType" onchange="calcBilling()" style="width:70px;font-weight:700;margin:0">';
+  html += '<option value="pct">%</option>';
+  html += '<option value="flat">৳</option>';
+  html += '</select>';
+  html += '</div>';
   html += '<label style="font-size:11px;color:#666">📊 VAT (%)</label><input id="billVat" type="number" value="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">🚚 Transport / Carrying Cost (৳)</label><input id="billTransport" type="number" value="0" oninput="calcBilling()">';
   html += '<div id="billSummary" style="background:#e3f2fd;padding:12px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.8"></div>';
