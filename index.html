@@ -1184,19 +1184,23 @@ function render() {
   if (!currentUser || !currentShop) return;
   
   // হেডারে লেটেস্ট শপ ডেটা (সাবটাইটেল) দেখানো
-  var latestShopsData = [];
+    // হেডারে লেটেস্ট শপ ডেটা (সাবটাইটেল) দেখানো
+  var cloudShopData = null;
   try {
-    latestShopsData = JSON.parse(localStorage.getItem('smp_global_shops') || '[]');
+    cloudShopData = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
   } catch(e) {}
   
-  if (latestShopsData.length > 0) {
-    for (var ls = 0; ls < latestShopsData.length; ls++) {
-      if (latestShopsData[ls].id === currentShop.id) {
-        currentShop = latestShopsData[ls];
-        break;
-      }
+  if (cloudShopData && cloudShopData.id === currentShop.id) {
+    // যদি ক্লাউড শপে সাবটাইটেল থাকে, তবে currentShop এ আপডেট করো
+    if (cloudShopData.subtitle) {
+      currentShop.subtitle = cloudShopData.subtitle;
     }
+    if (cloudShopData.logo) currentShop.logo = cloudShopData.logo;
+    if (cloudShopData.name) currentShop.name = cloudShopData.name;
+    if (cloudShopData.phone) currentShop.phone = cloudShopData.phone;
+    if (cloudShopData.address) currentShop.address = cloudShopData.address;
   }
+    
 
   var logoEl = document.getElementById('bizLogo');
   var nameEl = document.getElementById('bizShopName');
@@ -2644,6 +2648,12 @@ function saveBrandingEdit() {
     shops[i].phone = document.getElementById('brandPhone').value.trim();
   }
   DB.setGlobal('shops', shops);
+  // vyro_shop লোডাল স্টোরেজেও আপডেট করা (হেডারের জন্য)
+  var cloudShop = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
+  if (cloudShop && cloudShop.id === currentShop.id) {
+    cloudShop.subtitle = shops[i].subtitle;
+    localStorage.setItem('vyro_shop', JSON.stringify(cloudShop));
+  }
   
   // currentShop আপডেট
   currentShop = DB.findShop(currentShop.id);
