@@ -1182,25 +1182,23 @@ function setChartPeriod(p) {
 
 function render() {
   if (!currentUser || !currentShop) return;
-  
-  // হেডারে লেটেস্ট শপ ডেটা (সাবটাইটেল) দেখানো
-    // হেডারে লেটেস্ট শপ ডেটা (সাবটাইটেল) দেখানো
-  var cloudShopData = null;
-  try {
-    cloudShopData = JSON.parse(localStorage.getItem('vyro_shop') || 'null');
-  } catch(e) {}
-  
-  if (cloudShopData && cloudShopData.id === currentShop.id) {
-    // যদি ক্লাউড শপে সাবটাইটেল থাকে, তবে currentShop এ আপডেট করো
-    if (cloudShopData.subtitle) {
-      currentShop.subtitle = cloudShopData.subtitle;
-    }
-    if (cloudShopData.logo) currentShop.logo = cloudShopData.logo;
-    if (cloudShopData.name) currentShop.name = cloudShopData.name;
-    if (cloudShopData.phone) currentShop.phone = cloudShopData.phone;
-    if (cloudShopData.address) currentShop.address = cloudShopData.address;
+
+  // হেডারে লেটেস্ট শপ ডেটা দেখানো
+  if (currentShop) {
+    try {
+      var latestShopsData = JSON.parse(localStorage.getItem('smp_global_shops') || '[]');
+      for (var ls = 0; ls < latestShopsData.length; ls++) {
+        if (latestShopsData[ls].id === currentShop.id) {
+          if (latestShopsData[ls].subtitle) currentShop.subtitle = latestShopsData[ls].subtitle;
+          if (latestShopsData[ls].logo) currentShop.logo = latestShopsData[ls].logo;
+          if (latestShopsData[ls].name) currentShop.name = latestShopsData[ls].name;
+          if (latestShopsData[ls].phone) currentShop.phone = latestShopsData[ls].phone;
+          if (latestShopsData[ls].address) currentShop.address = latestShopsData[ls].address;
+          break;
+        }
+      }
+    } catch(e) {}
   }
-    
 
   var logoEl = document.getElementById('bizLogo');
   var nameEl = document.getElementById('bizShopName');
@@ -1234,7 +1232,6 @@ function render() {
   else if (currentPage === 'reports') renderReports(app);
   else if (currentPage === 'quotation') renderQuotation(app);
 
-  // Back button for non-dashboard pages
   if (currentPage !== 'dashboard') {
     var titles = {
       inventory: '📦 Stock / Inventory',
