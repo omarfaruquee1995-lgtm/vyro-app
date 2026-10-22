@@ -1900,7 +1900,12 @@ function filterSaleProducts(query) {
     
     html += '<div onclick="addToCartById(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
     html += '<div style="flex:1;min-width:0">';
-    html += '<b style="font-size:13px">' + p.name + '</b><br>';
+    var searchDisplayName = p.size ? (p.size + ' ' + p.name) : p.name;
+html += '<b style="font-size:13px">' + searchDisplayName + '</b><br>';
+// Model & Brand দেখানো
+if (p.model || p.brand) {
+  html += '<small style="color:#2a5298;font-weight:700;font-size:10px">' + (p.model ? 'Model: ' + p.model : '') + (p.brand ? ' | Brand: ' + p.brand : '') + '</small><br>';
+}
     html += '<small style="color:#888;font-size:11px">' + (p.barcode || p.sku || '-') + '</small><br>';
     html += '<small style="color:' + stockColor + ';font-weight:700;font-size:11px">Stock: ' + p.stock + ' ' + (p.unit || 'pcs') + '</small>';
     html += '</div>';
