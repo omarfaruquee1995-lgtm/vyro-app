@@ -1452,10 +1452,14 @@ function saveProduct() {
   // সাইজ ভ্যালু নেওয়া হচ্ছে
   var sizeVal = document.getElementById('pSize') ? document.getElementById('pSize').value.trim() : '';
   
-  var newProduct = {
+  var modelVal = document.getElementById('pModel') ? document.getElementById('pModel').value.trim() : '';
+  var brandVal = document.getElementById('pBrand') ? document.getElementById('pBrand').value.trim() : '';  
+var newProduct = {
     id: id,
     name: name,
     size: sizeVal, // <--- এখানে size যোগ করা হলো
+    model: modelVal,
+    brand: brandVal,
     sku: document.getElementById('pSku').value.trim(),
     barcode: document.getElementById('pBarcode').value.trim(),
     buyPrice: +document.getElementById('pBuy').value || 0,
@@ -5030,6 +5034,8 @@ window.openAddProduct = function(barcode) {
   html += '<h3>📦 ' + t('newProduct') + '</h3>';
   html += '<input id="pName" placeholder="' + t('productName') + ' *">';
   html += '<input id="pSize" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
+  html += '<input id="pModel" placeholder="Model / Part No.">';
+  html += '<input id="pBrand" placeholder="Brand">';
   html += '<input id="pSku" placeholder="' + t('sku') + '">';
   html += '<input id="pBarcode" placeholder="' + t('barcode') + '" value="' + (barcode||'') + '">';
   html += '<input id="pBuy" type="number" placeholder="' + t('buyPrice') + '">';
