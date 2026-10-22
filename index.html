@@ -1796,45 +1796,50 @@ function viewImage(imgId, customerId) {
   html += '<button class="btn-primary" style="background:#ff4757;margin-top:10px;width:100%" onclick="document.getElementById(\'viewImgModal\').remove()">Close</button></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
-  function renderSales(app) {
+function renderSales(app) {
   var products = DB.get('products');
   var customers = DB.get('customers');
   
-  // 1. Party Select (সবার উপরে)
   var html = '<div class="card"><h3>🧾 New Sale <button class="btn-sm btn-info" style="width:auto" onclick="openScanner(\'sale\')">📷</button></h3>';
   html += '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px">👥 Party / Customer</label>';
   html += '<select id="saleCustSelect" onchange="updateSelectedCustomer(this)" style="margin-bottom:10px"><option value="0">Cash / Walk-in</option>';
   for (var j = 0; j < customers.length; j++) html += '<option value="' + customers[j].id + '">' + customers[j].name + (customers[j].due > 0 ? ' (' + fmt(customers[j].due) + ')' : '') + '</option>';
   html += '</select>';
   
-  // 2. Search Box
   html += '<input type="text" id="saleSearchBox" placeholder="🔍 Type product name..." autocomplete="off" oninput="filterSaleProducts(this.value)" style="margin-bottom:6px;border:2px solid #2a5298">';
   html += '<div id="saleProdResults" style="max-height:220px;overflow-y:auto;border:1px solid #eee;border-radius:8px;display:none;margin-bottom:8px;background:#fff"></div>';
   
-  // 3. Product Dropdown
   html += '<select id="saleProdSelect" onchange="addToCartFromSelect()"><option value="">-- Or Select Product --</option>';
   for (var i = 0; i < products.length; i++) html += '<option value="' + products[i].id + '">' + products[i].name + ' (' + products[i].stock + ' ' + (products[i].unit||'pcs') + ') - ' + fmt(products[i].sellPrice) + '</option>';
   html += '</select>';
   
-  // 4. Custom item
   html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:100%;margin-bottom:8px;padding:10px;font-weight:700">➕ Add Custom Item (Stock-এ নেই)</button>';
   
   html += '<h4 style="font-size:13px;margin:10px 0 6px;color:#2a5298">🛒 Cart (' + saleCart.length + ')</h4>';
   var subtotal = 0;
-  if (saleCart.length === 0) html += '<p style="text-align:center;color:#888;font-size:12px;padding:10px">Cart empty</p>';
-  else {
+  
+  if (saleCart.length === 0) {
+    html += '<p style="text-align:center;color:#888;font-size:12px;padding:10px">Cart empty</p>';
+  } else {
     for (var k = 0; k < saleCart.length; k++) {
       var item = saleCart[k];
       subtotal += item.price * item.qty;
       var itemUnit = item.unit || 'pcs';
+      
+      // সাইজ, মডেল, ব্র্যান্ড
       var itemDisplayName = item.size ? (item.size + ' ' + item.name) : item.name;
       var itemExtra = '';
       if (item.model) itemExtra += 'Model: ' + item.model;
       if (item.brand) itemExtra += (itemExtra ? ' | ' : '') + 'Brand: ' + item.brand;
-
+      
       html += '<div class="cart-item"><div style="flex:1"><b>' + itemDisplayName + '</b>';
-      if (itemExtra) html += '<br><small style="color:#2a5298;font-weight:700;font-size:10px">' + itemExtra + '</small>';
-html += '<br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';  
+      
+      if (itemExtra) {
+        html += '<br><small style="color:#2a5298;font-weight:700;font-size:10px">' + itemExtra + '</small>';
+      }
+      
+      html += '<br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';
+      
       html += '<div style="display:flex;gap:4px;align-items:center">';
       html += '<button class="btn-sm btn-warning" onclick="updateCartQty(' + k + ',-1)">−</button>';
       html += '<input type="number" value="' + item.qty + '" min="1" step="any" onchange="setCartQty(' + k + ', this.value)" style="width:60px;text-align:center;padding:4px;font-size:12px;margin:0">';
@@ -1853,15 +1858,18 @@ html += '<br><small>৳ <input type="number" value="' + item.price + '" onchange
   
   var sales = DB.get('sales').sort(function(a,b){ return b.id - a.id; }).slice(0, 20);
   html += '<div class="card"><h3>📜 Sale History</h3>';
-  if (sales.length === 0) html += '<p style="text-align:center;color:#888;font-size:12px;padding:10px">No sales</p>';
-  else for (var n = 0; n < sales.length; n++) {
-    var s = sales[n];
-    html += '<div class="list-item" style="cursor:pointer">';
-html += '<div class="info" onclick="showInvoice(' + s.id + ')"><b>' + (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + ' ' + (s.time||'') + ' • ' + (s.items?s.items.length:0) + ' items</small></div>';
-    html += '<div style="text-align:right"><b>' + fmt(s.total) + '</b><br><span class="pill ' + (s.due>0?'pill-due':'pill-paid') + '">' + (s.due>0?'Due: '+fmt(s.due):'Paid') + '</span>';
-    html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showInvoice(' + s.id + ')">👁️</button> ';
-    html += '<button class="btn-sm btn-warning" onclick="editInvoice(' + s.id + ')">✏️</button> ';
-    html += '<button class="btn-sm btn-danger" onclick="deleteSale(' + s.id + ')">🗑️</button></div></div></div>';
+  if (sales.length === 0) {
+    html += '<p style="text-align:center;color:#888;font-size:12px;padding:10px">No sales</p>';
+  } else {
+    for (var n = 0; n < sales.length; n++) {
+      var s = sales[n];
+      html += '<div class="list-item" style="cursor:pointer">';
+      html += '<div class="info" onclick="showInvoice(' + s.id + ')"><b>' + (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + ' ' + (s.time||'') + ' • ' + (s.items?s.items.length:0) + ' items</small></div>';
+      html += '<div style="text-align:right"><b>' + fmt(s.total) + '</b><br><span class="pill ' + (s.due>0?'pill-due':'pill-paid') + '">' + (s.due>0?'Due: '+fmt(s.due):'Paid') + '</span>';
+      html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showInvoice(' + s.id + ')">👁️</button> ';
+      html += '<button class="btn-sm btn-warning" onclick="editInvoice(' + s.id + ')">✏️</button> ';
+      html += '<button class="btn-sm btn-danger" onclick="deleteSale(' + s.id + ')">🗑️</button></div></div></div>';
+    }
   }
   html += '</div>';
   app.innerHTML = html;
