@@ -1827,7 +1827,14 @@ function viewImage(imgId, customerId) {
       var item = saleCart[k];
       subtotal += item.price * item.qty;
       var itemUnit = item.unit || 'pcs';
-      html += '<div class="cart-item"><div style="flex:1"><b>' + item.name + '</b><br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';
+      var itemDisplayName = item.size ? (item.size + ' ' + item.name) : item.name;
+      var itemExtra = '';
+      if (item.model) itemExtra += 'Model: ' + item.model;
+      if (item.brand) itemExtra += (itemExtra ? ' | ' : '') + 'Brand: ' + item.brand;
+
+      html += '<div class="cart-item"><div style="flex:1"><b>' + itemDisplayName + '</b>';
+      if (itemExtra) html += '<br><small style="color:#2a5298;font-weight:700;font-size:10px">' + itemExtra + '</small>';
+html += '<br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';  
       html += '<div style="display:flex;gap:4px;align-items:center">';
       html += '<button class="btn-sm btn-warning" onclick="updateCartQty(' + k + ',-1)">−</button>';
       html += '<input type="number" value="' + item.qty + '" min="1" step="any" onchange="setCartQty(' + k + ', this.value)" style="width:60px;text-align:center;padding:4px;font-size:12px;margin:0">';
@@ -1934,7 +1941,18 @@ var stockMsg = LANG === 'en'
 if (!confirm(stockMsg)) return;
   }
   
-  saleCart.push({productId: p.id, name: p.name, price: p.sellPrice, buyPrice: p.buyPrice, qty: 1, unit: p.unit || 'pcs', stockAtSale: p.stock || 0});
+saleCart.push({
+  productId: p.id,
+  name: p.name,
+  size: p.size || '',
+  model: p.model || '',
+  brand: p.brand || '',
+  price: p.sellPrice,
+  buyPrice: p.buyPrice,
+  qty: 1,
+  unit: p.unit || 'pcs',
+  stockAtSale: p.stock || 0
+});
   var sb2 = document.getElementById('saleSearchBox'); if (sb2) sb2.value = '';
   var rd2 = document.getElementById('saleProdResults'); if (rd2) rd2.style.display = 'none';
   renderSales(document.getElementById('app'));
