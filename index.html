@@ -1810,7 +1810,13 @@ function renderSales(app) {
   html += '<div id="saleProdResults" style="max-height:220px;overflow-y:auto;border:1px solid #eee;border-radius:8px;display:none;margin-bottom:8px;background:#fff"></div>';
   
   html += '<select id="saleProdSelect" onchange="addToCartFromSelect()"><option value="">-- Or Select Product --</option>';
-  for (var i = 0; i < products.length; i++) html += '<option value="' + products[i].id + '">' + products[i].name + ' (' + products[i].stock + ' ' + (products[i].unit||'pcs') + ') - ' + fmt(products[i].sellPrice) + '</option>';
+  for (var i = 0; i < products.length; i++) {
+  var pName = products[i].size ? (products[i].size + ' ' + products[i].name) : products[i].name;
+  var pExtra = '';
+  if (products[i].model) pExtra += ' | ' + products[i].model;
+  if (products[i].brand) pExtra += ' | ' + products[i].brand;
+  html += '<option value="' + products[i].id + '">' + pName + pExtra + ' (' + products[i].stock + ' ' + (products[i].unit||'pcs') + ') - ' + fmt(products[i].sellPrice) + '</option>';
+}
   html += '</select>';
   
   html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:100%;margin-bottom:8px;padding:10px;font-weight:700">➕ Add Custom Item (Stock-এ নেই)</button>';
