@@ -1513,10 +1513,20 @@ function updateProduct(id) {
   for (var i = 0; i < products.length; i++) if (products[i].id === id) {
     var oldStock = products[i].stock || 0;
     var newStock = +document.getElementById('pStock').value || 0;
+    
     products[i].name = document.getElementById('pName').value.trim();
+    
+    // Size, Model, Brand আপডেট
     if (document.getElementById('pSize')) {
       products[i].size = document.getElementById('pSize').value.trim();
     }
+    if (document.getElementById('pModel')) {
+      products[i].model = document.getElementById('pModel').value.trim();
+    }
+    if (document.getElementById('pBrand')) {
+      products[i].brand = document.getElementById('pBrand').value.trim();
+    }
+    
     products[i].sku = document.getElementById('pSku').value.trim();
     products[i].barcode = document.getElementById('pBarcode').value.trim();
     products[i].buyPrice = +document.getElementById('pBuy').value || 0;
@@ -1524,7 +1534,18 @@ function updateProduct(id) {
     products[i].stock = newStock;
     products[i].unit = document.getElementById('pUnit').value || 'pcs';
     products[i].lowAlert = +document.getElementById('pLow').value || 5;
-    if (oldStock !== newStock) addStockJournal(id, 'adjust', Math.abs(newStock - oldStock), products[i].buyPrice, 'Manual adjustment', today());
+    
+    if (oldStock !== newStock) {
+      addStockJournal(id, 'adjust', Math.abs(newStock - oldStock), products[i].buyPrice, 'Manual adjustment', today());
+    }
+    
+    // ☁️ Cloud sync updated product to D1
+    if (VYRO_TOKEN) {
+      vyroApiCall('/api/save', 'POST', { products: [products[i]] }).then(function(r) {
+        if (r && r.success) console.log('✅ Updated product synced to cloud');
+        else console.warn('⚠️ Updated product sync failed:', r && r.error);
+      });
+    }
   }
   DB.set('products', products);
   document.getElementById('prodModal').remove();
