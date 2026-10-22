@@ -3278,7 +3278,7 @@ function renderReports(app) {
     var sorted = filteredSales.slice().sort(function(a,b){ return b.id - a.id; });
     for (var k = 0; k < sorted.length; k++) {
       var s = sorted[k];
-      html += '<div class="list-item" onclick="showInvoice(' + s.id + ')" style="cursor:pointer"><div class="info"><b>#' + s.id + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + '</small></div><b>' + fmt(s.total) + '</b></div>';
+     html += '<div class="list-item" onclick="showInvoice(' + s.id + ')" style="cursor:pointer"><div class="info"><b>' + (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + '</small></div><b>' + fmt(s.total) + '</b></div>';
     }
   }
   html += '</div>';
@@ -3778,7 +3778,7 @@ function getAllRecords() {
   var sales = DB.get('sales');
   for (var i = 0; i < sales.length; i++) {
     var s = sales[i];
-    records.push({type: 'sale', icon: '🧾', id: s.id, date: s.date, time: s.time || '', title: 'Sale #' + s.id + ' — ' + (s.customerName || 'Cash'), amount: s.total || 0, meta: (s.items ? s.items.length : 0) + ' items • Paid: ' + fmt(s.paid || 0) + (s.due > 0 ? ' • Due: ' + fmt(s.due) : ''), ref: s});
+    records.push({type: 'sale', icon: '🧾', id: s.id, date: s.date, time: s.time || '', title: (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName || 'Cash'),amount: s.total || 0, meta: (s.items ? s.items.length : 0) + ' items • Paid: ' + fmt(s.paid || 0) + (s.due > 0 ? ' • Due: ' + fmt(s.due) : ''), ref: s});
   }
   var purchases = DB.get('purchases');
   var products = DB.get('products');
