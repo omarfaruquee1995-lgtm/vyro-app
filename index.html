@@ -5162,8 +5162,8 @@ function buildInventoryListHTML(products, search) {
     var p = products[i];
     var low = p.stock <= (p.lowAlert||5);
     
-    // প্রোডাক্টের নামের সাথে সাইজ
-    var displayName = p.size ? (p.size + ' ' + p.name) : p.name;
+    // সাইজ এবং নাম
+    var displayName = (p.size && p.size.trim() !== '') ? (p.size + ' ' + p.name) : p.name;
     
     // মডেল এবং ব্র্যান্ড
     var extraInfo = '';
@@ -5173,13 +5173,11 @@ function buildInventoryListHTML(products, search) {
     html += '<div class="list-item"><div class="info"><b>' + highlightSearch(displayName, search) + '</b>';
     html += '<small>' + (p.barcode||p.sku||'-') + ' • ' + fmt(p.buyPrice) + ' → ' + fmt(p.sellPrice) + '</small>';
     
-    // Model & Brand দেখানো
     if (extraInfo) {
       html += '<br><small style="color:#2a5298;font-weight:700;font-size:10px">' + extraInfo + '</small>';
     }
     html += '</div>';
     
-    // ডান দিকের বাটন
     html += '<div style="text-align:right"><b style="color:' + (low?'#ff4757':'#2ed573') + '">' + p.stock + ' ' + (p.unit||'pcs') + '</b>';
     html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showProductHistory(' + p.id + ')">📜</button> ';
     html += '<button class="btn-sm btn-warning" onclick="openPurchaseEntry(' + p.id + ')">📥</button> ';
