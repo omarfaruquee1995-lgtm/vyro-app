@@ -4131,7 +4131,7 @@ function renderQuotation(app) {
   var html = '';
 
   html += '<div class="card" style="padding:10px;display:flex;gap:6px;flex-wrap:wrap">';
-  html += '<button class="btn-sm btn-primary" style="flex:1;min-width:100px;padding:10px" onclick="saveQuotationDraft()">💾 Save Draft</button>';
+html += '<button class="btn-sm btn-primary" style="flex:1;min-width:100px;padding:10px" onclick="saveQuotationDraft()">💾 Save Quotation</button>';
   html += '<button class="btn-sm btn-info" style="flex:1;min-width:100px;padding:10px" onclick="printQuotation()">🖨 Print</button>';
   html += '<button class="btn-sm btn-success" style="flex:1;min-width:100px;padding:10px" onclick="convertQuotationToInvoice()">🧾 To Invoice</button>';
   html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;background:#25D366;color:#fff" onclick="shareQuotationWhatsApp()">📱 WhatsApp</button>';
@@ -4563,42 +4563,98 @@ function openQuotationList() {
   if (quotations.length === 0) {
     html += '<p style="text-align:center;color:#888;padding:30px">কোনো Quotation সেভ করা হয়নি</p>';
   } else {
-    var sorted = quotations.slice().sort(function(a,b){ return (b.savedAt || b.createdAt || 0) - (a.savedAt || a.createdAt || 0); });
-    for (var i = 0; i < sorted.length; i++) {
-      var q = sorted[i];
-      var grand = q._calcs ? q._calcs.grand : 0;
-      var itemCount = q.items ? q.items.filter(function(x){ return x.name; }).length : 0;
-      var statusColor = '#ffa502';
-      if (q.status === 'Accepted') statusColor = '#2ed573';
-      else if (q.status === 'Rejected') statusColor = '#ff4757';
-      else if (q.status === 'Sent') statusColor = '#3498db';
-      else if (q.status === 'Expired') statusColor = '#888';
+    // কাস্টমার অনুযায়ী গ্রুপ করা
+    var grouped = {};
+    for (var i = 0; i < quotations.length; i++) {
+      var q = quotations[i];
+      var custName = (q.customer && q.customer.name) ? q.customer.name : 'Unknown Customer';
+      if (!grouped[custName]) grouped[custName] = [];
+      grouped[custName].push(q);
+    }
 
-      html += '<div class="list-item" style="flex-direction:column;align-items:stretch;gap:8px;padding:12px 0">';
-      html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
-      html += '<div class="info" style="flex:1;min-width:0">';
-      html += '<b>' + (q.qNo || 'N/A') + '</b>';
-      html += '<small>👤 ' + escAttr(q.customer ? q.customer.name : '') + (q.customer && q.customer.phone ? ' • 📞 ' + escAttr(q.customer.phone) : '') + '</small>';
-      html += '<small>📅 ' + (q.qDate || '-') + ' • ' + itemCount + ' items</small>';
+    // প্রতিটি গ্রুপের জন্য ফোল্ডার তৈরি করা
+    var customerNames = Object.keys(grouped);
+    for (var c = 0; c < customerNames.length; c++) {
+      var cName = customerNames[c];
+      var qList = grouped[cName];
+      
+      // তারিখ অনুযায়ী সাজানো (নতুন আগে)
+      qList.sort(function(a,b){ return (b.qDate || '').localeCompare(a.qDate || ''); });
+
+      var totalAmount = 0;
+      for (var t = 0; t < qList.length; t++) {
+        var qCalcs = qList[t]._calcs;
+        if (qCalcs && qCalcs.grand) totalAmount += qCalcs.grand;
+      }
+
+      html += '<div style="background:#f8f9fa; border-radius:8px; margin-bottom:10px; overflow:hidden; border:1px solid #eee">';
+      html += '<div onclick="toggleQuoteFolder(\'' + cName.replace(/'/g, "\\'") + '\')" style="padding:12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#e3f2fd;">';
+      html += '<div><b style="font-size:13px; color:#2a5298;">👤 ' + cName + '</b>';
+      html += '<br><small style="color:#666; font-size:10px;">' + qList.length + ' টি Quotation • মোট: ' + fmt(totalAmount) + '</small></div>';
+      html += '<div style="font-size:18px; color:#2a5298;">▼</div>';
       html += '</div>';
-      html += '<div style="text-align:right">';
-      html += '<b style="color:#2a5298;font-size:15px">' + fmt(grand) + '</b><br>';
-      html += '<span class="pill" style="background:' + statusColor + '20;color:' + statusColor + ';font-weight:700">' + (q.status || 'Draft') + '</span>';
-      html += '</div></div>';
+      
+      // ফোল্ডারের ভেতরের লিস্ট
+      html += '<div id="quoteFolder_' + cName.replace(/[^a-zA-Z0-9]/g, '_') + '" style="display:none; padding:10px;">';
 
-     html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px">';
-html += '<button class="btn-sm btn-info" style="padding:6px;font-size:10px" onclick="printQuotationFromList(' + q.id + ')">👁️ View</button>';
-html += '<button class="btn-sm btn-warning" style="padding:6px;font-size:10px" onclick="editQuotationById(' + q.id + ')">✏️ Edit</button>';
-html += '<button class="btn-sm" style="padding:6px;font-size:10px;background:#25D366;color:#fff" onclick="whatsappQuotationById(' + q.id + ')">📱 WA</button>';
-html += '<button class="btn-sm btn-danger" style="padding:6px;font-size:10px" onclick="deleteQuotationById(' + q.id + ')">🗑️</button>';
-html += '</div>';
+      // মাস অনুযায়ী সাব-গ্রুপ করা
+      var monthGroups = {};
+      for (var m = 0; m < qList.length; m++) {
+        var mKey = qList[m].qDate ? qList[m].qDate.substring(0, 7) : 'Unknown';
+        if (!monthGroups[mKey]) monthGroups[mKey] = [];
+        monthGroups[mKey].push(qList[m]);
+      }
+
+      var months = Object.keys(monthGroups).sort().reverse();
+      for (var mo = 0; mo < months.length; mo++) {
+        var mName = months[mo];
+        html += '<div style="background:#2a5298; color:#fff; font-size:11px; font-weight:700; padding:4px 8px; border-radius:4px; margin:8px 0 6px;">📅 ' + mName + '</div>';
+        
+        var mList = monthGroups[mName];
+        for (var q2 = 0; q2 < mList.length; q2++) {
+          var item = mList[q2];
+          var grand = item._calcs ? item._calcs.grand : 0;
+          var statusColor = '#ffa502';
+          if (item.status === 'Accepted') statusColor = '#2ed573';
+          else if (item.status === 'Rejected') statusColor = '#ff4757';
+          else if (item.status === 'Sent') statusColor = '#3498db';
+
+          html += '<div style="background:#fff; border-left:4px solid ' + statusColor + '; border-radius:6px; padding:8px; margin-bottom:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+          html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+          html += '<div>';
+          html += '<b style="font-size:12px; color:#2a5298;">' + (item.qNo || 'N/A') + '</b><br>';
+          html += '<small style="font-size:10px; color:#888;">' + item.qDate + ' • ' + (item.items ? item.items.filter(function(x){return x.name;}).length : 0) + ' items</small>';
+          html += '</div>';
+          html += '<div style="text-align:right;">';
+          html += '<b style="font-size:13px; color:#2a5298;">' + fmt(grand) + '</b><br>';
+          html += '<span class="pill" style="background:' + statusColor + '20; color:' + statusColor + '; font-weight:700; font-size:9px;">' + (item.status || 'Draft') + '</span>';
+          html += '</div></div>';
+          
+          html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; margin-top:6px;">';
+          html += '<button class="btn-sm btn-info" style="padding:5px; font-size:10px;" onclick="printQuotationFromList(' + item.id + ')">👁️</button>';
+          html += '<button class="btn-sm btn-warning" style="padding:5px; font-size:10px;" onclick="editQuotationById(' + item.id + ')">✏️</button>';
+          html += '<button class="btn-sm" style="padding:5px; font-size:10px; background:#25D366; color:#fff;" onclick="whatsappQuotationById(' + item.id + ')">📱</button>';
+          html += '<button class="btn-sm btn-danger" style="padding:5px; font-size:10px;" onclick="deleteQuotationById(' + item.id + ')">🗑️</button>';
+          html += '</div></div>';
+        }
+      }
+      html += '</div></div>';
     }
   }
 
-  html += '<button class="btn-primary" style="background:#888;margin-top:12px" onclick="document.getElementById(\'quoteListModal\').remove()">Close</button>';
+  html += '<button class="btn-primary" style="background:#888; margin-top:12px;" onclick="document.getElementById(\'quoteListModal\').remove()">Close</button>';
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
+
+// ফোল্ডার ওপেন/ক্লোজ করার ফাংশন
+window.toggleQuoteFolder = function(cName) {
+  var id = 'quoteFolder_' + cName.replace(/[^a-zA-Z0-9]/g, '_');
+  var el = document.getElementById(id);
+  if (el) {
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+};
 
 function editQuotationById(id) {
   var quotations = DB.get('quotations');
