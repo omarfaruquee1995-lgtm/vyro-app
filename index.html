@@ -4351,7 +4351,7 @@ function saveQuotationDraft() {
   if (!found) { quotations.push(q); commitQuotationNo(); }
     DB.set('quotations', quotations);
   // Save success visual confirmation
-  alert('✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo);
+  alert(LANG === 'en' ? '✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo : '✅ Quotation সফলভাবে সেভ হয়েছে!\n\nQuotation No: ' + q.qNo);
   
   // Optional: Refresh the current page to reflect saved state
   if (typeof openQuotationList === 'function') {
@@ -4360,7 +4360,8 @@ function saveQuotationDraft() {
 }
 
 function newQuotationForm() {
-  if (!confirm('নতুন Quotation শুরু করবেন? সেভ না করা পরিবর্তন হারিয়ে যাবে।')) return;
+  var newMsg = LANG === 'en' ? 'Start new Quotation? Unsaved changes will be lost.' : 'নতুন Quotation শুরু করবেন? সেভ না করা পরিবর্তন হারিয়ে যাবে।';
+  if (!confirm(newMsg)) return;
   currentQuotation = newQuotation();
   renderQuotation(document.getElementById('app'));
   window.scrollTo(0,0);
@@ -4372,7 +4373,10 @@ function convertQuotationToInvoice() {
   if (!q.customer.name) { alert('Customer name required'); return; }
   var validItems = q.items.filter(function(x){ return x.name && x.qty > 0; });
   if (!validItems.length) { alert('Add at least one product with name & qty'); return; }
-  if (!confirm('Convert to Invoice?\n\nCustomer + Product + Qty + Price সব অটো Invoice-এ চলে যাবে।\nএবং Stock থেকে বাদ যাবে।')) return;
+    var confirmMsg = LANG === 'en' 
+    ? 'Convert to Invoice?\n\nCustomer + Product + Qty + Price will be auto-filled in the Invoice.\nAnd stock will be deducted.'
+    : 'Convert to Invoice?\n\nCustomer + Product + Qty + Price সব অটো Invoice-এ চলে যাবে।\nএবং Stock থেকে বাদ যাবে।';
+  if (!confirm(confirmMsg)) return;
 
   var custId = 0;
   var customers = DB.get('customers');
@@ -4434,7 +4438,7 @@ function convertQuotationToInvoice() {
   if (!found) qs.push(q);
   DB.set('quotations', qs);
 
-  alert('✅ Invoice তৈরি হয়েছে: #' + saleId);
+  alert(LANG === 'en' ? '✅ Invoice created: #' + saleId : '✅ Invoice তৈরি হয়েছে: #' + saleId);
   showInvoice(saleId);
 }
 
@@ -4737,7 +4741,8 @@ function whatsappQuotationById(id) {
 }
 
 function deleteQuotationById(id) {
-  if (!confirm('⚠️ এই Quotation টি ডিলিট করবেন?')) return;
+  var delMsg = LANG === 'en' ? '⚠ Delete this Quotation?' : '⚠ এই Quotation টি ডিলিট করবেন?';
+if (!confirm(delMsg)) return;
   var quotations = DB.get('quotations');
   quotations = quotations.filter(function(x){ return x.id !== id; });
   DB.set('quotations', quotations);
@@ -9996,9 +10001,10 @@ loadQuotationById = function(id) {
   var quotations = DB.get('quotations');
   var q = null;
   for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
-  if (!q) { alert('Quotation পাওয়া যায়নি'); return; }
+  if (!q) { alert(LANG === 'en' ? 'Quotation not found' : 'Quotation পাওয়া যায়নি'); return; }
   
-  if (!confirm('এই Quotation টি এডিট করতে চান?\n\n' + q.qNo + '\nগ্রাহক: ' + (q.customer ? q.customer.name : ''))) return;
+ var editMsg = LANG === 'en' ? 'Edit this Quotation?\n\n' + q.qNo + '\nCustomer: ' + (q.customer ? q.customer.name : '') : 'এই Quotation টি এডিট করতে চান?\n\n' + q.qNo + '\nগ্রাহক: ' + (q.customer ? q.customer.name : '');
+if (!confirm(editMsg)) return;
   
   var modal = document.getElementById('quoteListModal');
   if (modal) modal.remove();
