@@ -5449,26 +5449,35 @@ window.pickQuoteProduct = function() {
   document.body.insertAdjacentHTML('beforeend', html);
 };
 
-function buildQuoteStockList(products) {
+  function buildQuoteStockList(products) {
   if (!products.length) return '<p style="text-align:center;color:#888;padding:20px">No products</p>';
   var html = '';
+  
+  // লেটেস্ট প্রোডাক্ট ডেটা একবার নিয়ে নিচ্ছি
+  var allProducts = DB.get('products');
+  
   for (var i = 0; i < products.length; i++) {
     var p = products[i];
     var low = p.stock <= (p.lowAlert || 5);
-    html += '<div onclick="addQuoteItemFromStock(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center">';
-        // সাইজ সরাসরি DB থেকে নিশ্চিত করা
-    var prodSize = p.size || '';
-    if (!prodSize) {
-      var allProds = DB.get('products');
-      for (var j = 0; j < allProds.length; j++) {
-        if (allProds[j].id === p.id) {
-          prodSize = allProds[j].size || '';
+    
+    // সবচেয়ে নির্ভরযোগ্য উপায়ে সাইজ বের করা
+    var prodSize = '';
+    if (p.size) {
+      prodSize = p.size;
+    } else {
+      // যদি p.size না থাকে, তবে DB থেকে সরাসরি খোঁজা
+      for (var j = 0; j < allProducts.length; j++) {
+        if (allProducts[j].id === p.id && allProducts[j].size) {
+          prodSize = allProducts[j].size;
           break;
         }
       }
     }
+    
     var displayName = prodSize ? (prodSize + ' ' + p.name) : p.name;
-html += '<div style="font-size:13px;font-weight:700;color:#2a5298">' + displayName + '</div>';
+    
+    html += '<div onclick="addQuoteItemFromStock(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><b style="font-size:13px">' + displayName + '</b>';
     html += '<br><small style="color:#888;font-size:11px">' + (p.sku||'-') + ' • ' + (p.barcode||'-') + '</small></div>';
     html += '<div style="text-align:right">';
     html += '<b style="color:#2a5298">' + fmt(p.sellPrice) + '</b><br>';
