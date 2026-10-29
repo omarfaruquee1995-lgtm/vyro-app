@@ -5449,7 +5449,7 @@ window.pickQuoteProduct = function() {
   document.body.insertAdjacentHTML('beforeend', html);
 };
 
-  function buildQuoteStockList(products) {
+ function buildQuoteStockList(products) {
   if (!products.length) return '<p style="text-align:center;color:#888;padding:20px">No products</p>';
   var html = '';
   
@@ -5460,12 +5460,9 @@ window.pickQuoteProduct = function() {
     var p = products[i];
     var low = p.stock <= (p.lowAlert || 5);
     
-    // সবচেয়ে নির্ভরযোগ্য উপায়ে সাইজ বের করা
-    var prodSize = '';
-    if (p.size) {
-      prodSize = p.size;
-    } else {
-      // যদি p.size না থাকে, তবে DB থেকে সরাসরি খোঁজা
+    // সাইজ বের করার সবচেয়ে নির্ভরযোগ্য উপায়
+    var prodSize = p.size || '';
+    if (!prodSize) {
       for (var j = 0; j < allProducts.length; j++) {
         if (allProducts[j].id === p.id && allProducts[j].size) {
           prodSize = allProducts[j].size;
