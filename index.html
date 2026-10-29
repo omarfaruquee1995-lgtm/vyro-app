@@ -5456,7 +5456,19 @@ function buildQuoteStockList(products) {
     var p = products[i];
     var low = p.stock <= (p.lowAlert || 5);
     html += '<div onclick="addQuoteItemFromStock(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center">';
-    html += '<div><b style="font-size:13px">' + p.name + '</b>';
+        // সাইজ সরাসরি DB থেকে নিশ্চিত করা
+    var prodSize = p.size || '';
+    if (!prodSize) {
+      var allProds = DB.get('products');
+      for (var j = 0; j < allProds.length; j++) {
+        if (allProds[j].id === p.id) {
+          prodSize = allProds[j].size || '';
+          break;
+        }
+      }
+    }
+    var displayName = prodSize ? (prodSize + ' ' + p.name) : p.name;
+html += '<div style="font-size:13px;font-weight:700;color:#2a5298">' + displayName + '</div>';
     html += '<br><small style="color:#888;font-size:11px">' + (p.sku||'-') + ' • ' + (p.barcode||'-') + '</small></div>';
     html += '<div style="text-align:right">';
     html += '<b style="color:#2a5298">' + fmt(p.sellPrice) + '</b><br>';
