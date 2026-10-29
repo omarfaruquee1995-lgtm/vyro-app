@@ -5462,6 +5462,7 @@ window.pickQuoteProduct = function() {
     
     // সাইজ বের করার সবচেয়ে নির্ভরযোগ্য উপায়
     var prodSize = p.size || '';
+    console.log('DEBUG - Product:', p.name, '| p.size:', p.size, '| prodSize:', prodSize);
     if (!prodSize) {
       for (var j = 0; j < allProducts.length; j++) {
         if (allProducts[j].id === p.id && allProducts[j].size) {
