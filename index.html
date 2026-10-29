@@ -3004,24 +3004,79 @@ function loadInvoiceEdit() {
   html += '<button class="btn-info" style="margin-top:6px" onclick="document.getElementById(\'editInvoiceModal\').remove();showInvoice(' + id + ')">👁️ View</button>';
   area.innerHTML = html;
 }
+// Edit Invoice Item Helpers
+window.updateEditItemQty = function(idx, val) {
+  if (!window._editSale || !window._editSale.items[idx]) return;
+  window._editSale.items[idx].qty = Math.max(1, +val || 1);
+  var total = 0;
+  for (var i = 0; i < window._editSale.items.length; i++) total += window._editSale.items[i].qty * window._editSale.items[i].price;
+  var tEl = document.getElementById('editItemsTotal');
+  if (tEl) tEl.textContent = 'Items Total: ' + fmt(total);
+};
+
+window.updateEditItemPrice = function(idx, val) {
+  if (!window._editSale || !window._editSale.items[idx]) return;
+  window._editSale.items[idx].price = Math.max(0, +val || 0);
+  var total = 0;
+  for (var i = 0; i < window._editSale.items.length; i++) total += window._editSale.items[i].qty * window._editSale.items[i].price;
+  var tEl = document.getElementById('editItemsTotal');
+  if (tEl) tEl.textContent = 'Items Total: ' + fmt(total);
+};
+
+window.removeEditItem = function(idx) {
+  if (!window._editSale) return;
+  if (window._editSale.items.length <= 1) { alert('Cannot delete last item'); return; }
+  window._editSale.items.splice(idx, 1);
+  document.getElementById('editInvoiceModal').remove();
+  editInvoice(window._editSale.id);
+};
 function saveInvoiceEdit(id) {
+  if (!window._editSale) return;
   var sales = DB.get('sales');
+  var s = null;
+  
   for (var i = 0; i < sales.length; i++) if (sales[i].id === id) {
-    var s = sales[i];
+    s = sales[i];
+    var oldDue = s.due || 0;
+    
+    // Items আপডেট
+    s.items = window._editSale.items;
+    
+    // নতুন Subtotal বের করা
+    var newSubtotal = 0;
+    var newCost = 0;
+    for (var k = 0; k < s.items.length; k++) {
+      newSubtotal += s.items[k].qty * s.items[k].price;
+      newCost += s.items[k].qty * (s.items[k].buyPrice || 0);
+    }
+    
+    // Discount, VAT, Paid আপডেট
     var newDiscount = +document.getElementById('editInvDiscount').value || 0;
     var newVat = +document.getElementById('editInvVat').value || 0;
     var newPaid = +document.getElementById('editInvPaid').value || 0;
-    var afterDiscount = s.subtotal - newDiscount;
+    
+    var afterDiscount = newSubtotal - newDiscount;
     if (afterDiscount < 0) afterDiscount = 0;
     var vatAmount = afterDiscount * newVat / 100;
     var grandTotal = afterDiscount + vatAmount;
     var newDue = Math.max(0, grandTotal - newPaid);
-    var oldDue = s.due || 0;
     var dueDiff = newDue - oldDue;
-    s.discount = newDiscount; s.vatPct = newVat; s.vatAmount = vatAmount; s.total = grandTotal; s.paid = newPaid; s.due = newDue;
+    
+    s.subtotal = newSubtotal;
+    s.discount = newDiscount;
+    s.vatPct = newVat;
+    s.vatAmount = vatAmount;
+    s.total = grandTotal;
+    s.paid = newPaid;
+    s.due = newDue;
+    s.profit = grandTotal - vatAmount - newCost;
+    
+    // Customer info আপডেট
     s.customerName = document.getElementById('editInvCustName').value.trim() || s.customerName;
     s.customerAddress = document.getElementById('editInvCustAddr').value.trim();
     s.customerAttention = document.getElementById('editInvCustAttn').value.trim();
+    
+    // Customer Due Adjust
     if (s.customerId && dueDiff !== 0) {
       var customers = DB.get('customers');
       for (var n = 0; n < customers.length; n++) if (customers[n].id === s.customerId) customers[n].due = Math.max(0, (customers[n].due || 0) + dueDiff);
@@ -3029,16 +3084,18 @@ function saveInvoiceEdit(id) {
     }
   }
   DB.set('sales', sales);
-// ☁️ Cloud sync edited sale to D1
-if (VYRO_TOKEN && s) {
-  vyroApiCall('/api/save', 'POST', { sales: [s] }).then(function(r) {
-    if (r && r.success) console.log('✅ Edited sale synced to cloud');
-    else console.warn('⚠️ Edited sale sync failed:', r && r.error);
-  });
-}
-  alert('✅ Invoice আপডেট হয়েছে');
+  
+  // Cloud sync
+  if (VYRO_TOKEN && s) {
+    vyroApiCall('/api/save', 'POST', { sales: [s] }).then(function(r) {
+      if (r && r.success) console.log('✅ Edited sale synced to cloud');
+      else console.warn('⚠️ Edited sale sync failed:', r && r.error);
+    });
+  }
+  
+  window._editSale = null;
+  alert(LANG === 'en' ? '✅ Invoice updated successfully' : '✅ Invoice আপডেট হয়েছে');
   document.getElementById('editInvoiceModal').remove();
-  openSettings();
   render();
 }
 function editInvoice(saleId) {
@@ -3047,18 +3104,53 @@ function editInvoice(saleId) {
   var s = null;
   for (var i = 0; i < sales.length; i++) if (sales[i].id === saleId) s = sales[i];
   if (!s) return;
-  var html = '<div class="modal-overlay" id="editInvoiceModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
-  html += '<h3>✏️ Edit Invoice #' + saleId + '</h3>';
+  
+  var html = '<div class="modal-overlay" id="editInvoiceModal" onclick="if(event.target===this)this.remove()"><div class="modal" style="max-width:600px">';
+  html += '<h3>✏️ Edit Invoice</h3>';
+  
+  // Invoice Info
+  html += '<div class="alert" style="background:#fff3cd;border-color:#ffa502;font-size:11px"><b>Invoice #' + (s.invoiceNo || s.id) + '</b> | Customer: ' + (s.customerName||'Cash') + '</div>';
+  
+  // Discount, VAT, Paid
   html += '<label style="font-size:11px;color:#666">Discount (৳)</label><input id="editInvDiscount" type="number" value="' + (s.discount||0) + '">';
   html += '<label style="font-size:11px;color:#666">VAT (%)</label><input id="editInvVat" type="number" value="' + (s.vatPct||0) + '">';
   html += '<label style="font-size:11px;color:#666">Paid Amount</label><input id="editInvPaid" type="number" value="' + (s.paid||0) + '">';
+  
+  // Items Edit Section
+  html += '<h4 style="font-size:13px;margin:12px 0 6px;color:#2a5298">📦 Items (Qty & Price Edit)</h4>';
+  html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:11px;min-width:400px">';
+  html += '<thead><tr style="background:#f0f2f5"><th style="padding:5px">Item</th><th style="padding:5px;width:60px">Qty</th><th style="padding:5px;width:80px">Price</th><th style="padding:5px;width:30px"></th></tr></thead><tbody id="editItemsBody">';
+  
+  for (var j = 0; j < s.items.length; j++) {
+    var it = s.items[j];
+    var displayName = (it.size ? it.size + ' ' : '') + it.name;
+    html += '<tr style="border-bottom:1px solid #eee">';
+    html += '<td style="padding:5px">' + displayName + '</td>';
+    html += '<td style="padding:5px"><input type="number" value="' + it.qty + '" min="1" onchange="updateEditItemQty(' + j + ', this.value)" style="padding:4px;margin:0;font-size:11px;text-align:center"></td>';
+    html += '<td style="padding:5px"><input type="number" value="' + it.price + '" min="0" step="0.01" onchange="updateEditItemPrice(' + j + ', this.value)" style="padding:4px;margin:0;font-size:11px;text-align:right"></td>';
+    html += '<td style="padding:5px"><button class="btn-sm btn-danger" style="padding:2px 6px;font-size:10px" onclick="removeEditItem(' + j + ')">✕</button></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  
+  // Items Total Display
+  var currentTotal = 0;
+  for (var k = 0; k < s.items.length; k++) currentTotal += (s.items[k].qty * s.items[k].price);
+  html += '<div id="editItemsTotal" style="text-align:right;font-weight:700;color:#2a5298;padding:6px 0;font-size:12px">Items Total: ' + fmt(currentTotal) + '</div>';
+  
+  // Customer Info
   html += '<label style="font-size:11px;color:#666">Customer Name</label><input id="editInvCustName" value="' + (s.customerName||'') + '">';
   html += '<label style="font-size:11px;color:#666">Customer Address</label><input id="editInvCustAddr" value="' + (s.customerAddress||'') + '">';
   html += '<label style="font-size:11px;color:#666">👤 Attention</label><input id="editInvCustAttn" value="' + (s.customerAttention||'') + '">';
-  html += '<button class="btn-primary" onclick="saveInvoiceEdit(' + saleId + ')">💾 Save</button>';
-  html += '<button class="btn-info" style="margin-top:6px" onclick="document.getElementById(\'editInvoiceModal\').remove();showInvoice(' + saleId + ')">👁️ View</button>';
+  
+  // Buttons
+  html += '<button class="btn-primary" style="margin-top:12px" onclick="saveInvoiceEdit(' + saleId + ')">💾 Save Changes</button>';
+  html += '<button class="btn-info" style="margin-top:6px" onclick="document.getElementById(\'editInvoiceModal\').remove();showInvoice(' + saleId + ')">👁️ View Invoice</button>';
   html += '<button class="btn-primary" style="background:#888;margin-top:8px" onclick="document.getElementById(\'editInvoiceModal\').remove()">Close</button></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
+  
+  // Store the sale for editing
+  window._editSale = JSON.parse(JSON.stringify(s));
 }
 function openAddExpense() {
   closeModal();
