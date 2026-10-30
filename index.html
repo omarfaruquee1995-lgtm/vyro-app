@@ -4433,24 +4433,40 @@ try { localStorage.setItem('smp_quote_session_' + DB.currentShopId, JSON.stringi
 function saveQuotationDraft() {
   updateQuote();
   var q = currentQuotation;
-  if (!q.customer.name) { alert('⚠ Customer name required'); return; }
+  
+  if (!q.customer.name) { 
+    alert(LANG === 'en' ? '⚠ Customer name required' : '⚠ কাস্টমারের নাম আবশ্যক'); 
+    return; 
+  }
+  
   q.status = 'Draft';
-  var st = document.getElementById('qStatus'); if (st) st.value = 'Draft';
+  var st = document.getElementById('qStatus'); 
+  if (st) st.value = 'Draft';
+  
   q.savedAt = Date.now();
   var quotations = DB.get('quotations');
   var found = false;
-  for (var i=0;i<quotations.length;i++) if (quotations[i].qNo === q.qNo) { quotations[i] = q; found = true; break; }
-  if (!found) { quotations.push(q); commitQuotationNo(); }
-    DB.set('quotations', quotations);
-  // Save success visual confirmation
-  alert(LANG === 'en' ? '✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo : '✅ Quotation সফলভাবে সেভ হয়েছে!\n\nQuotation No: ' + q.qNo);
   
-  // Optional: Refresh the current page to reflect saved state
-  if (typeof openQuotationList === 'function') {
-     // If you are in the list modal, you might want to reload it
+  // FIX: qNo এর বদলে id দিয়ে চেক করা হচ্ছে
+  for (var i = 0; i < quotations.length; i++) { 
+    if (quotations[i].id === q.id) { 
+      quotations[i] = q; 
+      found = true; 
+      break; 
+    } 
   }
+  
+  if (!found) { 
+    quotations.push(q); 
+    // নতুন কোটেশন সেভ হলে সিকোয়েন্স নাম্বার বাড়বে
+    commitQuotationNo(); 
+    // পরের কোটেশনের জন্য নতুন নম্বর সেট করে দেওয়া হবে
+    q.qNo = peekQuotationNo();
+  }
+  
+  DB.set('quotations', quotations);
+  alert(LANG === 'en' ? '✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo : '✅ Quotation সফলভাবে সেভ হয়েছে!\n\nQuotation No: ' + q.qNo);
 }
-
 function newQuotationForm() {
   var newMsg = LANG === 'en' ? 'Start new Quotation? Unsaved changes will be lost.' : 'নতুন Quotation শুরু করবেন? সেভ না করা পরিবর্তন হারিয়ে যাবে।';
   if (!confirm(newMsg)) return;
@@ -10845,6 +10861,42 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   console.log('✅ Global safety net active');
 });
+// ============ FINAL FIX FOR QUOTATION SAVE ============
+window.saveQuotationDraft = function() {
+  updateQuote();
+  var q = currentQuotation;
+  
+  if (!q.customer.name) { 
+    alert(LANG === 'en' ? '⚠ Customer name required' : '⚠ কাস্টমারের নাম আবশ্যক'); 
+    return; 
+  }
+  
+  q.status = 'Draft';
+  var st = document.getElementById('qStatus'); 
+  if (st) st.value = 'Draft';
+  
+  q.savedAt = Date.now();
+  var quotations = DB.get('quotations');
+  var found = false;
+  
+  for (var i = 0; i < quotations.length; i++) { 
+    if (quotations[i].id === q.id) { 
+      quotations[i] = q; 
+      found = true; 
+      break; 
+    } 
+  }
+  
+  if (!found) { 
+    quotations.push(q); 
+    commitQuotationNo(); 
+    q.qNo = peekQuotationNo();
+  }
+  
+  DB.set('quotations', quotations);
+  alert(LANG === 'en' ? '✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo : '✅ Quotation সফলভাবে সেভ হয়েছে!\n\nQuotation No: ' + q.qNo);
+};
+// =======================================================
 </script>
 </body>
 </html>
