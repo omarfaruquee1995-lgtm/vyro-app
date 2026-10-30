@@ -7528,14 +7528,21 @@ window.filterQuoteStock = function() {
   document.getElementById('qsResults').innerHTML = buildQuoteStockList(matched, q);
 };
 
-// ---------- Build Quote Stock List ----------
+// ---------- Build Quote Stock List (FIXED with Size, Model, Brand) ----------
 function buildQuoteStockList(products, search) {
   if (!products.length) return '<p style="text-align:center;color:#888;padding:30px">No products found</p>';
   var html = '';
   for (var i = 0; i < products.length; i++) {
     var p = products[i];
     var low = p.stock <= (p.lowAlert || 5);
-    var name = p.name;
+    
+    // সাইজ, মডেল, ব্র্যান্ড সহ নাম তৈরি করা
+    var displayName = (p.size && p.size.trim() !== '') ? (p.size + ' ' + p.name) : p.name;
+    var extraInfo = '';
+    if (p.model) extraInfo += 'Model: ' + p.model;
+    if (p.brand) extraInfo += (extraInfo ? ' | ' : '') + 'Brand: ' + p.brand;
+
+    var name = displayName;
     if (search) {
       var terms = search.toLowerCase().split(' ').filter(function(x){return x;});
       for (var t = 0; t < terms.length; t++) {
@@ -7545,9 +7552,16 @@ function buildQuoteStockList(products, search) {
         name = name.replace(regex, '<mark style="background:#ffe082;padding:0 2px;border-radius:2px">$1</mark>');
       }
     }
+    
     html += '<div onclick="addQuoteItemFromStock(' + p.id + ')" style="padding:12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;transition:background .15s" onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'#fff\'">';
     html += '<div style="flex:1;min-width:0">';
     html += '<div style="font-size:13px;font-weight:700;color:#2a5298">' + name + '</div>';
+    
+    // সাইজ, মডেল, ব্র্যান্ড দেখানো
+    if (extraInfo) {
+       html += '<div style="font-size:10px;color:#2a5298;font-weight:700;margin-top:2px">' + extraInfo + '</div>';
+    }
+    
     html += '<div style="font-size:10px;color:#888;margin-top:2px">' + (p.sku || '-') + ' | ' + (p.barcode || '-') + '</div>';
     html += '</div>';
     html += '<div style="text-align:right;flex-shrink:0">';
@@ -7557,7 +7571,6 @@ function buildQuoteStockList(products, search) {
   }
   return html;
 }
-
 // ---------- Add Quote Item from Stock (auto-fill) ----------
 window.addQuoteItemFromStock = function(productId) {
   var products = DB.get('products');
