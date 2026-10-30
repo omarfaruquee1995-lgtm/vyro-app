@@ -1442,26 +1442,77 @@ html += '<input id="pSize" placeholder="Size (e.g. 1/2, 3/4, 1 inch)">';
 }
 function saveProduct() {
   var name = document.getElementById('pName').value.trim();
-  if (!name) { alert('Product name required'); return; }
+  if (!name) { 
+    alert(LANG === 'en' ? '⚠ Product name required' : '⚠ পণ্যের নাম আবশ্যক'); 
+    return; 
+  }
   
   var products = DB.get('products');
   var stock = +document.getElementById('pStock').value || 0;
   var unit = document.getElementById('pUnit').value || 'pcs';
   var id = uid();
   
-  // সাইজ ভ্যালু নেওয়া হচ্ছে
   var sizeVal = document.getElementById('pSize') ? document.getElementById('pSize').value.trim() : '';
-  
   var modelVal = document.getElementById('pModel') ? document.getElementById('pModel').value.trim() : '';
-  var brandVal = document.getElementById('pBrand') ? document.getElementById('pBrand').value.trim() : '';  
-var newProduct = {
+  var brandVal = document.getElementById('pBrand') ? document.getElementById('pBrand').value.trim() : '';
+  var skuVal = document.getElementById('pSku') ? document.getElementById('pSku').value.trim() : '';
+  var barcodeVal = document.getElementById('pBarcode') ? document.getElementById('pBarcode').value.trim() : '';
+
+  // ============ SMART DUPLICATE CHECK ============
+  var isDuplicate = false;
+  var dupReasonsEn = [];
+  var dupReasonsBn = [];
+  var displayName = (sizeVal ? sizeVal + ' ' : '') + name;
+
+  for (var i = 0; i < products.length; i++) {
+    var p = products[i];
+    var pDisplayName = (p.size ? p.size + ' ' : '') + p.name;
+    
+    // ১. একই নাম, সাইজ এবং ব্র্যান্ড চেক
+    if (pDisplayName.toLowerCase() === displayName.toLowerCase() && (p.brand || '').toLowerCase() === brandVal.toLowerCase()) {
+      isDuplicate = true;
+      dupReasonsEn.push('Same Name, Size & Brand');
+      dupReasonsBn.push('একই নাম, সাইজ ও ব্র্যান্ডের প্রোডাক্ট');
+    }
+    
+    // ২. একই বারকোড চেক
+    if (barcodeVal && p.barcode === barcodeVal) {
+      isDuplicate = true;
+      dupReasonsEn.push('Same Barcode (' + barcodeVal + ')');
+      dupReasonsBn.push('একই বারকোড (' + barcodeVal + ')');
+    }
+    
+    // ৩. একই SKU চেক
+    if (skuVal && p.sku === skuVal) {
+      isDuplicate = true;
+      dupReasonsEn.push('Same SKU (' + skuVal + ')');
+      dupReasonsBn.push('একই SKU (' + skuVal + ')');
+    }
+  }
+
+  // যদি ডুপ্লিকেট পাওয়া যায়, তবে ভাষা অনুযায়ী স্মার্ট এলার্ট দেবে
+  if (isDuplicate) {
+    var alertMsg = '';
+    if (LANG === 'en') {
+      var uniqueEn = dupReasonsEn.filter(function(item, pos) { return dupReasonsEn.indexOf(item) == pos; });
+      alertMsg = '⚠️ Warning: This product may already exist in stock!\n\nReason:\n• ' + uniqueEn.join('\n• ') + '\n\nAre you sure you want to add this as a new product?';
+    } else {
+      var uniqueBn = dupReasonsBn.filter(function(item, pos) { return dupReasonsBn.indexOf(item) == pos; });
+      alertMsg = '⚠️ সতর্কতা: স্টকে ইতিমধ্যে এই প্রোডাক্টটি থাকতে পারে!\n\nকারণ:\n• ' + uniqueBn.join('\n• ') + '\n\nআপনি কি নিশ্চিত যে আপনি এটি আবার নতুন প্রোডাক্ট হিসেবে যোগ করতে চান?';
+    }
+    
+    if (!confirm(alertMsg)) return; // ইউজার 'Cancel' দিলে ফেরত যাবে
+  }
+  // ============ END SMART DUPLICATE CHECK ============
+  
+  var newProduct = {
     id: id,
     name: name,
-    size: sizeVal, // <--- এখানে size যোগ করা হলো
+    size: sizeVal,
     model: modelVal,
     brand: brandVal,
-    sku: document.getElementById('pSku').value.trim(),
-    barcode: document.getElementById('pBarcode').value.trim(),
+    sku: skuVal,
+    barcode: barcodeVal,
     buyPrice: +document.getElementById('pBuy').value || 0,
     sellPrice: +document.getElementById('pSell').value || 0,
     stock: stock,
@@ -1471,18 +1522,21 @@ var newProduct = {
   
   products.push(newProduct);
   DB.set('products', products);
-  // ... (বাকি কোড আগের মতোই থাকবে)  
+
   // ☁️ Cloud sync to D1
-  if (VYRO_TOKEN) {
+  if (typeof VYRO_TOKEN !== 'undefined' && VYRO_TOKEN) {
     vyroApiCall('/api/save', 'POST', { products: [newProduct] }).then(function(r) {
       if (r && r.success) console.log('✅ Product synced to cloud');
       else console.warn('⚠️ Cloud sync failed:', r && r.error);
     });
   }
   
-  if (stock > 0) addStockJournal(id, 'purchase', stock, +document.getElementById('pBuy').value || 0, 'Initial stock', today());
+  if (stock > 0 && typeof addStockJournal === 'function') {
+    addStockJournal(id, 'purchase', stock, +document.getElementById('pBuy').value || 0, 'Initial stock', today());
+  }
+  
   document.getElementById('prodModal').remove();
-  render();
+  if (typeof render === 'function') render();
 }
 function editProduct(id) {
   closeModal();
@@ -10861,42 +10915,103 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   console.log('✅ Global safety net active');
 });
-// ============ FINAL FIX FOR QUOTATION SAVE ============
-window.saveQuotationDraft = function() {
-  updateQuote();
-  var q = currentQuotation;
-  
-  if (!q.customer.name) { 
-    alert(LANG === 'en' ? '⚠ Customer name required' : '⚠ কাস্টমারের নাম আবশ্যক'); 
-    return; 
+// ============ PERFECT FIX FOR SAVED QUOTATION LIST (FOLDER VIEW) ============
+window.openQuotationList = function() {
+  var quotations = DB.get('quotations') || [];
+  var html = '<div class="modal-overlay" id="quoteListModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal" style="max-width:600px">';
+  html += '<h3>📚 Saved Quotations (' + quotations.length + ') <span style="float:right;cursor:pointer" onclick="document.getElementById(\'quoteListModal\').remove()">✕</span></h3>';
+
+  if (quotations.length === 0) {
+    html += '<p style="text-align:center;color:#888;padding:30px">কোনো Quotation সেভ করা হয়নি</p>';
+  } else {
+    // ১. কাস্টমারের নাম অনুযায়ী গ্রুপ করা
+    var grouped = {};
+    for (var i = 0; i < quotations.length; i++) {
+      var q = quotations[i];
+      var custName = (q.customer && q.customer.name) ? q.customer.name : 'Unknown Customer';
+      if (!grouped[custName]) grouped[custName] = [];
+      grouped[custName].push(q);
+    }
+
+    var customerNames = Object.keys(grouped);
+    for (var c = 0; c < customerNames.length; c++) {
+      var cName = customerNames[c];
+      var qList = grouped[cName];
+      qList.sort(function(a,b){ return (b.qDate || '').localeCompare(a.qDate || ''); });
+
+      var totalAmount = 0;
+      for (var t = 0; t < qList.length; t++) {
+        var qCalcs = qList[t]._calcs;
+        if (qCalcs && qCalcs.grand) totalAmount += qCalcs.grand;
+      }
+
+      html += '<div style="background:#f8f9fa; border-radius:8px; margin-bottom:10px; overflow:hidden; border:1px solid #eee">';
+      // কাস্টমার ফোল্ডার হেডার
+      html += '<div onclick="toggleQuoteFolder(\'' + cName.replace(/'/g, "\\'") + '\')" style="padding:12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; background:#e3f2fd;">';
+      html += '<div><b style="font-size:13px; color:#2a5298;">👤 ' + cName + '</b>';
+      html += '<br><small style="color:#666; font-size:10px;">' + qList.length + ' টি Quotation • মোট: ' + fmt(totalAmount) + '</small></div>';
+      html += '<div style="font-size:18px; color:#2a5298;">▼</div>';
+      html += '</div>';
+      
+      // ভেতরের কোটেশন লিস্ট
+      html += '<div id="quoteFolder_' + cName.replace(/[^a-zA-Z0-9]/g, '_') + '" style="display:none; padding:10px;">';
+      
+      // মাস অনুযায়ী সাজানো
+      var monthGroups = {};
+      for (var m = 0; m < qList.length; m++) {
+        var mKey = qList[m].qDate ? qList[m].qDate.substring(0, 7) : 'Unknown';
+        if (!monthGroups[mKey]) monthGroups[mKey] = [];
+        monthGroups[mKey].push(qList[m]);
+      }
+      var months = Object.keys(monthGroups).sort().reverse();
+      
+      for (var mo = 0; mo < months.length; mo++) {
+        var mName = months[mo];
+        html += '<div style="background:#2a5298; color:#fff; font-size:11px; font-weight:700; padding:4px 8px; border-radius:4px; margin:8px 0 6px;">📅 ' + mName + '</div>';
+        
+        var mList = monthGroups[mName];
+        for (var q2 = 0; q2 < mList.length; q2++) {
+          var item = mList[q2];
+          var grand = item._calcs ? item._calcs.grand : 0;
+          var statusColor = '#ffa502';
+          if (item.status === 'Accepted') statusColor = '#2ed573';
+          else if (item.status === 'Rejected') statusColor = '#ff4757';
+          else if (item.status === 'Sent') statusColor = '#3498db';
+
+          html += '<div style="background:#fff; border-left:4px solid ' + statusColor + '; border-radius:6px; padding:8px; margin-bottom:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">';
+          html += '<div style="display:flex; justify-content:space-between; align-items:flex-start;">';
+          html += '<div><b style="font-size:12px; color:#2a5298;">' + (item.qNo || 'N/A') + '</b><br>';
+          html += '<small style="font-size:10px; color:#888;">' + item.qDate + ' • ' + (item.items ? item.items.filter(function(x){return x.name;}).length : 0) + ' items</small></div>';
+          html += '<div style="text-align:right;"><b style="font-size:13px; color:#2a5298;">' + fmt(grand) + '</b><br>';
+          html += '<span class="pill" style="background:' + statusColor + '20; color:' + statusColor + '; font-weight:700; font-size:9px;">' + (item.status || 'Draft') + '</span></div>';
+          html += '</div>';
+          
+          html += '<div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:4px; margin-top:6px;">';
+          html += '<button class="btn-sm btn-info" style="padding:5px; font-size:10px;" onclick="printQuotationFromList(' + item.id + ')">👁️</button>';
+          html += '<button class="btn-sm btn-warning" style="padding:5px; font-size:10px;" onclick="editQuotationById(' + item.id + ')">✏️</button>';
+          html += '<button class="btn-sm" style="padding:5px; font-size:10px; background:#25D366; color:#fff;" onclick="whatsappQuotationById(' + item.id + ')">📱</button>';
+          html += '<button class="btn-sm btn-danger" style="padding:5px; font-size:10px;" onclick="deleteQuotationById(' + item.id + ')">🗑️</button>';
+          html += '</div></div>';
+        }
+      }
+      html += '</div></div>';
+    }
   }
-  
-  q.status = 'Draft';
-  var st = document.getElementById('qStatus'); 
-  if (st) st.value = 'Draft';
-  
-  q.savedAt = Date.now();
-  var quotations = DB.get('quotations');
-  var found = false;
-  
-  for (var i = 0; i < quotations.length; i++) { 
-    if (quotations[i].id === q.id) { 
-      quotations[i] = q; 
-      found = true; 
-      break; 
-    } 
-  }
-  
-  if (!found) { 
-    quotations.push(q); 
-    commitQuotationNo(); 
-    q.qNo = peekQuotationNo();
-  }
-  
-  DB.set('quotations', quotations);
-  alert(LANG === 'en' ? '✅ Quotation successfully saved!\n\nQuotation No: ' + q.qNo : '✅ Quotation সফলভাবে সেভ হয়েছে!\n\nQuotation No: ' + q.qNo);
+
+  html += '<button class="btn-primary" style="background:#888; margin-top:12px;" onclick="document.getElementById(\'quoteListModal\').remove()">Close</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
 };
-// =======================================================
+
+// ============ FOLDER TOGGLE FIX ============
+window.toggleQuoteFolder = function(cName) {
+  var id = 'quoteFolder_' + cName.replace(/[^a-zA-Z0-9]/g, '_');
+  var el = document.getElementById(id);
+  if (el) {
+    el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  }
+};
 </script>
 </body>
 </html>
