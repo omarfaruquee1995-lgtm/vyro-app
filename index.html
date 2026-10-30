@@ -1736,14 +1736,91 @@ function showCustomerLedger(id) {
 }
 function openPaymentModal(customerId) {
   closeModal();
-  var amount = prompt('Amount:');
-  if (!amount || isNaN(+amount) || +amount <= 0) return;
+  var customers = DB.get('customers');
+  var c = null;
+  for (var i = 0; i < customers.length; i++) if (customers[i].id === customerId) c = customers[i];
+  if (!c) return;
+
+  // কাস্টমারের বাকি থাকা ইনভয়েসগুলো বের করা
+  var sales = DB.get('sales');
+  var dueSales = sales.filter(function(s){ return s.customerId === customerId && (s.due || 0) > 0; });
+  dueSales.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
+
+  var html = '<div class="modal-overlay" id="paymentModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal">';
+  html += '<h3>💵 Receive Payment</h3>';
   
-  var payAmt = +amount;
+  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px;line-height:1.6">';
+  html += '<b>Customer:</b> ' + c.name + '<br>';
+  html += '<b>Total Due:</b> <span style="color:#ff4757;font-weight:800;font-size:14px">' + fmt(c.due) + '</span>';
+  html += '</div>';
+
+  // Invoice Number Select
+  html += '<label style="font-size:11px;color:#666;font-weight:700">🧾 Invoice No (Optional)</label>';
+  html += '<select id="payInvoiceNo" onchange="updatePayAmount()" style="margin-bottom:8px">';
+  html += '<option value="0">-- General Payment (No Invoice) --</option>';
+  for (var j = 0; j < dueSales.length; j++) {
+    var s = dueSales[j];
+    html += '<option value="' + s.id + '" data-due="' + s.due + '">' + (s.invoiceNo || ('INV-' + s.id)) + ' — Due: ' + fmt(s.due) + '</option>';
+  }
+  html += '</select>';
+
+  // Amount
+  html += '<label style="font-size:11px;color:#666;font-weight:700">💰 Amount</label>';
+  html += '<input id="payAmount" type="number" placeholder="0.00" oninput="updatePayAmount(true)">';
+
+  // Date
+  html += '<label style="font-size:11px;color:#666;font-weight:700">📅 Date</label>';
+  html += '<input id="payDate" type="date" value="' + today() + '">';
+
+  // Note
+  html += '<label style="font-size:11px;color:#666;font-weight:700">📝 Note</label>';
+  html += '<input id="payNote" placeholder="Optional note...">';
+
+  html += '<button class="btn-success" style="margin-top:8px" onclick="submitPayment(' + customerId + ')">✅ Save Payment</button>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'paymentModal\').remove()">Cancel</button>';
+  html += '</div></div>';
   
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+// Invoice সিলেক্ট করলে অটোমেটিক Due এমাউন্ট বসে যাবে
+window.updatePayAmount = function(fromManualInput) {
+  var sel = document.getElementById('payInvoiceNo');
+  var amtInput = document.getElementById('payAmount');
+  if (!sel || !amtInput) return;
+  
+  var selectedOpt = sel.options[sel.selectedIndex];
+  var due = selectedOpt ? +selectedOpt.getAttribute('data-due') : 0;
+  
+  // যদি ইনভয়েস সিলেক্ট করা হয় এবং ইউজার ম্যানুয়ালি অ্যামাউন্ট না লিখে থাকে
+  if (sel.value !== '0' && !fromManualInput && due > 0) {
+    amtInput.value = due;
+  }
+};
+
+// Payment সেভ করার ফাংশন
+window.submitPayment = function(customerId) {
+  var payAmt = +document.getElementById('payAmount').value;
+  var invoiceId = +document.getElementById('payInvoiceNo').value;
+  var payDate = document.getElementById('payDate').value || today();
+  var payNote = document.getElementById('payNote').value.trim();
+  
+  if (!payAmt || payAmt <= 0) { alert(LANG === 'en' ? '⚠ Invalid amount' : '⚠ সঠিক টাকার পরিমাণ দিন'); return; }
+
   // ১. পেমেন্ট সেভ
   var payments = DB.get('payments');
-  payments.push({id: uid(), customerId: customerId, amount: payAmt, date: today(), time: nowTime()});
+  var newPayment = {
+    id: uid(), 
+    paymentNo: (typeof generatePaymentNo === 'function') ? generatePaymentNo(customersName(customerId)) : ('PAY-' + Date.now()),
+    customerId: customerId, 
+    invoiceId: invoiceId,
+    amount: payAmt, 
+    date: payDate, 
+    time: nowTime(),
+    note: payNote
+  };
+  payments.push(newPayment);
   DB.set('payments', payments);
 
   // ২. কাস্টমার আপডেট
@@ -1754,39 +1831,73 @@ function openPaymentModal(customerId) {
   }
   DB.set('customers', customers);
 
-  // ৩. ইনভয়েসগুলোতে টাকা সমন্বয়
+  // ৩. ইনভয়েস সমন্বয় (Smart Adjustment)
   var sales = DB.get('sales');
   var remainingToAdjust = payAmt;
-  var custSales = sales.filter(function(s){ return s.customerId === customerId && (s.due || 0) > 0; });
-  custSales.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
   
-  for (var j = 0; j < custSales.length; j++) {
-    if (remainingToAdjust <= 0) break;
-    var sale = custSales[j];
-    var saleDue = sale.due || 0;
-    
-    if (remainingToAdjust >= saleDue) {
-      remainingToAdjust -= saleDue;
-      sale.paid = (sale.paid || 0) + saleDue;
-      sale.due = 0;
-    } else {
-      sale.paid = (sale.paid || 0) + remainingToAdjust;
-      sale.due = saleDue - remainingToAdjust;
-      remainingToAdjust = 0;
-    }
-    
+  if (invoiceId > 0) {
+    // নির্দিষ্ট ইনভয়েসে পেমেন্ট
     for (var k = 0; k < sales.length; k++) {
-      if (sales[k].id === sale.id) {
-        sales[k].paid = sale.paid;
-        sales[k].due = sale.due;
+      if (sales[k].id === invoiceId) {
+        var saleDue = sales[k].due || 0;
+        if (remainingToAdjust >= saleDue) {
+          remainingToAdjust -= saleDue;
+          sales[k].paid = (sales[k].paid || 0) + saleDue;
+          sales[k].due = 0;
+        } else {
+          sales[k].paid = (sales[k].paid || 0) + remainingToAdjust;
+          sales[k].due = saleDue - remainingToAdjust;
+          remainingToAdjust = 0;
+        }
         break;
+      }
+    }
+  } else {
+    // যদি General Payment হয়, তবে আগের দিনের বিল থেকে শুরু করে সাজিয়ে টাকা সমন্বয় হবে
+    var custSales = sales.filter(function(s){ return s.customerId === customerId && (s.due || 0) > 0; });
+    custSales.sort(function(a, b) { return (a.date || '').localeCompare(b.date || ''); });
+    
+    for (var j = 0; j < custSales.length; j++) {
+      if (remainingToAdjust <= 0) break;
+      var sale = custSales[j];
+      var saleDue = sale.due || 0;
+      
+      if (remainingToAdjust >= saleDue) {
+        remainingToAdjust -= saleDue;
+        sale.paid = (sale.paid || 0) + saleDue;
+        sale.due = 0;
+      } else {
+        sale.paid = (sale.paid || 0) + remainingToAdjust;
+        sale.due = saleDue - remainingToAdjust;
+        remainingToAdjust = 0;
+      }
+      
+      for (var m = 0; m < sales.length; m++) {
+        if (sales[m].id === sale.id) {
+          sales[m].paid = sale.paid;
+          sales[m].due = sale.due;
+          break;
+        }
       }
     }
   }
   DB.set('sales', sales);
+
+  document.getElementById('paymentModal').remove();
+  
   // রিসিপ্ট দেখানোর জন্য
-  setTimeout(function() { showMoneyReceipt(payments[payments.length - 1].id); }, 300);
-  render();
+  setTimeout(function() { 
+    if (typeof showMoneyReceipt === 'function') showMoneyReceipt(newPayment.id); 
+  }, 300);
+  
+  if (typeof render === 'function') render();
+};
+
+// হেল্পার ফাংশন কাস্টমারের নাম বের করার জন্য
+function customersName(id) {
+  var custs = DB.get('customers');
+  for (var i=0; i<custs.length; i++) if (custs[i].id === id) return custs[i].name;
+  return 'Customer';
 }
 function sendWhatsAppDue(customerId) {
   var customers = DB.get('customers');
