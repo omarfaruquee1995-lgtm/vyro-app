@@ -10708,6 +10708,20 @@ window.showMoneyReceipt = function(paymentId) {
   for (var j = 0; j < customers.length; j++) if (customers[j].id === p.customerId) c = customers[j];
   if (!c) return;
 
+  // Invoice Info বের করা
+  var invoiceNoText = '';
+  var invoiceDateText = '';
+  if (p.invoiceId && p.invoiceId > 0) {
+    var sales = DB.get('sales');
+    for (var k = 0; k < sales.length; k++) {
+      if (sales[k].id === p.invoiceId) {
+        invoiceNoText = sales[k].invoiceNo || ('INV-' + sales[k].id);
+        invoiceDateText = sales[k].date;
+        break;
+      }
+    }
+  }
+
   var theme = SETTINGS.get('invoiceTheme', 'blue');
   var font = SETTINGS.get('invoiceFont', 'arial');
   var receiptNo = 'MR-' + String(p.id).slice(-6);
@@ -10737,8 +10751,20 @@ window.showMoneyReceipt = function(paymentId) {
   if (c.address) html += '<p style="font-size:12px;color:#666;margin:2px 0 0">📍 ' + c.address + '</p>';
   html += '</div>';
 
-  // Payment Details
+  // Payment Details (Invoice No & Date Added)
   html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px">';
+  
+  if (invoiceNoText) {
+    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Against Invoice:</td><td style="padding:10px;text-align:right;font-weight:700;color:#2a5298">' + invoiceNoText + '</td></tr>';
+    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Invoice Date:</td><td style="padding:10px;text-align:right;font-weight:700">' + invoiceDateText + '</td></tr>';
+  } else {
+    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Against Invoice:</td><td style="padding:10px;text-align:right;font-weight:700;color:#888">General Payment</td></tr>';
+  }
+  
+  if (p.note) {
+    html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Note:</td><td style="padding:10px;text-align:right;">' + p.note + '</td></tr>';
+  }
+
   html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Payment Method:</td><td style="padding:10px;text-align:right;font-weight:700">Cash / Hand Cash</td></tr>';
   html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Received Amount:</td><td style="padding:10px;text-align:right;font-weight:800;color:#2ed573;font-size:16px">' + fmt(p.amount) + '</td></tr>';
   html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px;color:#666">Current Due (After Payment):</td><td style="padding:10px;text-align:right;font-weight:700;color:#ff4757">' + fmt(c.due) + '</td></tr>';
@@ -10772,7 +10798,6 @@ window.showMoneyReceipt = function(paymentId) {
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 };
-
 window.printMoneyReceipt = function() {
   var content = document.getElementById('moneyReceiptPrint').innerHTML;
   var theme = SETTINGS.get('invoiceTheme', 'blue');
