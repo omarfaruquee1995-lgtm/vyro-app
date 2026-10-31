@@ -26,6 +26,86 @@ body.dark-mode .tab { background:#2a2a2a; color:#e0e0e0; border-color:#444; }
 body.dark-mode .tab.active { background:#4a90e2; color:#fff; }
 body.dark-mode .alert { background:#2a2a1e; color:#e0e0e0; }
 body.dark-mode .cart-item { background:#2a2a2a; }
+/* ========================================= */
+/* NEW MODERN CART TABLE STYLES              */
+/* ========================================= */
+.modern-cart-wrap {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  border: 1px solid #eee;
+  background: #fff;
+}
+
+.modern-cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px; /* মোবাইলে স্ক্রল হবে */
+}
+
+.modern-cart-table thead {
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  color: #fff;
+}
+
+.modern-cart-table th {
+  padding: 12px 10px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modern-cart-table th:first-child { border-top-left-radius: 8px; }
+.modern-cart-table th:last-child { border-top-right-radius: 8px; }
+
+.modern-cart-table tbody tr {
+  border-bottom: 1px solid #f0f2f5;
+  transition: background 0.2s;
+}
+
+.modern-cart-table tbody tr:hover {
+  background: #f8faff;
+}
+
+.modern-cart-table td {
+  padding: 10px;
+  vertical-align: middle;
+  font-size: 13px;
+}
+
+/* টেবিলের ভেতরের ইনপুট স্টাইল */
+.modern-cart-table input[type="number"] {
+  width: 70px;
+  padding: 6px;
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.modern-cart-table .unit-select {
+  width: 70px !important;
+  padding: 6px 2px !important;
+  font-size: 12px !important;
+  margin: 0 !important;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+/* ডার্ক মোডের জন্য */
+body.dark-mode .modern-cart-wrap { background: #1e1e1e; border-color: #333; }
+body.dark-mode .modern-cart-table thead { background: #2a2a2a; color: #e0e0e0; }
+body.dark-mode .modern-cart-table tbody tr { border-bottom-color: #333; }
+body.dark-mode .modern-cart-table tbody tr:hover { background: #2a2a2a; }
+body.dark-mode .modern-cart-table input[type="number"], 
+body.dark-mode .modern-cart-table .unit-select { 
+  background: #333; color: #fff; border-color: #444; 
+}
 body.dark-mode .modal-overlay { background:rgba(0,0,0,.8); }
 body.dark-mode .settings-item { border-bottom-color:#333; }
 body.dark-mode .settings-item .value { color:#aaa; }
@@ -2007,42 +2087,66 @@ function renderSales(app) {
   
   html += '<button class="btn-info" onclick="openCustomItemModal()" style="width:100%;margin-bottom:8px;padding:10px;font-weight:700">➕ Add Custom Item (Stock-এ নেই)</button>';
   
-  html += '<h4 style="font-size:13px;margin:10px 0 6px;color:#2a5298">🛒 Cart (' + saleCart.length + ')</h4>';
+    html += '<h4 style="font-size:13px;margin:10px 0 6px;color:#2a5298">🛒 Cart (' + saleCart.length + ')</h4>';
   var subtotal = 0;
   
   if (saleCart.length === 0) {
     html += '<p style="text-align:center;color:#888;font-size:12px;padding:10px">Cart empty</p>';
   } else {
+       // টেবিলের হেডার (ক্রম: Product -> Qty -> Unit -> Price -> Amount)
+    html += '<div class="modern-cart-wrap"><table class="modern-cart-table"><thead><tr>';
+    html += '<th style="width:35%">Product</th>';
+    html += '<th style="width:15%">Qty</th>';
+    html += '<th style="width:15%">Unit</th>';
+    html += '<th style="width:15%">Price</th>';
+    html += '<th style="width:15%">Amount</th>';
+    html += '<th style="width:5%"></th>';
+    html += '</tr></thead><tbody>';
+
     for (var k = 0; k < saleCart.length; k++) {
       var item = saleCart[k];
       subtotal += item.price * item.qty;
       var itemUnit = item.unit || 'pcs';
       
-      // সাইজ, মডেল, ব্র্যান্ড
       var itemDisplayName = item.size ? (item.size + ' ' + item.name) : item.name;
       var itemExtra = '';
       if (item.model) itemExtra += 'Model: ' + item.model;
       if (item.brand) itemExtra += (itemExtra ? ' | ' : '') + 'Brand: ' + item.brand;
+
+      html += '<tr>';
       
-      html += '<div class="cart-item"><div style="flex:1"><b>' + itemDisplayName + '</b>';
+      // ১. Product Name & Details
+      html += '<td><b style="color:#2a5298;font-size:13px">' + itemDisplayName + '</b>';
+      if (itemExtra) html += '<br><small style="color:#ff9800;font-size:10px;font-weight:600">' + itemExtra + '</small>';
+      html += '</td>';
       
-      if (itemExtra) {
-        html += '<br><small style="color:#2a5298;font-weight:700;font-size:10px">' + itemExtra + '</small>';
-      }
+      // ২. Qty (Buttons & Input)
+      html += '<td><div style="display:flex;align-items:center;gap:2px">';
+      html += '<button class="btn-sm btn-warning" style="padding:2px 6px;font-size:10px" onclick="updateCartQty(' + k + ',-1)">−</button>';
+      html += '<input type="number" value="' + item.qty + '" min="1" step="any" onchange="setCartQty(' + k + ', this.value)" style="width:45px;text-align:center;padding:4px;font-size:12px;margin:0">';
+      html += '<button class="btn-sm btn-success" style="padding:2px 6px;font-size:10px" onclick="updateCartQty(' + k + ',1)">+</button>';
+      html += '</div></td>';
       
-      html += '<br><small>৳ <input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" style="width:70px;padding:2px 4px;font-size:11px;display:inline-block;margin:0" step="0.01"> × ' + item.qty + ' ' + itemUnit + ' = ' + fmt(item.price*item.qty) + '</small></div>';
-      
-      html += '<div style="display:flex;gap:4px;align-items:center">';
-      html += '<button class="btn-sm btn-warning" onclick="updateCartQty(' + k + ',-1)">−</button>';
-      html += '<input type="number" value="' + item.qty + '" min="1" step="any" onchange="setCartQty(' + k + ', this.value)" style="width:60px;text-align:center;padding:4px;font-size:12px;margin:0">';
-      html += '<button class="btn-sm btn-success" onclick="updateCartQty(' + k + ',1)">+</button>';
-      html += '<select class="unit-select" onchange="changeCartUnit(' + k + ',this.value)" style="width:60px;font-size:11px">';
+      // ৩. Unit
+      html += '<td><select class="unit-select" onchange="changeCartUnit(' + k + ',this.value)" style="width:70px;font-size:11px;margin:0;padding:4px">';
       var uArr = ['pcs','box','pkt'];
       for (var u2 = 0; u2 < uArr.length; u2++) html += '<option value="' + uArr[u2] + '"' + (itemUnit === uArr[u2] ? ' selected' : '') + '>' + uArr[u2] + '</option>';
-      html += '</select>';
-      html += '<button class="btn-sm btn-danger" onclick="removeFromCart(' + k + ')">✕</button></div></div>';
+      html += '</select></td>';
+      
+      // ৪. Price (৳ চিহ্ন ছাড়া)
+      html += '<td><input type="number" value="' + item.price + '" onchange="updateCartPrice(' + k + ', this.value)" step="0.01" style="width:70px;padding:4px;font-size:12px;margin:0"></td>';
+      
+      // ৫. Amount / Total
+      html += '<td style="font-weight:700;color:#2ed573">' + fmt(item.price * item.qty) + '</td>';
+      
+      // ৬. Action (Delete)
+      html += '<td style="text-align:center"><button class="btn-sm btn-danger" style="padding:4px 8px" onclick="removeFromCart(' + k + ')">✕</button></td>';
+      
+      html += '</tr>';
     }
-    html += '<div style="text-align:right;padding:8px 0;font-size:14px;font-weight:700;color:#2a5298">Subtotal: ' + fmt(subtotal) + '</div>';
+    
+    html += '</tbody></table></div>';
+    html += '<div style="text-align:right;padding:10px 0;font-size:16px;font-weight:800;color:#2a5298">Subtotal: ' + fmt(subtotal) + '</div>';
   }
   html += '<div class="grid2" style="margin-top:8px">';
   html += '<button class="btn-warning" onclick="if(saleCart.length&&confirm(\'Clear?\')){saleCart=[];renderSales(document.getElementById(\'app\'))}">🗑️ Clear Cart</button>';
