@@ -2571,7 +2571,12 @@ html += '<p style="font-size:11px; color:#666; margin:2px 0 0; font-weight:400;"
     html += '<b>INVOICE</b><br>';
     html += 'Invoice #: ' + (s.invoiceNo || s.id) + '<br>';
     html += 'Date: ' + s.date + '<br>';
-    html += 'Chalan No: ' + (s.challanNo || 'N/A');
+        var chalanTextF4 = 'N/A';
+    var chs = DB.get('challans');
+    for (var ci = 0; ci < chs.length; ci++) {
+      if (chs[ci].saleId === s.id) { chalanTextF4 = chs[ci].challanNo; break; }
+    }
+    html += 'Chalan No: ' + chalanTextF4;v
     html += '</div></div>';
 
     html += '<div style="display:flex; justify-content:space-between; margin-bottom:15px; position:relative; z-index:1; font-size:12px;">';
@@ -2617,6 +2622,85 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
     html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>Store Received</b></div><small style="color:#666;">Received By</small></div>';
     html += '</div>';
 
+  } else if (activeFormat === 5) {
+    // ==========================================
+    // FORMAT 5 - MODERN BORDER STYLE
+    // ==========================================
+    html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #ddd; padding-bottom:10px; margin-bottom:15px;">';
+    
+    // Left: Shop Info
+    html += '<div style="width:35%;">';
+    html += '<h1 style="color:#8b1e1e; font-size:24px; margin:0; font-weight:900; text-transform:uppercase;">' + currentShop.name + '</h1>';
+    html += '<p style="font-size:11px; color:#444; margin:4px 0 0; font-weight:600;">' + (savedSubtitle || '') + '</p>';
+    html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📍 ' + (savedAddress || '') + '</p>';
+    html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📞 ' + (savedPhone || '') + '</p>';
+    html += '</div>';
+
+    // Center: INVOICE
+    html += '<div style="width:30%; text-align:center;">';
+    html += '<h2 style="color:#8b1e1e; font-size:28px; margin:10px 0 0; letter-spacing:2px; font-weight:900;">INVOICE</h2>';
+    html += '</div>';
+
+    // Right: Invoice Details
+    html += '<div style="width:35%; text-align:right; font-size:12px; line-height:1.6;">';
+    html += '<div><b>Invoice #:</b> ' + (s.invoiceNo || s.id) + '</div>';
+    html += '<div><b>Invoice Date:</b> ' + s.date + '</div>';
+        // চালান নাম্বার খোঁজা
+    var challanNoText = 'N/A';
+    var challansList = DB.get('challans');
+    for (var c = 0; c < challansList.length; c++) {
+      if (challansList[c].saleId === s.id) {
+        challanNoText = challansList[c].challanNo;
+        break;
+      }
+    }
+    html += '<div><b>Challan No:</b> ' + challanNoText + '</div>';
+    html += '</div>';
+
+    html += '</div>';
+
+    // Bill To
+    html += '<div style="margin-bottom:15px; font-size:12px;">';
+    html += '<b style="font-size:11px; text-transform:uppercase;">BILL TO:</b><br>';
+    html += '<b style="font-size:14px;">' + (s.customerName || 'Cash') + '</b><br>';
+    if (custAddress) html += '<span style="color:#666;">' + custAddress + '</span><br>';
+    if (custAttention) html += '<span style="color:#666;">Attention: ' + custAttention + '</span>';
+    html += '</div>';
+
+    // Items Table
+    html += '<table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:15px; border:1px solid #000;">';
+    html += '<thead><tr style="background:#f0f0f0; border:1px solid #000; text-align:center; font-weight:bold;">';
+    html += '<th style="border:1px solid #000; padding:6px; width:5%;">Sl No</th>';
+    html += '<th style="border:1px solid #000; padding:6px; width:45%;">Description</th>';
+    html += '<th style="border:1px solid #000; padding:6px; width:10%;">Qty</th>';
+    html += '<th style="border:1px solid #000; padding:6px; width:10%;">Unit</th>';
+    html += '<th style="border:1px solid #000; padding:6px; width:15%;">Unit Price</th>';
+    html += '<th style="border:1px solid #000; padding:6px; width:15%;">Amount</th>';
+    html += '</tr></thead><tbody>';
+    
+    for (var j = 0; j < s.items.length; j++) {
+      var it = s.items[j];
+      html += '<tr>';
+      html += '<td style="border:1px solid #000; padding:6px; text-align:center;">' + (j + 1) + '</td>';
+      html += '<td style="border:1px solid #000; padding:6px;">' + it.name + '</td>';
+      html += '<td style="border:1px solid #000; padding:6px; text-align:center;">' + it.qty + '</td>';
+      html += '<td style="border:1px solid #000; padding:6px; text-align:center;">' + (it.unit || 'pcs') + '</td>';
+      html += '<td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (it.price).toFixed(2) + '</td>';
+      html += '<td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (it.price * it.qty).toFixed(2) + '</td>';
+      html += '</tr>';
+    }
+    html += '</tbody></table>';
+
+    // Summary Table (As per picture)
+    html += '<table style="width:100%; border-collapse:collapse; font-size:12px; border:1px solid #000;">';
+    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SUB TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right; width:20%;">৳ ' + (s.subtotal || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SPECIAL DISCOUNT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.discount || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">VAT (as per govt. rules) :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td style="border:1px solid #000; padding:6px; text-transform:uppercase;">TRANSPORTATION / CARRYING CHARGE</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + (s.total || 0).toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="3" style="border:1px solid #000; padding:6px; font-weight:bold; font-style:italic;">IN WORD : BDT ' + amountToWords(s.total).toUpperCase() + '</td></tr>';
+    html += '</table>';
   } else {
     // ==========================================
     // আগের ফরম্যাট ১, ২, ৩ (Standard/Modern/Classic)
@@ -11001,7 +11085,8 @@ window.openFormatSelector = function() {
     { id: 1, name: 'Standard Format', desc: 'Clean and simple design' },
     { id: 2, name: 'Modern Box Format', desc: 'Centered header with borders' },
     { id: 3, name: 'Classic Top Bar', desc: 'Thick top border design' },
-{ id: 4, name: 'NS Safety Style', desc: 'Detailed boxed layout like NS Safety Tools' }
+    { id: 4, name: 'NS Safety Style', desc: 'Detailed boxed layout like NS Safety Tools' },
+    { id: 5, name: 'Modern Border Style', desc: 'Modern look with center invoice title and boxed summary' } // <--- নতুন যোগ হলো
   ];
   
   for (var i = 0; i < formats.length; i++) {
@@ -11172,6 +11257,53 @@ window.toggleQuoteFolder = function(cName) {
   if (el) {
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
   }
+};
+// ============ PERFECT FIX FOR CHALLAN NO IN INVOICE ============
+var _origShowInvoiceFinal = window.showInvoice;
+window.showInvoice = function(saleId) {
+  // ১. চেক করা হচ্ছে এই সেল আইডির জন্য চালান আছে কি না, না থাকলে তৈরি করা হচ্ছে
+  var challans = DB.get('challans');
+  var hasChallan = false;
+  for (var c = 0; c < challans.length; c++) {
+    if (challans[c].saleId === saleId) { hasChallan = true; break; }
+  }
+  if (!hasChallan) {
+    // যদি চালান না থাকে, তবে অটো তৈরি করার ফাংশন কল করা হচ্ছে (যদি থাকে)
+    if (typeof autoCreateChallan === 'function') {
+      autoCreateChallan(saleId);
+    }
+  }
+
+  // ২. মূল showInvoice ফাংশন কল করা হচ্ছে
+  if (_origShowInvoiceFinal) {
+    _origShowInvoiceFinal(saleId);
+  }
+
+  // ৩. DOM-এ চালান নাম্বারটি আপডেট করা হচ্ছে (ইনভয়েস রেন্ডার হওয়ার পর)
+  setTimeout(function() {
+    var sales = DB.get('sales');
+    var s = null;
+    for (var i = 0; i < sales.length; i++) if (sales[i].id === saleId) s = sales[i];
+    if (!s) return;
+
+    // ডাটাবেস থেকে চালান নাম্বার বের করা
+    var challanNoText = 'N/A';
+    var chs = DB.get('challans');
+    for (var j = 0; j < chs.length; j++) {
+      if (chs[j].saleId === saleId) {
+        challanNoText = chs[j].challanNo;
+        break;
+      }
+    }
+
+    // DOM-এ যেখানে 'Challan No: N/A' বা 'Chalan No: N/A' লেখা আছে, সেটা খুঁজে আপডেট করা
+    var printArea = document.getElementById('invoicePrint');
+    if (printArea) {
+      // regex দিয়ে খোঁজা হচ্ছে (ফরম্যাট ৪ এবং ৫ এর জন্য)
+      var regex = /(Chall?a?n No:?\s*)(N\/A|[\w-]+)/gi;
+      printArea.innerHTML = printArea.innerHTML.replace(regex, '$1' + challanNoText);
+    }
+  }, 100); // ১০০ মিলিসেকেন্ড পর DOM আপডেট হবে
 };
 </script>
 </body>
