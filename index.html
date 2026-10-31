@@ -2691,15 +2691,21 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
     }
     html += '</tbody></table>';
 
-    // Summary Table (As per picture)
+        // Summary Table (As per picture)
     html += '<table style="width:100%; border-collapse:collapse; font-size:12px; border:1px solid #000;">';
     html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SUB TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right; width:20%;">৳ ' + (s.subtotal || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SPECIAL DISCOUNT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.discount || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
+    
+    // VAT and Transport
     html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">VAT (as per govt. rules) :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
     html += '<tr><td style="border:1px solid #000; padding:6px; text-transform:uppercase;">TRANSPORTATION / CARRYING CHARGE</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
-    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + (s.total || 0).toFixed(2) + '</td></tr>';
-    html += '<tr><td colspan="3" style="border:1px solid #000; padding:6px; font-weight:bold; font-style:italic;">IN WORD : BDT ' + amountToWords(s.total).toUpperCase() + '</td></tr>';
+    
+    // সঠিক গ্র্যান্ড টোটাল হিসাব
+    var grandTotalCalc = (s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0) + (s.transportCost || 0);
+    
+    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + grandTotalCalc.toFixed(2) + '</td></tr>';
+    html += '<tr><td colspan="3" style="border:1px solid #000; padding:6px; font-weight:bold; font-style:italic;">IN WORD : BDT ' + amountToWords(grandTotalCalc).toUpperCase() + '</td></tr>';
     html += '</table>';
   } else {
     // ==========================================
