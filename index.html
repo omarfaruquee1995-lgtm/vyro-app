@@ -2510,21 +2510,25 @@ function amountToWords(amount) {
   return numberToWordsEN(amount);
 }
 function completeSale() {
-  // চেক করা হচ্ছে কার্টে আসলেই কিছু আছে কি না
-    // FIX: window.saleCart চেক করা হচ্ছে যাতে টেবিলে ডেটা থাকলে কার্ট খালি না দেখায়
-  var cart = window.saleCart || saleCart;
-  if (typeof cart === 'undefined' || !cart || cart.length === 0) {
-    alert(LANG === 'en' ? 'Cart is empty' : 'কার্ট খালি');
-    return;
+  // কাস্টমারের ব্রাউজারে স্কোপ সমস্যা এড়াতে window.saleCart ব্যবহার
+  if (typeof window.saleCart === 'undefined') {
+    window.saleCart = [];
+  }
+  
+  var cart = window.saleCart;
+  
+  if (!cart || cart.length === 0) { 
+    alert(LANG === 'en' ? 'Cart is empty!' : 'কার্ট খালি!'); 
+    return; 
   }
   
   var custId = window.selectedCustomerId || +document.getElementById('saleCustSelect').value || 0;
   var subtotal = 0, cost = 0;
   
-    // টোটাল হিসাব করা
-  for (var j = 0; j < cart.length; j++) {
-    subtotal += cart[j].price * cart[j].qty;
-    cost += cart[j].buyPrice * cart[j].qty;
+  // টোটাল হিসাব করা
+  for (var j = 0; j < cart.length; j++) { 
+    subtotal += cart[j].price * cart[j].qty; 
+    cost += cart[j].buyPrice * cart[j].qty; 
   }
   
   closeModal();
@@ -2546,6 +2550,7 @@ function completeSale() {
   html += '<div id="billWordsBox" class="amount-words" style="display:none"></div>';
   html += '<button class="btn-success" onclick="finalizeSale(' + custId + ',' + cost + ')">✅ Complete Sale</button>';
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'billingModal\').remove()">Cancel</button></div></div>';
+  
   document.body.insertAdjacentHTML('beforeend', html);
   window._billSubtotal = subtotal;
   calcBilling();
