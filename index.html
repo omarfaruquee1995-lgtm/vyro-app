@@ -2511,18 +2511,20 @@ function amountToWords(amount) {
 }
 function completeSale() {
   // চেক করা হচ্ছে কার্টে আসলেই কিছু আছে কি না
-  if (typeof saleCart === 'undefined' || saleCart.length === 0) { 
-    alert('Cart empty'); 
-    return; 
+    // FIX: window.saleCart চেক করা হচ্ছে যাতে টেবিলে ডেটা থাকলে কার্ট খালি না দেখায়
+  var cart = window.saleCart || saleCart;
+  if (typeof cart === 'undefined' || !cart || cart.length === 0) {
+    alert(LANG === 'en' ? 'Cart is empty' : 'কার্ট খালি');
+    return;
   }
   
   var custId = window.selectedCustomerId || +document.getElementById('saleCustSelect').value || 0;
   var subtotal = 0, cost = 0;
   
-  // টোটাল হিসাব করা
-  for (var j = 0; j < saleCart.length; j++) { 
-    subtotal += saleCart[j].price * saleCart[j].qty; 
-    cost += saleCart[j].buyPrice * saleCart[j].qty; 
+    // টোটাল হিসাব করা
+  for (var j = 0; j < cart.length; j++) {
+    subtotal += cart[j].price * cart[j].qty;
+    cost += cart[j].buyPrice * cart[j].qty;
   }
   
   closeModal();
