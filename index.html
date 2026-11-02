@@ -1001,30 +1001,29 @@ function initApp() {
   document.getElementById('loginScreen').style.display = 'flex';
   if (!localStorage.getItem('smp_global_shops')) DB.setGlobal('shops', [{id:1, name:'Demo Shop', logo:'🏪', address:'Dhaka', phone:'01700000000'}]);
   if (!localStorage.getItem('smp_global_users')) DB.setGlobal('users', [{id:1, shopId:1, username:'admin', password:'admin123', name:'Admin', role:'admin', permissions:['sell','stock','customers','reports','expense']}]);
-    var session = localStorage.getItem('smp_session');
+  
+  var session = localStorage.getItem('smp_session');
   if (session) {
     try {
-      // Session Expiry Check (১২ ঘণ্টা)
       var sessionTime = +localStorage.getItem('smp_session_time') || 0;
       var twelveHours = 12 * 60 * 60 * 1000;
       if (sessionTime && (Date.now() - sessionTime > twelveHours)) {
         localStorage.removeItem('smp_session');
         localStorage.removeItem('smp_session_time');
         console.log('Session expired. Auto logout.');
-        // সেশন এক্সপায়ার হলে নিচের কোড রান হবে না, লগইন স্ক্রিন দেখাবে
       } else {
-        // টাইম আপডেট করা (Activity Based)
         localStorage.setItem('smp_session_time', Date.now().toString());
         var s = JSON.parse(session);
-      var users = DB.getGlobal('users');
-      for (var i = 0; i < users.length; i++) if (users[i].id === s.userId) { currentUser = users[i]; DB.currentShopId = s.shopId; currentShop = DB.findShop(s.shopId); }
-      if (currentUser && currentShop) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('topbar').style.display = 'flex';
-        document.getElementById('bottomNav').style.display = 'flex';
-        setTimeout(updateTopbarAvatar, 50);
-        applySavedTheme();
-      setTimeout(function() { vyroLoadFromCloud(); }, 500);
+        var users = DB.getGlobal('users');
+        for (var i = 0; i < users.length; i++) if (users[i].id === s.userId) { currentUser = users[i]; DB.currentShopId = s.shopId; currentShop = DB.findShop(s.shopId); }
+        if (currentUser && currentShop) {
+          document.getElementById('loginScreen').style.display = 'none';
+          document.getElementById('topbar').style.display = 'flex';
+          document.getElementById('bottomNav').style.display = 'flex';
+          setTimeout(updateTopbarAvatar, 50);
+          applySavedTheme();
+          setTimeout(function() { if (typeof vyroLoadFromCloud === 'function') vyroLoadFromCloud(); }, 500);
+        }
       }
     } catch(e) {}
   }
@@ -3294,7 +3293,7 @@ function openPasswordSecurity() {
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'passwordModal\').remove();openSettings()">Close</button></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
-function changeUserPassword() {
+async function changeUserPassword() {
   var oldP = document.getElementById('oldPass').value;
   var newP = document.getElementById('newPass').value;
   var newP2 = document.getElementById('newPass2').value;
@@ -5294,18 +5293,16 @@ function editQuotationById(id) {
   window.scrollTo(0, 0);
 }
 window.loadQuotationById = function(id) {
-  var quotations = DB.get('quotations');
+  var quotations = DB.get('quotations') || [];
   var q = null;
   for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
   if (!q) { alert('Quotation পাওয়া যায়নি'); return; }
-  if (!confirm('এই Quotation টি এডিট করতে চান?\n\n' + q.qNo + '\nগ্রাহক: ' + (q.customer ? q.customer.name : ''))) return;
   var modal = document.getElementById('quoteListModal');
   if (modal) modal.remove();
-  currentQuotation = q;
-  currentPage = 'quotation';
-  var items = document.querySelectorAll('.nav-item');
-  for (var j = 0; j < items.length; j++) items[j].classList.remove('active');
-  render();
+  window.currentQuotation = q;
+  window.currentPage = 'quotation';
+  if (typeof render === 'function') render();
+  
   setTimeout(function() {
     var custPick = document.getElementById('qCustPick');
     if (custPick && q.customer && q.customer.customerId) {
@@ -5313,10 +5310,10 @@ window.loadQuotationById = function(id) {
     }
     if (typeof renderQuoteItems === 'function') renderQuoteItems();
     if (typeof updateQuote === 'function') updateQuote();
-  }, 100);
+  }, 150);
+  
   window.scrollTo(0, 0);
 };
-
 function printQuotationFromList(id) {
   var quotations = DB.get('quotations');
   var q = null;
@@ -10638,9 +10635,8 @@ setTimeout(function() {
 
 console.log('✅ Step 9 loaded — Cloud API Integration');
 console.log('🌐 API URL:', VYRO_API_URL);
-// ============ QUOTATION LOAD FIX ============
-var _originalLoadQuotationById = loadQuotationById;
-loadQuotationById = function(id) {
+// ========== QUOTATION LOAD FIX ==========
+window.loadQuotationById = function(id) {
   var quotations = DB.get('quotations');
   var q = null;
   for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
@@ -11367,17 +11363,6 @@ window.addEventListener('DOMContentLoaded', function() {
 window.onerror = function(msg, url, lineNo, columnNo, error) {
   console.warn('⚠️ Global Error: ' + msg + ' at line ' + lineNo);
   return false; // স্ক্রিপ্ট চলতে দেবে
-};
-window.loadQuotationById = function(id) {
-  var quotations = DB.get('quotations') || [];
-  var q = null;
-  for (var i = 0; i < quotations.length; i++) if (quotations[i].id === id) q = quotations[i];
-  if (!q) { alert('Quotation পাওয়া যায়নি'); return; }
-  var modal = document.getElementById('quoteListModal');
-  if (modal) modal.remove();
-  window.currentQuotation = q;
-  window.currentPage = 'quotation';
-  if (typeof render === 'function') render();
 };
 window.addEventListener('DOMContentLoaded', function() {
   if (typeof window.LANG === 'undefined') window.LANG = 'bn';
