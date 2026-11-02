@@ -628,7 +628,54 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
 // Powered by O-FR Pro Software
 // ============================================================
 
+// ============================================================
+// STEP 1.1 — XSS SAFE HELPERS
+// ============================================================
+function safe(v) {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function safeAttr(v) {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+window.safe = safe;
+window.safeAttr = safeAttr;
+// ============================================================
+// END STEP 1.1
+// ============================================================
+
 var SECRET_KEY = 'OMARFARUQUE1995SHOP';
+// ============================================================
+// STEP 2.1 — PASSWORD HASHING
+// ============================================================
+async function hashPassword(password) {
+  if (!password) return '';
+  try {
+    var msgBuffer = new TextEncoder().encode(password);
+    var hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    var hashArray = Array.from(new Uint8Array(hashBuffer));
+    var hashHex = hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    return hashHex;
+  } catch (e) {
+    console.error('Hash error:', e);
+    return password; // Fallback
+  }
+}
+window.hashPassword = hashPassword;
+// ============================================================
+// END STEP 2.1
+// ============================================================
 window.LANG = localStorage.getItem('smp_lang') || 'bn';
 var SETTINGS = {
   get: function(key, def) {
@@ -954,10 +1001,21 @@ function initApp() {
   document.getElementById('loginScreen').style.display = 'flex';
   if (!localStorage.getItem('smp_global_shops')) DB.setGlobal('shops', [{id:1, name:'Demo Shop', logo:'🏪', address:'Dhaka', phone:'01700000000'}]);
   if (!localStorage.getItem('smp_global_users')) DB.setGlobal('users', [{id:1, shopId:1, username:'admin', password:'admin123', name:'Admin', role:'admin', permissions:['sell','stock','customers','reports','expense']}]);
-  var session = localStorage.getItem('smp_session');
+    var session = localStorage.getItem('smp_session');
   if (session) {
     try {
-      var s = JSON.parse(session);
+      // Session Expiry Check (১২ ঘণ্টা)
+      var sessionTime = +localStorage.getItem('smp_session_time') || 0;
+      var twelveHours = 12 * 60 * 60 * 1000;
+      if (sessionTime && (Date.now() - sessionTime > twelveHours)) {
+        localStorage.removeItem('smp_session');
+        localStorage.removeItem('smp_session_time');
+        console.log('Session expired. Auto logout.');
+        // সেশন এক্সপায়ার হলে নিচের কোড রান হবে না, লগইন স্ক্রিন দেখাবে
+      } else {
+        // টাইম আপডেট করা (Activity Based)
+        localStorage.setItem('smp_session_time', Date.now().toString());
+        var s = JSON.parse(session);
       var users = DB.getGlobal('users');
       for (var i = 0; i < users.length; i++) if (users[i].id === s.userId) { currentUser = users[i]; DB.currentShopId = s.shopId; currentShop = DB.findShop(s.shopId); }
       if (currentUser && currentShop) {
@@ -1029,6 +1087,17 @@ async function doLogin() {
   var p = document.getElementById('loginPass').value;
   var err = document.getElementById('loginErr');
   if (!shopId) { err.textContent = '❌ ' + t('selectShop'); return; }
+
+  // ==========================================
+  // Brute-Force Protection (৫ বার ভুল হলে ২ মিনিট লক)
+  // ==========================================
+  var lockKey = 'smp_login_lock_' + u;
+  var lockUntil = +localStorage.getItem(lockKey) || 0;
+  if (Date.now() < lockUntil) {
+    var remainingSec = Math.ceil((lockUntil - Date.now()) / 1000);
+    err.textContent = '🔒 অনেকবার ভুল পাসওয়ার্ড! ' + remainingSec + ' সেকেন্ড পর আবার চেষ্টা করুন।';
+    return;
+  }
   
   // Step 1: API login try করুন
   err.textContent = '⏳ Logging in...';
@@ -1053,12 +1122,35 @@ async function doLogin() {
   
   // Step 2: API fail হলে localStorage fallback
   console.warn('⚠️ API login failed, using local login');
-  var users = DB.getGlobal('users');
+    var users = DB.getGlobal('users');
   var found = null;
+  var hashedP = await hashPassword(p);
   for (var i = 0; i < users.length; i++) {
-    if (users[i].shopId === shopId && users[i].username === u && users[i].password === p) found = users[i];
+    // পাসওয়ার্ড চেক: নতুন হ্যাশড পাসওয়ার্ড অথবা পুরনো প্লেইন টেক্সট (Fallback)
+    if (users[i].shopId === shopId && users[i].username === u && (users[i].password === hashedP || users[i].password === p)) {
+      found = users[i];
+      // যদি পুরনো প্লেইন টেক্সট পাসওয়ার্ড ম্যাচ করে, তবে অটোমেটিক হ্যাশ করে সেভ করে দিবে
+      if (users[i].password === p && p !== hashedP) {
+        users[i].password = hashedP;
+        DB.setGlobal('users', users);
+      }
+    }
   }
-  if (!found) { err.textContent = '❌ ' + t('wrongLogin'); return; }
+  if (!found) { 
+  // ভুল পাসওয়ার্ড ট্র্যাকিং
+  var failKey = 'smp_login_fail_' + u;
+  var fails = +localStorage.getItem(failKey) || 0;
+  fails++;
+  localStorage.setItem(failKey, fails);
+  if (fails >= 5) {
+    localStorage.setItem(lockKey, Date.now() + 2 * 60 * 1000); // ২ মিনিট লক
+    localStorage.setItem(failKey, 0); // কাউন্টার রিসেট
+    err.textContent = '🔒 ৫ বার ভুল পাসওয়ার্ড! ২ মিনিটের জন্য লক করা হলো।'; 
+    return; 
+  }
+  err.textContent = '❌ ' + t('wrongLogin') + ' (Attempt ' + fails + '/5)'; 
+  return; 
+}
   currentUser = found;
   DB.currentShopId = shopId;
   currentShop = DB.findShop(shopId);
@@ -1070,6 +1162,10 @@ for (var ls = 0; ls < latestShops.length; ls++) {
     break;
   }
 }
+// সফল লগইনে কাউন্টার ও টাইম রিসেট করা
+localStorage.setItem(lockKey, 0);
+localStorage.setItem('smp_login_fail_' + u, 0);
+localStorage.setItem('smp_session_time', Date.now().toString()); // সেশন টাইমার শুরু
   localStorage.setItem('smp_session', JSON.stringify({userId: found.id, shopId: shopId}));
   err.textContent = '';
   document.getElementById('loginScreen').style.display = 'none';
@@ -1703,7 +1799,7 @@ function renderCustomers(app) {
   if (customers.length === 0) html += '<p style="text-align:center;color:#888;font-size:12px;padding:15px">' + t('noCustomers') + '</p>';
   else for (var i = 0; i < customers.length; i++) {
     var c = customers[i];
-html += '<div class="list-item"><div class="info" onclick="showCustomerLedger(' + c.id + ')" style="cursor:pointer"><b>' + c.name + ' <span style="font-size:10px;color:#2a5298">(Ledger)</span></b><small>📞 ' + (c.phone||'-') + (c.address ? ' • ' + c.address : '') + '</small></div>';
+html += '<div class="list-item"><div class="info" onclick="showCustomerLedger(' + c.id + ')" style="cursor:pointer"><b>' + safe(c.name) + ' <span style="font-size:10px;color:#2a5298">(Ledger)</span></b><small>📞 ' + safe(c.phone||'-') + (c.address ? ' • ' + safe(c.address) : '') + '</small></div>';
     html += '<div style="text-align:right">';
     if (c.due > 0) html += '<span class="pill pill-due">Due: ' + fmt(c.due) + '</span>';
     else html += '<span class="pill pill-paid">Paid</span>';
@@ -1792,7 +1888,7 @@ function showCustomerLedger(id) {
   var sales = DB.get('sales').filter(function(s){ return s.customerId === id; });
   var payments = DB.get('payments').filter(function(p){ return p.customerId === id; });
   var html = '<div class="modal-overlay" id="ledgerModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
-  html += '<h3>📋 ' + c.name + '</h3>';
+  html += '<h3>📋 ' + safe(c.name) + '</h3>';
   if (c.phone) html += '<p style="font-size:12px;color:#666">📞 ' + c.phone + '</p>';
   if (c.address) html += '<p style="font-size:12px;color:#666">📍 ' + c.address + '</p>';
   if (c.attention) html += '<p style="font-size:12px;color:#666">👤 Attention: ' + c.attention + '</p>';
@@ -2116,7 +2212,7 @@ function renderSales(app) {
       html += '<tr>';
       
       // ১. Product Name & Details
-      html += '<td><b style="color:#2a5298;font-size:13px">' + itemDisplayName + '</b>';
+      html += '<td><b style="color:#2a5298;font-size:13px">' + safe(itemDisplayName) + '</b>';
       if (itemExtra) html += '<br><small style="color:#ff9800;font-size:10px;font-weight:600">' + itemExtra + '</small>';
       html += '</td>';
       
@@ -2129,7 +2225,7 @@ function renderSales(app) {
       
       // ৩. Unit
       html += '<td><select class="unit-select" onchange="changeCartUnit(' + k + ',this.value)" style="width:70px;font-size:11px;margin:0;padding:4px">';
-      var uArr = getUOMList();
+      
       for (var u2 = 0; u2 < uArr.length; u2++) html += '<option value="' + uArr[u2] + '"' + (itemUnit === uArr[u2] ? ' selected' : '') + '>' + uArr[u2] + '</option>';
       html += '</select></td>';
       
@@ -2160,7 +2256,7 @@ function renderSales(app) {
     for (var n = 0; n < sales.length; n++) {
       var s = sales[n];
       html += '<div class="list-item" style="cursor:pointer">';
-      html += '<div class="info" onclick="showInvoice(' + s.id + ')"><b>' + (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + ' ' + (s.time||'') + ' • ' + (s.items?s.items.length:0) + ' items</small></div>';
+      html += '<div class="info" onclick="showInvoice(' + s.id + ')"><b>' + safe(s.invoiceNo || ('#' + s.id)) + ' — ' + safe(s.customerName||'Cash') + '</b><small>' + s.date + ' ' + (s.time||'') + ' • ' + (s.items?s.items.length:0) + ' items</small></div>';
       html += '<div style="text-align:right"><b>' + fmt(s.total) + '</b><br><span class="pill ' + (s.due>0?'pill-due':'pill-paid') + '">' + (s.due>0?'Due: '+fmt(s.due):'Paid') + '</span>';
       html += '<div style="margin-top:4px"><button class="btn-sm btn-info" onclick="showInvoice(' + s.id + ')">👁️</button> ';
       html += '<button class="btn-sm btn-warning" onclick="editInvoice(' + s.id + ')">✏️</button> ';
@@ -2205,7 +2301,7 @@ function filterSaleProducts(query) {
     html += '<div onclick="addToCartById(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
     html += '<div style="flex:1;min-width:0">';
     var searchDisplayName = p.size ? (p.size + ' ' + p.name) : p.name;
-html += '<b style="font-size:13px">' + searchDisplayName + '</b><br>';
+html += '<b style="font-size:13px">' + safe(searchDisplayName) + '</b><br>';
 // Model & Brand দেখানো
 if (p.model || p.brand) {
   html += '<small style="color:#2a5298;font-weight:700;font-size:10px">' + (p.model ? 'Model: ' + p.model : '') + (p.brand ? ' | Brand: ' + p.brand : '') + '</small><br>';
@@ -2832,9 +2928,9 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
 
     html += '<div style="background:#f8f9fa;padding:12px 15px;border-radius:8px;margin-bottom:20px;border-left:4px solid var(--inv-accent,#2a5298); position:relative; z-index:1;">';
     html += '<p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;margin:0 0 4px">Bill To</p>';
-    html += '<p style="font-size:15px;font-weight:700;margin:0">' + (s.customerName || 'Cash / Walk-in') + '</p>';
-    if (custAddress) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📍 ' + custAddress + '</p>';
-    if (custAttention) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">👤 <b>Attention:</b> ' + custAttention + '</p>';
+    html += '<p style="font-size:15px;font-weight:700;margin:0">' + safe(s.customerName || 'Cash / Walk-in') + '</p>';
+    if (custAddress) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">📍 ' + safe(custAddress) + '</p>';
+    if (custAttention) html += '<p style="font-size:12px;color:#666;margin:4px 0 0">👤 <b>Attention:</b> ' + safe(custAttention) + '</p>';
     html += '</div>';
 
     html += '<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:20px; position:relative; z-index:1;">';
@@ -2842,7 +2938,7 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
     html += '<th style="padding:10px;text-align:left">#</th><th style="padding:10px;text-align:left">Item</th><th style="padding:10px;text-align:center">Qty</th><th style="padding:10px;text-align:right">Rate</th><th style="padding:10px;text-align:right">Amount</th></tr></thead><tbody>';
     for (var j = 0; j < s.items.length; j++) {
       var it = s.items[j];
-      html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + it.name + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + (it.unit || 'pcs') + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
+      html += '<tr style="border-bottom:1px solid #eee"><td style="padding:10px">' + (j + 1) + '</td><td style="padding:10px">' + safe(it.name) + '</td><td style="padding:10px;text-align:center">' + it.qty + ' ' + (it.unit || 'pcs') + '</td><td style="padding:10px;text-align:right">' + fmt(it.price) + '</td><td style="padding:10px;text-align:right">' + fmt(it.price * it.qty) + '</td></tr>';
     }
     html += '</tbody></table>';
 
@@ -3238,27 +3334,28 @@ function changeUserPassword() {
       break;
     }
   }
+   var hashedNewP = await hashPassword(newP);
   if (existingUser) {
-    existingUser.password = newP;
+    existingUser.password = hashedNewP;
   } else {
     allUsers.push({
       id: currentUser.id || Date.now(),
       shopId: DB.currentShopId,
       username: currentUser.username,
-      password: newP,
+            password: hashedNewP,
       name: currentUser.name || 'Admin',
       role: currentUser.role || 'admin',
       permissions: ['sell', 'stock', 'customers', 'reports', 'expense']
     });
   }
   DB.setGlobal('users', allUsers);
-  currentUser.password = newP;
+  currentUser.password = hashedNewP;
   
   // ☁️ Save to Cloud
   if (VYRO_TOKEN) {
-    vyroApiCall('/api/save-password', 'POST', {
+        vyroApiCall('/api/save-password', 'POST', {
       username: currentUser.username,
-      password: newP
+      password: hashedNewP
     }).then(function(r) {
       if (r && r.success) console.log('✅ Password synced to cloud');
       else console.warn('⚠️ Cloud password sync failed:', r && r.error);
@@ -3267,7 +3364,7 @@ function changeUserPassword() {
   
   document.getElementById('passwordModal').remove();
   openSettings();
-  alert('✅ Password পরিবর্তন হয়েছে!\n\nনতুন password: ' + newP);
+    alert('✅ Password পরিবর্তন হয়েছে!\n\nপরবর্তী লগইনে নতুন পাসওয়ার্ড ব্যবহার করুন।');
 }
 function openCustomerAddressEdit() {
   var customers = DB.get('customers');
@@ -3577,8 +3674,8 @@ function showNotifications() {
   var customers = DB.get('customers');
   var suppliers = DB.get('suppliers');
   var notifs = [];
-  for (var i = 0; i < products.length; i++) { var p = products[i]; if (p.stock <= (p.lowAlert||5)) notifs.push({icon:'⚠️', text: p.name + ' — Low Stock (' + p.stock + ' ' + (p.unit||'pcs') + ')'}); }
-  for (var j = 0; j < customers.length; j++) { var c = customers[j]; if (c.due > 0) notifs.push({icon:'💰', text: c.name + ' — Due: ' + fmt(c.due)}); }
+  for (var i = 0; i < products.length; i++) { var p = products[i]; if (p.stock <= (p.lowAlert||5)) notifs.push({icon:'⚠️', text: safe(p.name) + ' — Low Stock (' + p.stock + ' ' + (p.unit||'pcs') + ')'}); }
+  for (var j = 0; j < customers.length; j++) { var c = customers[j]; if (c.due > 0) notifs.push({icon:'💰', text: safe(c.name) + ' — Due: ' + fmt(c.due)}); }
   for (var s = 0; s < suppliers.length; s++) { var sup = suppliers[s]; if (sup.due > 0) notifs.push({icon:'📥', text: 'Supplier ' + sup.name + ' — Due: ' + fmt(sup.due)}); }
   var html = '<div class="modal-overlay" id="notifModal" onclick="if(event.target===this)this.remove()"><div class="modal">';
   html += '<h3>🔔 ' + t('notifications') + '</h3>';
@@ -3728,19 +3825,22 @@ function openUserEdit(id) {
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'userEditModal\').remove()">Close</button></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
-function saveUser(id) {
+async function saveUser(id) {
   var users = DB.getGlobal('users');
   var name = document.getElementById('uName').value.trim();
   var username = document.getElementById('uUser').value.trim();
   var password = document.getElementById('uPass').value;
   var role = document.getElementById('uRole').value;
   if (!name || !username || !password) { alert('All fields required'); return; }
-  if (id) {
-    for (var i = 0; i < users.length; i++) if (users[i].id === id) { users[i].name = name; users[i].username = username; users[i].password = password; users[i].role = role; }
+  
+  // পাসওয়ার্ড হ্যাশ করা
+  var hashedPassword = await hashPassword(password);
+    if (id) {
+    for (var i = 0; i < users.length; i++) if (users[i].id === id) { users[i].name = name; users[i].username = username; users[i].password = hashedPassword; users[i].role = role; }
   } else {
     var newId = 1;
     for (var m = 0; m < users.length; m++) if (users[m].id >= newId) newId = users[m].id + 1;
-    users.push({id:newId, shopId: currentShop.id, username:username, password:password, name:name, role:role, permissions:['sell','stock','customers']});
+        users.push({id:newId, shopId: currentShop.id, username:username, password:hashedPassword, name:name, role:role, permissions:['sell','stock','customers']});
   }
   DB.setGlobal('users', users);
   document.getElementById('userEditModal').remove();
@@ -3790,7 +3890,7 @@ function renderReports(app) {
   if (filteredExpenses.length === 0) html += '<p style="text-align:center;color:#888;font-size:12px;padding:10px">No expense</p>';
   else for (var n = 0; n < filteredExpenses.length; n++) {
     var e = filteredExpenses[n];
-    html += '<div class="list-item"><div class="info"><b>' + e.description + '</b><small>' + e.date + '</small></div><div style="text-align:right"><b style="color:#ff4757">' + fmt(e.amount) + '</b>';
+    html += '<div class="list-item"><div class="info"><b>' + safe(e.description) + '</b><small>' + e.date + '</small></div><div style="text-align:right"><b style="color:#ff4757">' + fmt(e.amount) + '</b>';
     html += '<div style="margin-top:4px"><button class="btn-sm btn-danger" onclick="event.stopPropagation();deleteExpense(' + e.id + ')">🗑️</button></div></div></div>';
   }
   html += '</div>';
@@ -3818,7 +3918,7 @@ function openSupplierManager() {
   if (suppliers.length === 0) html += '<p style="text-align:center;color:#888;padding:20px">No suppliers</p>';
   else for (var i = 0; i < suppliers.length; i++) {
     var s = suppliers[i];
-    html += '<div class="list-item"><div class="info"><b>' + s.name + '</b><small>📞 ' + (s.phone||'-') + '</small></div>';
+    html += '<div class="list-item"><div class="info"><b>' + safe(s.name) + '</b><small>📞 ' + safe(s.phone||'-') + '</small></div>';
     html += '<div style="text-align:right">';
     if (s.due > 0) html += '<span class="pill pill-due">Due: ' + fmt(s.due) + '</span>';
     else html += '<span class="pill pill-paid">Clear</span>';
@@ -4706,7 +4806,7 @@ function renderQuoteItems() {
     var it = q.items[i];
     html += '<tr style="border-bottom:1px solid #eee">';
     html += '<td><input value="'+escAttr(it.sku)+'" oninput="currentQuotation.items['+i+'].sku=this.value" style="padding:4px;font-size:11px;margin:0"></td>';
-    html += '<td><input value="'+escAttr(it.name)+'" oninput="currentQuotation.items['+i+'].name=this.value" style="padding:4px;font-size:11px;margin:0"></td>';
+    html += '<td><input value="'+safeAttr(it.name)+'" oninput="currentQuotation.items['+i+'].name=this.value" style="padding:4px;font-size:11px;margin:0;min-width:120px"></td>';
     html += '<td><input value="'+escAttr(it.desc)+'" oninput="currentQuotation.items['+i+'].desc=this.value" style="padding:4px;font-size:11px;margin:0"></td>';
     html += '<td><input type="number" value="'+it.qty+'" oninput="currentQuotation.items['+i+'].qty=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:55px"></td>';
     html += '<td><select onchange="currentQuotation.items['+i+'].unit=this.value" style="padding:4px;font-size:11px;margin:0;width:70px">';
@@ -5788,7 +5888,7 @@ function buildInventoryListHTML(products, search) {
     if (p.model) extraInfo += 'Model: ' + p.model;
     if (p.brand) extraInfo += (extraInfo ? ' | ' : '') + 'Brand: ' + p.brand;
     
-    html += '<div class="list-item"><div class="info"><b>' + highlightSearch(displayName, search) + '</b>';
+    html += '<div class="list-item"><div class="info"><b>' + highlightSearch(safe(displayName), search) + '</b>';
     html += '<small>' + (p.barcode||p.sku||'-') + ' • ' + fmt(p.buyPrice) + ' → ' + fmt(p.sellPrice) + '</small>';
     
     if (extraInfo) {
@@ -9830,6 +9930,18 @@ setTimeout(function() {
 }, 2000);
 
 console.log('✅ Step 8 FINAL loaded — Full Translation + Historical Fix + Polish');
+// ============================================================
+// STEP 3.5 — ACTIVITY TRACKER (SESSION KEEP-ALIVE)
+// ============================================================
+document.addEventListener('click', function() {
+  if (currentUser) localStorage.setItem('smp_session_time', Date.now().toString());
+});
+document.addEventListener('keypress', function() {
+  if (currentUser) localStorage.setItem('smp_session_time', Date.now().toString());
+});
+// ============================================================
+// END STEP 3.5
+// ============================================================
 </script>
 <!-- ============================================ -->
 <!-- GOOGLE DRIVE AUTO BACKUP SETUP - FIX v1.0  -->
