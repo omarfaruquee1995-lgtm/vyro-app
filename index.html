@@ -2129,7 +2129,7 @@ function renderSales(app) {
       
       // ৩. Unit
       html += '<td><select class="unit-select" onchange="changeCartUnit(' + k + ',this.value)" style="width:70px;font-size:11px;margin:0;padding:4px">';
-      var uArr = ['pcs','box','pkt'];
+      var uArr = getUOMList();
       for (var u2 = 0; u2 < uArr.length; u2++) html += '<option value="' + uArr[u2] + '"' + (itemUnit === uArr[u2] ? ' selected' : '') + '>' + uArr[u2] + '</option>';
       html += '</select></td>';
       
