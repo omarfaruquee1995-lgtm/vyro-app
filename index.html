@@ -2160,6 +2160,7 @@ function viewImage(imgId, customerId) {
 function renderSales(app) {
   var products = DB.get('products');
   var customers = DB.get('customers');
+var uArr = getUOMList();
   
   var html = '<div class="card"><h3>🧾 New Sale <button class="btn-sm btn-info" style="width:auto" onclick="openScanner(\'sale\')">📷</button></h3>';
   html += '<label style="font-size:11px;color:#666;display:block;margin-bottom:4px">👥 Party / Customer</label>';
