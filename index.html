@@ -4665,11 +4665,13 @@ function newQuotation() {
     qDate: today(),
     qValid: addDaysISO(today(), 30),
     status: 'Draft',
+globalDisc: 0,
+globalVat: 0,
     customer: { name:'', phone:'', address:'', email:'', customerId:'' },
     items: [{ sku:'', name:'', desc:'', qty:1, unit:'pcs', price:0, disc:0, tax:0 }],
     deliveryCharge: 0,
     otherCharge: 0,
-    payment: { method:'Cash', advPct:50, terms:'50% Advance + 50% After Delivery' },
+    payment: { method:'Cash', advPct:0, terms:'' },
     extra: {
       delDate: '', delLoc: '',
       terms: '১. কোটেশন ৩০ দিন পর্যন্ত বৈধ।\n২. অগ্রিম পেমেন্ট ছাড়া অর্ডার নিশ্চিত হবে না।\n৩. ডেলিভারি চার্জ গ্রাহক বহন করবেন।',
@@ -4752,9 +4754,9 @@ html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;backg
   html += '<div class="card"><h3>3️⃣ Product / Service Details <button class="btn-sm btn-success" style="width:auto;float:right;padding:5px 10px" onclick="addQuoteItem()">+ Add</button></h3>';
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:750px">';
   html += '<thead><tr style="background:#f0f2f5">';
-  html += '<th style="padding:6px">SKU</th><th style="padding:6px">Name</th><th style="padding:6px">Desc</th>';
+  html += '<th style="padding:6px">Product</th><th style="padding:6px">Qty</th>';
   html += '<th style="padding:6px">Qty</th><th style="padding:6px">Unit</th><th style="padding:6px">Price</th>';
-  html += '<th style="padding:6px">Disc%</th><th style="padding:6px">VAT%</th><th style="padding:6px;text-align:right">Total</th><th></th>';
+  html += '<th style="padding:6px;text-align:right">Total</th><th></th>';
   html += '</tr></thead><tbody id="qItemsBody"></tbody></table></div>';
   html += '<button class="btn-sm btn-info" style="margin-top:8px;width:auto;padding:8px 12px" onclick="pickQuoteProduct()">📦 From Stock</button>';
   html += '</div>';
@@ -4762,6 +4764,10 @@ html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;backg
   // 4+5. Summary + Payment
   html += '<div class="card"><h3>4️⃣ Summary & 5️⃣ Payment Terms</h3>';
   html += '<div id="qSummary"></div>';
+html += '<div class="grid2" style="margin-top:10px">';
+html += '<div><label style="font-size:11px;color:#666">Discount (%)</label><input id="qGlobalDisc" type="text" value="' + (q.globalDisc || '') + '" oninput="currentQuotation.globalDisc = this.value; updateQuote()"></div>';
+html += '<div><label style="font-size:11px;color:#666">VAT (%)</label><input id="qGlobalVat" type="text" value="' + (q.globalVat || '') + '" oninput="currentQuotation.globalVat = this.value; updateQuote()"></div>';
+html += '</div>';
   html += '<div class="grid2" style="margin-top:8px">';
   html += '<div><label style="font-size:11px;color:#666">Payment Method</label><select id="qPayMethod" onchange="updateQuote()">';
   var pms = ['Cash','Bank Transfer','Mobile Banking (bKash/Nagad)','Cheque','Mixed'];
@@ -4804,7 +4810,6 @@ function renderQuoteItems() {
   for (var i=0;i<q.items.length;i++) {
     var it = q.items[i];
     html += '<tr style="border-bottom:1px solid #eee">';
-    html += '<td><input value="'+escAttr(it.sku)+'" oninput="currentQuotation.items['+i+'].sku=this.value" style="padding:4px;font-size:11px;margin:0"></td>';
     html += '<td><input value="'+safeAttr(it.name)+'" oninput="currentQuotation.items['+i+'].name=this.value" style="padding:4px;font-size:11px;margin:0;min-width:120px"></td>';
     html += '<td><input value="'+escAttr(it.desc)+'" oninput="currentQuotation.items['+i+'].desc=this.value" style="padding:4px;font-size:11px;margin:0"></td>';
     html += '<td><input type="number" value="'+it.qty+'" oninput="currentQuotation.items['+i+'].qty=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:55px"></td>';
@@ -4812,8 +4817,6 @@ function renderQuoteItems() {
     for (var u=0;u<units.length;u++) html += '<option'+(it.unit===units[u]?' selected':'')+'>'+units[u]+'</option>';
     html += '</select></td>';
     html += '<td><input type="number" value="'+it.price+'" oninput="currentQuotation.items['+i+'].price=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:70px"></td>';
-    html += '<td><input type="number" value="'+it.disc+'" oninput="currentQuotation.items['+i+'].disc=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:55px"></td>';
-    html += '<td><input type="number" value="'+it.tax+'" oninput="currentQuotation.items['+i+'].tax=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:55px"></td>';
     html += '<td id="qItTotal'+i+'" style="padding:6px;text-align:right;font-weight:700">'+fmt(0)+'</td>';
     html += '<td><button class="btn-sm btn-danger" style="padding:3px 8px" onclick="removeQuoteItem('+i+')">✕</button></td>';
     html += '</tr>';
@@ -4871,7 +4874,8 @@ function updateQuote() {
     qPayMethod:'payment.method', qAdvPct:'payment.advPct', qPayTerms:'payment.terms',
     qDelDate:'extra.delDate', qDelLoc:'extra.delLoc', qTerms:'extra.terms',
     qCNote:'extra.cNote', qINote:'extra.iNote',
-    qSignPrep:'sign.prep', qSignCheck:'sign.check', qSignAppr:'sign.appr'
+    qSignPrep:'sign.prep', qSignCheck:'sign.check', qSignAppr:'sign.appr',
+    qGlobalDisc: 'globalDisc', qGlobalVat: 'globalVat',
   };
   for (var id in f) {
     var el = document.getElementById(id);
@@ -4887,20 +4891,20 @@ function updateQuote() {
 }
   }
 
-  var sub=0, disc=0, vat=0;
-  for (var i=0;i<q.items.length;i++) {
+    var sub = 0;
+  for (var i = 0; i < q.items.length; i++) {
     var it = q.items[i];
     var gross = it.qty * it.price;
-    var dAmt = gross * (it.disc||0) / 100;
-    var taxable = gross - dAmt;
-    var vAmt = taxable * (it.tax||0) / 100;
-    var total = taxable + vAmt;
-    sub += gross; disc += dAmt; vat += vAmt;
+    sub += gross;
     var el2 = document.getElementById('qItTotal'+i);
-    if (el2) el2.textContent = fmt(total);
+    if (el2) el2.textContent = fmt(gross);
   }
 
-  var grand = sub - disc + vat;
+  // Global Discount এবং VAT হিসাব
+  var disc = sub * (q.globalDisc || 0) / 100;
+  var taxable = sub - disc;
+  var vat = taxable * (q.globalVat || 0) / 100;
+  var grand = taxable + vat;
   var advAmt = grand * (q.payment.advPct||0) / 100;
   var due = grand - advAmt;
 
@@ -4909,12 +4913,14 @@ function updateQuote() {
   sumHtml += '<div style="display:flex;justify-content:space-between;color:#ff4757"><span>Discount:</span><b>− '+fmt(disc)+'</b></div>';
   sumHtml += '<div style="display:flex;justify-content:space-between;color:#ffa502"><span>VAT/Tax:</span><b>+ '+fmt(vat)+'</b></div>';
   sumHtml += '<div style="display:flex;justify-content:space-between;border-top:1px dashed #ccc;padding-top:6px;margin-top:6px"><span>Grand Total:</span><b style="color:#2a5298;font-size:16px">'+fmt(grand)+'</b></div>';
-  sumHtml += '<div style="display:flex;justify-content:space-between;color:#2ed573"><span>Advance ('+(q.payment.advPct||0)+'%):</span><b>'+fmt(advAmt)+'</b></div>';
-  sumHtml += '<div style="display:flex;justify-content:space-between;color:#ff4757"><span>Due:</span><b>'+fmt(due)+'</b></div>';
   sumHtml += '</div>';
   var sumEl = document.getElementById('qSummary');
   if (sumEl) sumEl.innerHTML = sumHtml;
 
+  var elDisc = document.getElementById('qGlobalDisc');
+  if (elDisc) q.globalDisc = +elDisc.value || 0;
+  var elVat = document.getElementById('qGlobalVat');
+  if (elVat) q.globalVat = +elVat.value || 0;
   q._calcs = { sub:sub, disc:disc, vat:vat, grand:grand, advAmt:advAmt, due:due };
 // 💾 Auto-save current quote for session
 try { localStorage.setItem('smp_quote_session_' + DB.currentShopId, JSON.stringify(q)); } catch(e) {}
@@ -5082,32 +5088,33 @@ function printQuotation() {
   if (q.customer.customerId) w.document.write('<br>🆔 ' + q.customer.customerId);
   w.document.write('</div>');
 
-  w.document.write('<table><thead><tr><th>#</th><th>SKU</th><th>Product/Service</th><th>Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Disc%</th><th style="text-align:right">VAT%</th><th style="text-align:right">Total</th></tr></thead><tbody>');
-  for (var i=0;i<q.items.length;i++) {
+    w.document.write('<table><thead><tr><th>#</th><th>Product/Service</th><th>Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead><tbody>');
+    for (var i=0;i<q.items.length;i++) {
     var it = q.items[i];
     var gross = it.qty*it.price;
-    var d = gross*(it.disc||0)/100;
-    var taxable = gross-d;
-    var v = taxable*(it.tax||0)/100;
-    var total = taxable+v;
-    w.document.write('<tr><td>'+(i+1)+'</td><td>'+(it.sku||'-')+'</td><td>'+it.name+(it.desc?'<br><small style="color:#666">'+it.desc+'</small>':'')+'</td><td>'+it.qty+' '+it.unit+'</td><td style="text-align:right">'+fmt(it.price)+'</td><td style="text-align:right">'+(it.disc||0)+'%</td><td style="text-align:right">'+(it.tax||0)+'%</td><td style="text-align:right"><b>'+fmt(total)+'</b></td></tr>');
+    w.document.write('<tr><td>'+(i+1)+'</td><td>'+it.name+(it.desc?'<br><small style="color:#666">'+it.desc+'</small>':'')+'</td><td>'+it.qty+' '+it.unit+'</td><td style="text-align:right">'+fmt(it.price)+'</td><td style="text-align:right"><b>'+fmt(gross)+'</b></td></tr>');
   }
   w.document.write('</tbody></table>');
 
   w.document.write('<div style="display:flex;justify-content:flex-end;margin-top:16px"><div style="min-width:280px;font-size:13px">');
   w.document.write('<div style="display:flex;justify-content:space-between;padding:4px 0"><span>Subtotal:</span><b>'+fmt(c.sub)+'</b></div>');
+  
   if (c.disc) w.document.write('<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Discount:</span><b>− '+fmt(c.disc)+'</b></div>');
+  
   if (c.vat) w.document.write('<div style="display:flex;justify-content:space-between;padding:4px 0;color:#e67e22"><span>VAT/Tax:</span><b>+ '+fmt(c.vat)+'</b></div>');
+  
   w.document.write('<div style="display:flex;justify-content:space-between;padding:8px 0;border-top:2px solid var(--inv-primary);font-size:16px;color:var(--inv-primary)"><span><b>Grand Total:</b></span><b>'+fmt(c.grand)+'</b></div>');
-  w.document.write('<div style="display:flex;justify-content:space-between;padding:4px 0;color:#2ed573"><span>Advance ('+q.payment.advPct+'%):</span><b>'+fmt(c.advAmt)+'</b></div>');
-  w.document.write('<div style="display:flex;justify-content:space-between;padding:4px 0;color:#c0392b"><span>Due:</span><b>'+fmt(c.due)+'</b></div>');
   w.document.write('</div></div>');
 
   if (awEnabled && c.grand > 0) {
     w.document.write('<div class="aw"><b>In Words:</b> ' + amountToWords(c.grand) + '</div>');
   }
 
-  w.document.write('<div style="margin-top:20px;font-size:12px;line-height:1.8"><b>Payment Method:</b> ' + q.payment.method + '<br><b>Payment Terms:</b> ' + q.payment.terms + '</div>');
+  w.document.write('<div style="margin-top:20px;font-size:12px;line-height:1.8"><b>Payment Method:</b> ' + q.payment.method + '<br>');
+  if (q.payment.advPct > 0) {
+    w.document.write('<b>Advance:</b> ' + q.payment.advPct + '%<br>');
+  }
+  w.document.write('<b>Payment Terms:</b> ' + q.payment.terms + '</div>');
   if (q.extra.delDate || q.extra.delLoc) {
     w.document.write('<div style="margin-top:12px;font-size:12px"><b>Delivery:</b> ' + (q.extra.delDate||'') + ' ' + (q.extra.delLoc||'') + '</div>');
   }
@@ -7898,16 +7905,17 @@ window.renderQuotation = function(app) {
   // Items table
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:750px">';
   html += '<thead><tr style="background:#f0f2f5">';
-  html += '<th style="padding:6px">SKU</th><th style="padding:6px">Name</th><th style="padding:6px">Qty</th>';
-  html += '<th style="padding:6px">Unit</th><th style="padding:6px">Price</th><th style="padding:6px">Disc%</th>';
-  html += '<th style="padding:6px">VAT%</th><th style="padding:6px;text-align:right">Total</th><th></th>';
-  html += '</tr></thead><tbody id="qItemsBody"></tbody></table></div>';
-  html += '</div>';
+  html += '<th style="padding:6px">Product</th><th style="padding:6px">Qty</th>';
+html += '<th style="padding:6px">Unit</th><th style="padding:6px">Price</th><th style="padding:6px;text-align:right">Total</th><th></th>';
+html += '</tr></thead><tbody id="qItemsBody"></tbody></table></div>';
   
   // Summary
   html += '<div class="card"><h3>4️⃣ Summary</h3>';
   html += '<div id="qSummary"></div>';
-  html += '</div>';
+html += '<div class="grid2" style="margin-top:10px">';
+html += '<div><label style="font-size:11px;color:#666">Discount (%)</label><input id="qGlobalDisc" type="number" value="' + (q.globalDisc || 0) + '" oninput="currentQuotation.globalDisc=+this.value||0;updateQuote()"></div>';
+html += '<div><label style="font-size:11px;color:#666">VAT (%)</label><input id="qGlobalVat" type="number" value="' + (q.globalVat || 0) + '" oninput="currentQuotation.globalVat=+this.value||0;updateQuote()"></div>';
+html += '</div>';
   
   // Payment
   html += '<div class="card"><h3>5️⃣ Payment</h3>';
@@ -7957,15 +7965,12 @@ window.renderQuoteItems = function() {
     for (var i = 0; i < q.items.length; i++) {
       var it = q.items[i];
       html += '<tr style="border-bottom:1px solid #eee">';
-      html += '<td><input value="' + escAttr(it.sku) + '" oninput="currentQuotation.items[' + i + '].sku=this.value" style="padding:4px;font-size:11px;margin:0;width:70px"></td>';
       html += '<td><input value="' + escAttr(it.name) + '" oninput="currentQuotation.items[' + i + '].name=this.value" style="padding:4px;font-size:11px;margin:0;min-width:120px"></td>';
       html += '<td><input type="number" value="' + it.qty + '" oninput="currentQuotation.items[' + i + '].qty=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:55px"></td>';
       html += '<td><select onchange="currentQuotation.items[' + i + '].unit=this.value" style="padding:4px;font-size:11px;margin:0;width:65px">';
       for (var u = 0; u < units.length; u++) html += '<option' + (it.unit === units[u] ? ' selected' : '') + '>' + units[u] + '</option>';
       html += '</select></td>';
       html += '<td><input type="number" value="' + it.price + '" oninput="currentQuotation.items[' + i + '].price=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:70px"></td>';
-      html += '<td><input type="number" value="' + it.disc + '" oninput="currentQuotation.items[' + i + '].disc=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:50px"></td>';
-      html += '<td><input type="number" value="' + it.tax + '" oninput="currentQuotation.items[' + i + '].tax=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:50px"></td>';
       html += '<td id="qItTotal' + i + '" style="padding:6px;text-align:right;font-weight:700">' + fmt(0) + '</td>';
       html += '<td><button class="btn-sm btn-danger" style="padding:3px 8px" onclick="removeQuoteItem(' + i + ')">✕</button></td>';
       html += '</tr>';
