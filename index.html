@@ -120,7 +120,7 @@ body.dark-mode .settings-item .value { color:#aaa; }
 .font-courier { font-family:'Courier New',monospace !important; }
 .font-georgia { font-family:Georgia,serif !important; }
 .font-verdana { font-family:Verdana,sans-serif !important; }
-.biz-header { background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color:#fff; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,.2); }
+.biz-header { background:linear-gradient(135deg,#0a192f 0%,#112240 100%); color:#fff; padding:12px 14px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,.5); border-bottom: 1px solid rgba(100,255,218,0.2); }
 .biz-header-left { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
 .biz-title { font-size:15px; font-weight:800; display:flex; align-items:center; gap:6px; letter-spacing:.5px; }
 .biz-title #bizLogo { font-size:20px; }
@@ -182,7 +182,7 @@ body.dark-mode .chart-box h4 { color:#4a90e2; }
 .chart-tab.active { background:#2a5298; color:#fff; }
 body.dark-mode .chart-tab { background:#2a2a2a; color:#aaa; }
 body.dark-mode .chart-tab.active { background:#4a90e2; color:#fff; }
-.smart-alert { margin:0 12px 8px; background:#fff; border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 6px rgba(0,0,0,.06); cursor:pointer; border-left:4px solid transparent; font-size:12px; transition:transform .15s; }
+.smart-alert { margin:0 12px 8px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:12px; box-shadow:0 2px 6px rgba(0,0,0,.06); cursor:pointer; border-left:4px solid transparent; font-size:12px; transition:transform .15s; color: #e6f1ff; }
 .smart-alert:hover { transform:translateX(2px); }
 .smart-alert.warn { border-left-color:#ffa502; }
 .smart-alert.danger { border-left-color:#ff4757; }
@@ -812,6 +812,21 @@ body.dark-mode .card, body.dark-mode .stat, body.dark-mode .modal {
   background: rgba(255, 255, 255, 0.05) !important;
   color: #fff !important;
   border: 1px solid #444 !important;
+}
+/* Fix Dashboard Text Colors in Dark Mode */
+body.dark-mode .dash-section-title,
+body.dark-mode .cust-name,
+body.dark-mode .ss-num {
+  color: #64ffda !important;
+}
+body.dark-mode .due-table-wrap,
+body.dark-mode .stock-status-card {
+  background: rgba(255,255,255,0.05) !important;
+  border-color: rgba(255,255,255,0.1) !important;
+}
+body.dark-mode .due-table td,
+body.dark-mode .stock-status-card .ss-lbl {
+  color: #a8b2d1 !important;
 }
 </style>
 </head>
@@ -1855,12 +1870,18 @@ function render() {
     } catch(e) {}
   }
 
+  // ভেরিয়েবল ডিক্লেয়ার (এগুলো আগে মিসিং ছিল)
   var logoEl = document.getElementById('bizLogo');
   var nameEl = document.getElementById('bizShopName');
   var infoEl = document.getElementById('bizInfo');
+    if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
   
-  if (logoEl) logoEl.textContent = currentShop.logo || '🏪';
-  if (nameEl) nameEl.textContent = currentShop.name || 'VYRO SHOP';
+  if (nameEl) {
+    nameEl.textContent = currentShop.name || 'VYRO SHOP';
+    // দোকানের নামের জন্য নিওন গ্লো কালার
+    nameEl.style.color = '#64ffda'; 
+    nameEl.style.textShadow = '0 0 10px rgba(100,255,218,0.8), 0 0 20px rgba(100,255,218,0.4)';
+  }
   
   if (infoEl) {
     var parts = [];
@@ -1871,6 +1892,9 @@ function render() {
     if (currentShop.address) parts.push('📍 ' + currentShop.address);
     
     infoEl.textContent = parts.length > 0 ? parts.join(' | ') : 'Powered by O-FR Pro Software';
+    // ঠিকানার জন্য হালকা সায়ান (Cyan) গ্লো কালার
+    infoEl.style.color = '#8be9fd';
+    infoEl.style.textShadow = '0 0 5px rgba(139,233,253,0.6)';
   }
 
   var app = document.getElementById('app');
@@ -1924,44 +1948,113 @@ function renderDashboard(app) {
   var stats = calcDashboardStats();
   var customers = DB.get('customers');
   var html = '';
-  html += '<div class="dash-stats-grid">';
-  html += '<div class="dash-stat-card success"><span class="ds-icon">💰</span><div class="ds-num">' + fmt(stats.todaySales) + '</div><div class="ds-lbl">Today\'s Sales</div></div>';
-  html += '<div class="dash-stat-card success"><span class="ds-icon">📈</span><div class="ds-num">' + fmt(stats.todayProfit) + '</div><div class="ds-lbl">Today\'s Profit</div></div>';
-  html += '<div class="dash-stat-card danger"><span class="ds-icon">🧾</span><div class="ds-num">' + fmt(stats.totalDue) + '</div><div class="ds-lbl">Total Due</div></div>';
-  html += '<div class="dash-stat-card warn"><span class="ds-icon">📦</span><div class="ds-num">' + fmt(stats.stockValue) + '</div><div class="ds-lbl">Stock Value</div></div>';
-  html += '<div class="dash-stat-card info"><span class="ds-icon">🛒</span><div class="ds-num">' + fmt(stats.todayPurchase) + '</div><div class="ds-lbl">Today\'s Purchase</div></div>';
-  html += '<div class="dash-stat-card purple"><span class="ds-icon">👥</span><div class="ds-num">' + stats.totalCustomers + '</div><div class="ds-lbl">Customers</div></div>';
-  html += '<div class="dash-stat-card danger"><span class="ds-icon">⚠️</span><div class="ds-num">' + stats.lowStock + '</div><div class="ds-lbl">Low Stock</div></div>';
-  html += '<div class="dash-stat-card warn"><span class="ds-icon">💸</span><div class="ds-num">' + fmt(stats.todayExpense) + '</div><div class="ds-lbl">Expenses</div></div>';
-  html += '</div>';
-  html += '<div class="dash-section-title">⚡ Quick Actions</div>';
-  html += '<div class="qa-grid">';
-  html += '<button class="qa-btn blue" onclick="nav(\'sales\')"><span class="qa-icon">🛒</span>New Sale</button>';
-  html += '<button class="qa-btn green" onclick="openAddProduct()"><span class="qa-icon">➕</span>New Product</button>';
-  html += '<button class="qa-btn blue" onclick="openAddCustomer()"><span class="qa-icon">👤</span>New Customer</button>';
-  html += '<button class="qa-btn orange" onclick="openAddExpense()"><span class="qa-icon">💰</span>Add Expense</button>';
-  html += '<button class="qa-btn info" onclick="openPurchaseEntry()"><span class="qa-icon">📥</span>Purchase Entry</button>';
-  html += '<button class="qa-btn green" onclick="openSupplierManager()"><span class="qa-icon">🚚</span>Supplier</button>';
-  html += '<button class="qa-btn blue" onclick="openStockJournal()"><span class="qa-icon">📜</span>Stock Journal</button>';
-  html += '<button class="qa-btn orange" onclick="openPurchaseReport()"><span class="qa-icon">📊</span>Purchase Report</button>';
-  html += '<button class="qa-btn purple" onclick="nav(\'sales\')"><span class="qa-icon">🧾</span>Create Invoice</button>';
-html += '<button class="qa-btn purple" onclick="openQuotationPage()"><span class="qa-icon">📋</span>Create Quotation</button>';
-  html += '<button class="qa-btn green" onclick="quickReceiveDue()"><span class="qa-icon">💳</span>Receive Due</button>';
-  html += '<button class="qa-btn red" onclick="alert(\'Sales Return — Coming soon!\')"><span class="qa-icon">🔄</span>Sales Return</button>';
-  html += '<button class="qa-btn info" onclick="alert(\'Stock Transfer — Coming soon!\')"><span class="qa-icon">📦</span>Stock Transfer</button>';
-  html += '</div>';
+
+  // ==========================================
+  // 1. GLOWING STATS CARDS (8 Items)
+  // ==========================================
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px;">';
+  
+  // 1. Today's Sales (Green Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(46,213,115,0.15), rgba(46,213,115,0.05));border:1px solid rgba(46,213,115,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(46,213,115,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">💵</div>';
+  html += '<div style="font-size:10px;color:#64ffda;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Today\'s Sales</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#64ffda;text-shadow:0 0 10px rgba(100,255,218,0.5);">' + fmt(stats.todaySales) + '</div></div>';
+
+  // 2. Today's Profit (Neon Blue Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(100,255,218,0.15), rgba(100,255,218,0.05));border:1px solid rgba(100,255,218,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(100,255,218,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">📈</div>';
+  html += '<div style="font-size:10px;color:#64ffda;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Today\'s Profit</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#64ffda;text-shadow:0 0 10px rgba(100,255,218,0.5);">' + fmt(stats.todayProfit) + '</div></div>';
+
+  // 3. Total Due (Red Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(255,71,87,0.15), rgba(255,71,87,0.05));border:1px solid rgba(255,71,87,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(255,71,87,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">⚠️</div>';
+  html += '<div style="font-size:10px;color:#ff6b6b;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Total Due</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#ff6b6b;text-shadow:0 0 10px rgba(255,71,87,0.5);">' + fmt(stats.totalDue) + '</div></div>';
+
+  // 4. Stock Value (Gold Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(255,165,2,0.15), rgba(255,165,2,0.05));border:1px solid rgba(255,165,2,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(255,165,2,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">📦</div>';
+  html += '<div style="font-size:10px;color:#feca57;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Stock Value</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#feca57;text-shadow:0 0 10px rgba(255,165,2,0.5);">' + fmt(stats.stockValue) + '</div></div>';
+
+  // 5. Today's Purchase (Light Blue Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(52,152,219,0.15), rgba(52,152,219,0.05));border:1px solid rgba(52,152,219,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(52,152,219,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">🛒</div>';
+  html += '<div style="font-size:10px;color:#3498db;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Today\'s Purchase</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#3498db;text-shadow:0 0 10px rgba(52,152,219,0.5);">' + fmt(stats.todayPurchase) + '</div></div>';
+
+  // 6. Customers (Purple Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(156,39,176,0.15), rgba(156,39,176,0.05));border:1px solid rgba(156,39,176,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(156,39,176,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">👥</div>';
+  html += '<div style="font-size:10px;color:#e056fd;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Customers</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#e056fd;text-shadow:0 0 10px rgba(156,39,176,0.5);">' + stats.totalCustomers + '</div></div>';
+
+  // 7. Low Stock (Orange Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(255,165,2,0.15), rgba(255,165,2,0.05));border:1px solid rgba(255,165,2,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(255,165,2,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">⚠️</div>';
+  html += '<div style="font-size:10px;color:#ffa502;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Low Stock</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#ffa502;text-shadow:0 0 10px rgba(255,165,2,0.5);">' + stats.lowStock + '</div></div>';
+
+  // 8. Expenses (Red/Pink Glow)
+  html += '<div style="background:linear-gradient(135deg, rgba(255,71,87,0.15), rgba(255,71,87,0.05));border:1px solid rgba(255,71,87,0.3);border-radius:16px;padding:15px;position:relative;overflow:hidden;box-shadow:0 0 15px rgba(255,71,87,0.1);">';
+  html += '<div style="position:absolute;top:-10px;right:-10px;font-size:60px;opacity:0.15;">💸</div>';
+  html += '<div style="font-size:10px;color:#ff6b6b;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Expenses</div>';
+  html += '<div style="font-size:22px;font-weight:800;color:#ff6b6b;text-shadow:0 0 10px rgba(255,71,87,0.5);">' + fmt(stats.todayExpense) + '</div></div>';
+  
+  html += '</div>'; // End of stats grid
+
+  // ==========================================
+  // 2. GLOWING QUICK ACTIONS (12 Items)
+  // ==========================================
+  html += '<div class="dash-section-title" style="font-size:14px; margin-top:20px; color:#64ffda; text-shadow:0 0 10px rgba(100,255,218,0.3);">⚡ ' + t('quickActions') + '</div>';
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:12px;">';
+
+  var qaButtons = [
+    { icon: '🛒', label: t('newSale'), action: "nav('sales')", color: '100,255,218' }, // Neon Green
+    { icon: '➕', label: t('newProduct'), action: "openAddProduct()", color: '255,165,2' }, // Gold
+    { icon: '👤', label: t('newCustomer'), action: "openAddCustomer()", color: '52,152,219' }, // Blue
+    { icon: '💰', label: t('addExpense'), action: "openAddExpense()", color: '255,71,87' }, // Red
+    { icon: '📥', label: 'Purchase Entry', action: "openPurchaseEntry()", color: '46,213,115' }, // Green
+    { icon: '🚚', label: 'Supplier', action: "openSupplierManager()", color: '156,39,176' }, // Purple
+    { icon: '📜', label: 'Stock Journal', action: "openStockJournal()", color: '255,165,2' }, // Orange
+    { icon: '📊', label: 'Purchase Report', action: "openPurchaseReport()", color: '52,152,219' }, // Blue
+    { icon: '🧾', label: 'Create Invoice', action: "nav('sales')", color: '100,255,218' }, // Neon Green
+    { icon: '📋', label: 'Create Quotation', action: "openQuotationPage()", color: '255,165,2' }, // Gold
+    { icon: '💳', label: t('receiveDue'), action: "quickReceiveDue()", color: '46,213,115' }, // Green
+    { icon: '🔄', label: t('saleReturn'), action: "openSaleReturn()", color: '255,71,87' } // Red
+  ];
+
+  for (var i = 0; i < qaButtons.length; i++) {
+    var btn = qaButtons[i];
+    html += '<div onclick="' + btn.action + '" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:15px;text-align:center;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.background=\'rgba(255,255,255,0.08)\'" onmouseout="this.style.background=\'rgba(255,255,255,0.03)\'">';
+    html += '<div style="width:40px;height:40px;background:rgba(' + btn.color + ',0.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px auto;font-size:18px;color:rgb(' + btn.color + ');box-shadow:0 0 15px rgba(' + btn.color + ',0.3);">' + btn.icon + '</div>';
+    html += '<div style="font-size:11px;font-weight:700;color:#e6f1ff;">' + btn.label + '</div></div>';
+  }
+
+  html += '</div>'; // End of Quick Actions grid
+
+  // ==========================================
+  // 3. REMAINING SECTIONS (Alerts, Chart, etc.)
+  // ==========================================
   html += '<div class="dash-section-title">📈 Sales Overview</div>';
   html += '<div class="chart-box"><div class="chart-tabs">';
   html += '<button class="chart-tab active" data-period="7days" onclick="setChartPeriod(\'7days\')">7 Days</button>';
   html += '<button class="chart-tab" data-period="30days" onclick="setChartPeriod(\'30days\')">30 Days</button>';
   html += '<button class="chart-tab" data-period="year" onclick="setChartPeriod(\'year\')">This Year</button>';
   html += '</div><div style="height:200px"><canvas id="salesChart"></canvas></div></div>';
+
+  // Smart Alerts
   html += '<div class="dash-section-title">⚠️ Smart Alerts</div>';
   if (stats.lowStock > 0) html += '<div class="smart-alert warn" onclick="nav(\'inventory\')"><span class="sa-icon">⚠️</span><span class="sa-text">' + stats.lowStock + ' Products are Low in Stock</span><span class="sa-arrow">›</span></div>';
   if (stats.overdueCustomers > 0) html += '<div class="smart-alert danger" onclick="nav(\'customers\')"><span class="sa-icon">🔴</span><span class="sa-text">' + stats.overdueCustomers + ' Customers have overdue payments</span><span class="sa-arrow">›</span></div>';
   if (stats.overdueSupplierCount > 0) html += '<div class="smart-alert info" onclick="openSupplierManager()"><span class="sa-icon">🚚</span><span class="sa-text">' + stats.overdueSupplierCount + ' Supplier payments are due</span><span class="sa-arrow">›</span></div>';
   if (stats.unpaidInvoices > 0) html += '<div class="smart-alert warn" onclick="nav(\'sales\')"><span class="sa-icon">🧾</span><span class="sa-text">' + stats.unpaidInvoices + ' invoices are unpaid</span><span class="sa-arrow">›</span></div>';
-  if (stats.lowStock === 0 && stats.overdueCustomers === 0 && stats.overdueSupplierCount === 0 && stats.unpaidInvoices === 0) html += '<div class="smart-alert info"><span class="sa-icon">✅</span><span class="sa-text">All clear! No pending alerts.</span></div>';
+  if (stats.lowStock === 0 && stats.overdueCustomers === 0 && stats.overdueSupplierCount === 0 && stats.unpaidInvoices === 0) {
+    html += '<div class="smart-alert info"><span class="sa-icon">✅</span><span class="sa-text">All clear! No pending alerts.</span></div>';
+  }
+
+  // Recent Due Customers
   html += '<div class="dash-section-title">👥 Recent Due Customers <span class="see-all" onclick="nav(\'customers\')">See All ›</span></div>';
   var dueCustomers = [];
   for (var i = 0; i < customers.length; i++) if (customers[i].due > 0) dueCustomers.push(customers[i]);
@@ -1972,12 +2065,14 @@ html += '<button class="qa-btn purple" onclick="openQuotationPage()"><span class
     html += '<div class="due-table-wrap"><table class="due-table"><thead><tr><th>Customer</th><th style="text-align:right">Due</th><th style="text-align:right">Action</th></tr></thead><tbody>';
     for (var j = 0; j < dueCustomers.length && j < 5; j++) {
       var c = dueCustomers[j];
-      html += '<tr><td><div class="cust-name">' + c.name + '</div><div class="cust-phone">📞 ' + (c.phone||'-') + '</div></td>';
+      html += '<tr><td><div class="cust-name">' + safe(c.name) + '</div><div class="cust-phone">📞 ' + safe(c.phone||'-') + '</div></td>';
       html += '<td class="cust-due">' + fmt(c.due) + '</td>';
       html += '<td class="action-cell"><button class="tbl-btn view" onclick="showCustomerLedger(' + c.id + ')">View</button><button class="tbl-btn recv" onclick="quickReceiveDue(' + c.id + ')">Receive</button></td></tr>';
     }
     html += '</tbody></table></div>';
   }
+
+  // Stock Status
   html += '<div class="dash-section-title">📦 Stock Status <span class="see-all" onclick="nav(\'inventory\')">See All ›</span></div>';
   html += '<div class="stock-status-grid">';
   html += '<div class="stock-status-card in"><div class="ss-num">' + stats.inStock + '</div><div class="ss-lbl">In Stock</div></div>';
@@ -1985,10 +2080,10 @@ html += '<button class="qa-btn purple" onclick="openQuotationPage()"><span class
   html += '<div class="stock-status-card out"><div class="ss-num">' + stats.outOfStock + '</div><div class="ss-lbl">Out of Stock</div></div>';
   html += '<div class="stock-status-card"><div class="ss-num">' + stats.totalProducts + '</div><div class="ss-lbl">Total Items</div></div>';
   html += '</div>';
+
   app.innerHTML = html;
   setTimeout(function() { renderSalesChart(); }, 100);
 }
-
 function quickReceiveDue(customerId) {
   if (!customerId) { nav('customers'); return; }
   var customers = DB.get('customers');
