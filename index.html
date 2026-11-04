@@ -1034,6 +1034,7 @@ body.dark-mode .card, body.dark-mode .stat, body.dark-mode .modal {
     <div class="settings-section">
       <div class="settings-section-header">🧾 Invoice Settings</div>
       <div class="settings-row" onclick="editInvoicePrefix()"><div class="sr-label">#️⃣ Invoice Prefix</div><div class="sr-value" id="prefixStatus">INV ›</div></div>
+      <div class="settings-row" onclick="openSignatureNamesEdit()"><div class="sr-label">✍️ Signature Names</div><div class="sr-value">Edit ›</div></div>
       <div class="settings-row" onclick="openSignatureSettings()"><div class="sr-label">✍️ Signature Settings</div><div class="sr-value">Edit ›</div></div>
       <div class="settings-row"><div class="sr-label">💬 Amount in Words</div><label class="switch"><input type="checkbox" id="amountWordsToggle" onchange="toggleAmountWords(this.checked)"><span class="slider"></span></label></div>
       <div class="settings-row" onclick="toggleAmountWordsLang()"><div class="sr-label">🔠 Words Language</div><div class="sr-value" id="wordsLangStatus">English ›</div></div>
@@ -1153,6 +1154,7 @@ window.hashPassword = hashPassword;
 // END STEP 2.1
 // ============================================================
 window.LANG = localStorage.getItem('smp_lang') || 'bn';
+var LANG = window.LANG;
 var SETTINGS = {
   get: function(key, def) {
     if (!window.DB || !DB.currentShopId) return def;
@@ -1162,19 +1164,6 @@ var SETTINGS = {
   },
   set: function(key, val) {
     if (!window.DB || !DB.currentShopId) return;
-    localStorage.setItem('smp_set_' + key + '_' + DB.currentShopId, JSON.stringify(val));
-  }
-};
-
-var SETTINGS = {
-  get: function(key, def) {
-    if (!DB.currentShopId) return def;
-    var v = localStorage.getItem('smp_set_' + key + '_' + DB.currentShopId);
-    if (v === null) return def;
-    try { return JSON.parse(v); } catch(e) { return v; }
-  },
-  set: function(key, val) {
-    if (!DB.currentShopId) return;
     localStorage.setItem('smp_set_' + key + '_' + DB.currentShopId, JSON.stringify(val));
   }
 };
@@ -1361,10 +1350,8 @@ function getCustomerProductHistory(customerId, productId) {
 var nowTime = function() { return new Date().toLocaleTimeString('en-BD', {hour:'2-digit', minute:'2-digit'}); };
 
 var currentUser = null;
-window.currentUser = currentUser;
 var currentShop = null;
 var currentPage = 'dashboard';
-var LANG = localStorage.getItem('smp_lang') || 'bn';
 var saleCart = [];
 var APP_VERSION = '4.3.0';
 var scanMode = 'sale';
@@ -1581,6 +1568,7 @@ async function doLogin() {
   if (apiResult && apiResult.success) {
     console.log('✅ Cloud login successful');
     currentUser = apiResult.user;
+    window.currentUser = apiResult.user;
     DB.currentShopId = apiResult.shop.id;
     currentShop = apiResult.shop;
     localStorage.setItem('smp_session', JSON.stringify({userId: apiResult.user.id, shopId: apiResult.shop.id}));
@@ -1627,6 +1615,7 @@ async function doLogin() {
   return; 
 }
   currentUser = found;
+  window.currentUser = found;
   DB.currentShopId = shopId;
   currentShop = DB.findShop(shopId);
 // লেটেস্ট শপ ডেটা লোড করা (সাবটাইটেল আপডেটের জন্য)
@@ -1655,6 +1644,7 @@ localStorage.setItem('smp_session_time', Date.now().toString()); // সেশন
 function logout() {
   if (!confirm(t('logoutConfirm'))) return;
   currentUser = null; currentShop = null; DB.currentShopId = null;
+  window.currentUser = null;
   localStorage.removeItem('smp_session');
   document.getElementById('loginScreen').style.display = 'flex';
   document.getElementById('topbar').style.display = 'none';
@@ -3200,6 +3190,10 @@ function finalizeSale(custId, cost) {
 function showInvoice(saleId) {
   var sales = DB.get('sales');
   var s = null;
+  // Auto-create Challan if not exists
+  if (typeof autoCreateChallan === 'function') {
+    autoCreateChallan(saleId);
+  }
   // ইনভয়েসের জন্য লেটেস্ট ডেটা নেওয়া
   var savedSubtitle = localStorage.getItem('smp_subtitle_' + currentShop.id);
   var savedAddress = localStorage.getItem('smp_address_' + currentShop.id);
@@ -3237,7 +3231,7 @@ function showInvoice(saleId) {
   `;
 
   var html = '<div class="modal-overlay" id="invoiceModal"><div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
-  html += '<div id="invoicePrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; min-height:900px; color:#000; position:relative; overflow:hidden;">';
+  html += '<div id="invoicePrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; min-height:auto; color:#000; position:relative; overflow:hidden;">';
   html += '<style>' + watermarkCSS + '</style>';
   html += '<div class="invoice-watermark">' + currentShop.name + '</div>';
   html += '<div class="invoice-side-text">VYRO Shop Management • Powered by OF-R Software</div>';
@@ -3247,11 +3241,11 @@ function showInvoice(saleId) {
     // FORMAT 4 - NS SAFETY STYLE
     // ==========================================
     html += '<div class="ns-header" style="position:relative; z-index:1;">';
-    html += '<div><h1 style="color:#8b1e1e; font-size:26px; margin:0; font-weight:900; letter-spacing:-0.5px;">' + currentShop.name + '</h1>';
+    html += '<div style="width: 65%;"><h1 style="color:#8b1e1e; font-size:10px; margin:0; font-weight:900; letter-spacing:-0.5px; white-space: nowrap;">' + currentShop.name + '</h1>';
     html += '<p style="font-size:12px; color:#444; margin:2px 0 0; font-weight:600;">' + (currentShop.subtitle || '') + '</p></div>';
 html += '<p style="font-size:11px; color:#666; margin:2px 0 0; font-weight:400;">📍 ' + (currentShop.address || '') + ' | 📞 ' + (currentShop.phone || '') + '</p>';
-    html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
-    html += '<b>INVOICE</b><br>';
+    html += '<div style="width: 35%; text-align:right; font-size:12px; line-height:1.4; margin-top:10px;">';
+    html += '<b style="font-size:22px; color:#8b1e1e; letter-spacing:2px;">INVOICE</b><br>';
     html += 'Invoice #: ' + (s.invoiceNo || s.id) + '<br>';
     html += 'Date: ' + s.date + '<br>';
         var chalanTextF4 = 'N/A';
@@ -3259,7 +3253,7 @@ html += '<p style="font-size:11px; color:#666; margin:2px 0 0; font-weight:400;"
     for (var ci = 0; ci < chs.length; ci++) {
       if (chs[ci].saleId === s.id) { chalanTextF4 = chs[ci].challanNo; break; }
     }
-    html += 'Chalan No: ' + chalanTextF4;v
+    html += 'Chalan No: ' + chalanTextF4;
     html += '</div></div>';
 
     html += '<div style="display:flex; justify-content:space-between; margin-bottom:15px; position:relative; z-index:1; font-size:12px;">';
@@ -3295,7 +3289,7 @@ html += '<p style="font-size:11px; color:#666; margin:2px 0 0; font-weight:400;"
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="2" style="text-align:right; font-weight:bold;">VAT (as per govt. rules) :</td><td style="text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
 html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING CHARGE</td><td style="text-align:right; width:20%; border-left:none; border-right:none;">৳ 0.00</td><td style="text-align:right; width:20%;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
-    html += '<tr><td colspan="2" style="text-align:right; font-weight:bold; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + (s.total || 0).toFixed(2) + '</td></tr>';
+        html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + grandTotalCalc.toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="3" style="font-weight:bold; font-style:italic; border-top:none;">IN WORD : BDT ' + amountToWords(s.total).toUpperCase() + '</td></tr>';
     html += '</table>';
 
@@ -3312,20 +3306,20 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
     html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #ddd; padding-bottom:10px; margin-bottom:15px;">';
     
     // Left: Shop Info
-    html += '<div style="width:35%;">';
-    html += '<h1 style="color:#8b1e1e; font-size:24px; margin:0; font-weight:900; text-transform:uppercase;">' + currentShop.name + '</h1>';
+    html += '<div style="width:45%; overflow: hidden;">';
+html += '<h1 style="color:#8b1e1e; font-size:16px; margin:0; font-weight:900; text-transform:uppercase; white-space:nowrap;">' + currentShop.name + '</h1>';
     html += '<p style="font-size:11px; color:#444; margin:4px 0 0; font-weight:600;">' + (savedSubtitle || '') + '</p>';
     html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📍 ' + (savedAddress || '') + '</p>';
     html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📞 ' + (savedPhone || '') + '</p>';
     html += '</div>';
 
     // Center: INVOICE
-    html += '<div style="width:30%; text-align:center;">';
-    html += '<h2 style="color:#8b1e1e; font-size:28px; margin:10px 0 0; letter-spacing:2px; font-weight:900;">INVOICE</h2>';
+    html += '<div style="width:25%; text-align:center; padding-top:5px;">';
+html += '<h2 style="color:#8b1e1e; font-size:22px; margin:0; letter-spacing:1px; font-weight:900;">INVOICE</h2>';
     html += '</div>';
 
     // Right: Invoice Details
-    html += '<div style="width:35%; text-align:right; font-size:12px; line-height:1.6;">';
+    html += '<div style="width:30%; text-align:right; font-size:12px; line-height:1.6;">';
     html += '<div><b>Invoice #:</b> ' + (s.invoiceNo || s.id) + '</div>';
     html += '<div><b>Invoice Date:</b> ' + s.date + '</div>';
         // চালান নাম্বার খোঁজা
@@ -3376,20 +3370,56 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
 
         // Summary Table (As per picture)
     html += '<table style="width:100%; border-collapse:collapse; font-size:12px; border:1px solid #000;">';
+    // SUBTOTAL (সবসময় দেখাবে)
     html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SUB TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right; width:20%;">৳ ' + (s.subtotal || 0).toFixed(2) + '</td></tr>';
-    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SPECIAL DISCOUNT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.discount || 0).toFixed(2) + '</td></tr>';
-    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
     
-    // VAT and Transport
-    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">VAT (as per govt. rules) :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
-    html += '<tr><td style="border:1px solid #000; padding:6px; text-transform:uppercase;">TRANSPORTATION / CARRYING CHARGE</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
+    // DISCOUNT (০ এর বেশি হলে দেখাবে)
+    if (s.discount > 0) {
+      html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">SPECIAL DISCOUNT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.discount || 0).toFixed(2) + '</td></tr>';
+    }
+    
+        // NET TOTAL (শুধু ডিসকাউন্ট বা ভ্যাট থাকলে দেখাবে)
+    if ((s.discount || 0) > 0 || (s.vatAmount || 0) > 0) {
+      html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">NET TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + ((s.subtotal || 0) - (s.discount || 0)).toFixed(2) + '</td></tr>';
+    }
+    
+    // VAT (০ এর বেশি হলে দেখাবে)
+    if (s.vatAmount > 0) {
+      html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase;">VAT (as per govt. rules) :</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.vatAmount || 0).toFixed(2) + '</td></tr>';
+    }
+    
+    // TRANSPORT (০ এর বেশি হলে দেখাবে)
+    if (s.transportCost > 0) {
+      html += '<tr><td style="border:1px solid #000; padding:6px; text-transform:uppercase;">TRANSPORTATION / CARRYING CHARGE</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td><td style="border:1px solid #000; padding:6px; text-align:right;">৳ ' + (s.transportCost || 0).toFixed(2) + '</td></tr>';
+    }
     
     // সঠিক গ্র্যান্ড টোটাল হিসাব
     var grandTotalCalc = (s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0) + (s.transportCost || 0);
     
-    html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT (INCLUDING ALL) :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + grandTotalCalc.toFixed(2) + '</td></tr>';
+       html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + grandTotalCalc.toFixed(2) + '</td></tr>';
     html += '<tr><td colspan="3" style="border:1px solid #000; padding:6px; font-weight:bold; font-style:italic;">IN WORD : BDT ' + amountToWords(grandTotalCalc).toUpperCase() + '</td></tr>';
     html += '</table>';
+    // ==========================================
+    // SIGNATURE SECTION (FORMAT 5)
+    // ==========================================
+    html += '<div style="display:flex; justify-content:space-between; margin-top:60px; padding-top:10px;">';
+    
+    // ১. Received By
+    html += '<div style="width:30%; text-align:center;">';
+    html += '<div style="border-top:1px solid #000; padding-top:5px; font-size:12px; font-weight:bold;">Received By</div>';
+    html += '</div>';
+    
+    // ২. Checked By
+    html += '<div style="width:30%; text-align:center;">';
+    html += '<div style="border-top:1px solid #000; padding-top:5px; font-size:12px; font-weight:bold;">Checked By</div>';
+    html += '</div>';
+    
+    // ৩. Authorised
+    html += '<div style="width:30%; text-align:center;">';
+    html += '<div style="border-top:1px solid #000; padding-top:5px; font-size:12px; font-weight:bold;">Authorised</div>';
+    html += '</div>';
+    
+    html += '</div>';
   } else {
     // ==========================================
     // আগের ফরম্যাট ১, ২, ৩ (Standard/Modern/Classic)
@@ -3447,13 +3477,32 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
   html += '</div>';
   
   // প্রিন্ট/ডাউনলোড বাটন
-  html += '<div style="padding:15px;background:#f8f9fa;border-top:2px solid #eee"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+  // Auto-create or find challan for button
+  var challanForBtn = null;
+  var chsList = DB.get('challans');
+  for (var cIdx = 0; cIdx < chsList.length; cIdx++) {
+    if (chsList[cIdx].saleId === s.id) { challanForBtn = chsList[cIdx]; break; }
+  }
+  if (!challanForBtn && typeof autoCreateChallan === 'function') {
+    challanForBtn = autoCreateChallan(s.id);
+  }
+
+  // প্রিন্ট/ডাউনলোড বাটন
+  html += '<div style="padding:15px;background:#f8f9fa;border-top:2px solid #eee">';
+  
+  // চালান বাটন (যদি চালান থাকে)
+  if (challanForBtn) {
+    html += '<button class="btn-primary" style="background:linear-gradient(135deg,#ff9800,#f57c00);margin-bottom:10px;width:100%;font-weight:700" onclick="showChallan(' + challanForBtn.id + ')">🚚 Delivery Challan (' + challanForBtn.challanNo + ')</button>';
+  }
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   html += '<button class="btn-primary" onclick="printInvoice()">🖨️ Print</button>';
   html += '<button class="btn-success" onclick="downloadInvoicePDF()">📄 Save PDF</button>';
   html += '<button class="btn-info" onclick="shareInvoiceWhatsApp(' + saleId + ')">📱 WhatsApp</button>';
   html += '<button class="btn-warning" onclick="downloadInvoiceImage(' + saleId + ')">🖼️ Save Image</button>';
   html += '</div>';
-  html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'invoiceModal\').remove();render()">Close</button></div>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:10px;width:100%" onclick="document.getElementById(\'invoiceModal\').remove();render()">Close</button>';
+  html += '</div>'; // padding div ক্লোজ
   
   html += '</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
@@ -3606,13 +3655,28 @@ function openSettings() {
   setTimeout(openSettingsExtend, 100);
 }
 function openSignatureSettings() {
-  var sm = document.getElementById('settingsModal'); if (sm) sm.classList.add('hidden');
-  var others = ['userMenu','shopMgr','userMgr','notifModal','ledgerModal','profileModal','shopEditModal','userEditModal','prodModal','custModal','invoiceModal','billingModal','attachModal','viewImgModal','editInvoiceModal','passwordModal','addressEditModal','productEditModal','timeDateModal','brandingModal','prefixModal','expenseModal','settingsSubModal','historyModal'];
-  for (var i = 0; i < others.length; i++) { var el = document.getElementById(others[i]); if (el) el.remove(); }
-  document.getElementById('sigPrepared').value = SETTINGS.get('sigPrepared', '');
-  document.getElementById('sigAuthorized').value = SETTINGS.get('sigAuthorized', '');
-  var modal = document.getElementById('signatureSettingsModal');
-  modal.classList.remove('hidden'); modal.style.display = 'flex';
+  var s1 = SETTINGS.get('signReceived', 'Received By');
+  var s2 = SETTINGS.get('signChecked', 'Checked By');
+  var s3 = SETTINGS.get('signAuthorised', 'Authorised');
+
+  var html = '<div class="modal-overlay" id="signNamesModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal">';
+  html += '<h3>✍️ Signature Names</h3>';
+  html += '<label style="font-size:11px;color:#666">1. Received By</label><input id="sigName1" value="' + escAttr(s1) + '">';
+  html += '<label style="font-size:11px;color:#666">2. Checked By</label><input id="sigName2" value="' + escAttr(s2) + '">';
+  html += '<label style="font-size:11px;color:#666">3. Authorised</label><input id="sigName3" value="' + escAttr(s3) + '">';
+  html += '<button class="btn-primary" onclick="saveSignatureNames()">💾 Save</button>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'signNamesModal\').remove()">Close</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function saveSignatureNames() {
+  SETTINGS.set('signReceived', document.getElementById('sigName1').value.trim());
+  SETTINGS.set('signChecked', document.getElementById('sigName2').value.trim());
+  SETTINGS.set('signAuthorised', document.getElementById('sigName3').value.trim());
+  document.getElementById('signNamesModal').remove();
+  alert('✅ Signature names saved!');
 }
 function closeSignatureSettings() {
   document.getElementById('signatureSettingsModal').classList.add('hidden');
@@ -4358,7 +4422,7 @@ function renderReports(app) {
     var sorted = filteredSales.slice().sort(function(a,b){ return b.id - a.id; });
     for (var k = 0; k < sorted.length; k++) {
       var s = sorted[k];
-     html += '<div class="list-item" onclick="showInvoice(' + s.id + ')" style="cursor:pointer"><div class="info"><b>' + (s.invoiceNo || ('#' + s.id)) + ' — ' + (s.customerName||'Cash') + '</b><small>' + s.date + '</small></div><b>' + fmt(s.total) + '</b></div>';
+    html += '<div class="list-item" onclick="showInvoice(' + s.id + ')" style="cursor:pointer"><div class="info"><b>' + safe(s.invoiceNo || ('#' + s.id)) + ' — ' + safe(s.customerName||'Cash') + '</b><small>' + s.date + '</small></div><b>' + fmt(s.total) + '</b></div>';
     }
   }
   html += '</div>';
@@ -9237,33 +9301,6 @@ window.exportReturnsCSV = function() {
   alert('✅ CSV download হয়েছে');
 };
 
-// ---------- Add Return button to Invoice Modal ----------
-var _origShowInvoice = window.showInvoice;
-window.showInvoice = function(saleId) {
-  if (_origShowInvoice) _origShowInvoice(saleId);
-  setTimeout(function() {
-    var modal = document.getElementById('invoiceModal');
-    if (!modal) return;
-    if (modal.querySelector('#returnInvoiceBtn')) return;
-    
-    var btnWrap = modal.querySelector('div[style*="padding:15px"]');
-    if (!btnWrap) return;
-    var firstGrid = btnWrap.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
-    if (!firstGrid) return;
-    
-    var retBtn = document.createElement('button');
-    retBtn.id = 'returnInvoiceBtn';
-    retBtn.className = 'btn-primary';
-    retBtn.style.cssText = 'background:linear-gradient(135deg,#c0392b,#e74c3c);margin-top:10px;width:100%;padding:12px;font-weight:700';
-    retBtn.innerHTML = '🔄 Sale Return (বিক্রি ফেরত)';
-    retBtn.onclick = function() {
-      document.getElementById('invoiceModal').remove();
-      openSaleReturn(saleId);
-    };
-    firstGrid.parentNode.insertBefore(retBtn, firstGrid.nextSibling);
-  }, 100);
-};
-
 // ---------- Add Sale Return to Dashboard Quick Actions ----------
 var _origRenderDashboard = window.renderDashboard;
 window.renderDashboard = function(app) {
@@ -9820,39 +9857,6 @@ window.finalizeSale = function(custId, cost) {
       }
     }
   }, 200);
-};
-
-// ---------- Hook: Add Challan button to Invoice Modal ----------
-var _origShowInvoiceStep7 = window.showInvoice;
-window.showInvoice = function(saleId) {
-  if (_origShowInvoiceStep7) _origShowInvoiceStep7(saleId);
-  setTimeout(function() {
-    var modal = document.getElementById('invoiceModal');
-    if (!modal) return;
-    if (modal.querySelector('#challanBtn')) return;
-    
-    var btnWrap = modal.querySelector('div[style*="padding:15px"]');
-    if (!btnWrap) return;
-    var firstGrid = btnWrap.querySelector('div[style*="grid-template-columns:1fr 1fr"]');
-    if (!firstGrid) return;
-    
-    // Auto-create challan if not exists
-    var challan = autoCreateChallan(saleId);
-    
-    var chBtn = document.createElement('button');
-    chBtn.id = 'challanBtn';
-    chBtn.className = 'btn-primary';
-    chBtn.style.cssText = 'background:linear-gradient(135deg,#ff9800,#f57c00);margin-top:10px;width:100%;padding:12px;font-weight:700';
-    chBtn.innerHTML = '🚚 Delivery Challan — ' + (challan ? challan.challanNo : '');
-    chBtn.onclick = function() {
-      if (challan) {
-        showChallan(challan.id);
-      } else {
-        alert('Challan পাওয়া যায়নি');
-      }
-    };
-    firstGrid.parentNode.insertBefore(chBtn, firstGrid.nextSibling);
-  }, 100);
 };
 
 // ---------- Hook: Add Challan Register to Dashboard Quick Actions ----------
@@ -12014,6 +12018,33 @@ window.showInvoice = function(saleId) {
     }
   }, 100); // ১০০ মিলিসেকেন্ড পর DOM আপডেট হবে
 };
+// ============================================================
+// SIGNATURE NAMES EDIT FUNCTIONS
+// ============================================================
+function openSignatureNamesEdit() {
+  var s1 = SETTINGS.get('signReceived', 'Received By');
+  var s2 = SETTINGS.get('signChecked', 'Checked By');
+  var s3 = SETTINGS.get('signAuthorised', 'Authorised');
+
+  var html = '<div class="modal-overlay" id="signNamesModal" onclick="if(event.target===this)this.remove()">';
+  html += '<div class="modal">';
+  html += '<h3>✍️ Signature Names</h3>';
+  html += '<label style="font-size:11px;color:#666">1. Received By</label><input id="sigName1" value="' + (typeof safeAttr === 'function' ? safeAttr(s1) : s1) + '">';
+  html += '<label style="font-size:11px;color:#666">2. Checked By</label><input id="sigName2" value="' + (typeof safeAttr === 'function' ? safeAttr(s2) : s2) + '">';
+  html += '<label style="font-size:11px;color:#666">3. Authorised</label><input id="sigName3" value="' + (typeof safeAttr === 'function' ? safeAttr(s3) : s3) + '">';
+  html += '<button class="btn-primary" onclick="saveSignatureNames()">💾 Save</button>';
+  html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'signNamesModal\').remove()">Close</button>';
+  html += '</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function saveSignatureNames() {
+  SETTINGS.set('signReceived', document.getElementById('sigName1').value.trim());
+  SETTINGS.set('signChecked', document.getElementById('sigName2').value.trim());
+  SETTINGS.set('signAuthorised', document.getElementById('sigName3').value.trim());
+  document.getElementById('signNamesModal').remove();
+  alert('✅ Signature names saved!');
+}
 </script>
 </body>
 </html>
