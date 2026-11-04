@@ -331,6 +331,285 @@ body.dark-mode .record-card .rec-date { color:#4a90e2; }
 .record-card .rec-amount { font-size:14px; font-weight:700; color:#1e7e34; }
 .record-card .rec-meta { font-size:11px; color:#888; }
 .group-header { background:linear-gradient(90deg,#2a5298,#4a90e2); color:#fff; padding:8px 12px; border-radius:8px; margin:12px 0 8px; font-size:13px; font-weight:700; display:flex; justify-content:space-between; }
+/* ========================================================= */
+/* PREMIUM DARK DASHBOARD THEME (MATCHING 2ND IMAGE)         */
+/* ========================================================= */
+
+/* ১. পুরো অ্যাপের ব্যাকগ্রাউন্ড (গাঢ় নীল/কালো গ্রেডিয়েন্ট) */
+body {
+  background: linear-gradient(135deg, #0a192f 0%, #112240 100%) !important;
+  color: #e6f1ff !important;
+}
+
+/* ২. হেডার (টপ বার) গ্লাস ইফেক্ট */
+.biz-header, .topbar {
+  background: rgba(10, 25, 47, 0.8) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* ৩. স্ট্যাটস কার্ড (Today's Sales, Profit ইত্যাদি) */
+.dash-stat-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+  border-left: none !important; /* আগের লাইন বর্ডার বাদ */
+  color: #fff !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
+}
+
+.dash-stat-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ৪. কার্ডের ভেতরের টেক্সট কালার */
+.ds-num { color: #64ffda !important; font-size: 18px !important; } /* টিল/নিওন কালার */
+.ds-lbl { color: #8892b0 !important; font-size: 11px !important; }
+
+/* স্পেসিফিক কার্ডের কালার (যেমন ২য় ছবিতে ১ম কার্ড সবুজ, ২য় কার্ড লাল) */
+.dash-stat-card.success .ds-num { color: #64ffda !important; } /* সবুজাভ নিওন */
+.dash-stat-card.danger .ds-num { color: #ff6b6b !important; }  /* লালাভ */
+.dash-stat-card.warn .ds-num { color: #feca57 !important; }    /* হলুদাভ */
+
+/* ৫. কুইক অ্যাকশন (বাটনগুলো) */
+.qa-btn {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #e6f1ff !important;
+  border-radius: 16px !important;
+  backdrop-filter: blur(8px) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
+  border-bottom: none !important; /* আগের লাইন বর্ডার বাদ */
+}
+
+.qa-btn:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(100, 255, 218, 0.5) !important;
+}
+
+/* ৬. সেকশন টাইটেল */
+.dash-section-title {
+  color: #64ffda !important;
+  font-weight: 800 !important;
+  letter-spacing: 1px !important;
+}
+
+/* ৭. চার্ট ও বটম নেভিগেশন */
+.chart-box, .due-table-wrap, .stock-status-card {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+
+.bottom-nav {
+  background: rgba(10, 25, 47, 0.9) !important;
+  backdrop-filter: blur(10px) !important;
+  border-top: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.nav-item { color: #8892b0 !important; }
+.nav-item.active { color: #64ffda !important; }
+
+/* ৮. ইনপুট ফিল্ড (সার্চ বার) */
+input, select, textarea {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+  color: #e6f1ff !important;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #64ffda !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+/* ========================================================= */
+/* EXTRA GLASSMORPHISM FOR CARDS & MODALS                    */
+/* ========================================================= */
+
+/* ১. সব সাদা কার্ডকে ডার্ক গ্লাস ইফেক্ট দেওয়া */
+.card, .login-box, .activation-box, .modal, .stat, .list-item, .due-table-wrap, .settings-section, .modern-cart-wrap {
+  background: rgba(17, 34, 64, 0.7) !important; /* গাঢ় নীল গ্লাস */
+  backdrop-filter: blur(15px) !important;
+  -webkit-backdrop-filter: blur(15px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
+  color: #e6f1ff !important;
+}
+
+/* ২. কার্ডের ভেতরের টাইটেল (যেমন New Sale, Cart) */
+.card h3, .card h4 {
+  color: #64ffda !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 10px;
+}
+
+/* ৩. ড্রপডাউন এবং ইনপুট ফিল্ড একদম ডার্ক ও গ্লাসি করা */
+select, input[type="text"], input[type="number"], input[type="date"], textarea {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+}
+select option {
+  background: #112240 !important; /* অপশন সিলেক্ট করলে ডার্ক দেখাবে */
+  color: #fff !important;
+}
+
+/* ৪. টেক্সট কালার (Party/Customer, Type product name) */
+label {
+  color: #8892b0 !important;
+}
+.card p, .card small, .list-item .info small {
+  color: #a8b2d1 !important;
+}
+
+/* ৫. ইনফরমেশন বক্স (যেমন ফুটার) */
+body.dark-mode .card, body.dark-mode .stat, body.dark-mode .modal {
+  background: rgba(17, 34, 64, 0.7) !important;
+  border: 1px solid rgba(255,255,255,0.1) !important;
+}
+/* ========================================================= */
+/* FIX WHITE BACK BUTTON & TABS                              */
+/* ========================================================= */
+
+/* ১. উপরের Back এবং Title Bar (যেটা এখনো সাদা) */
+#app > div[style*="background:#fff"], 
+#app > div[style*="background: #fff"] {
+    background: rgba(17, 34, 64, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e6f1ff !important;
+}
+
+/* ২. Back বাটনের পাশের টাইটেল (যেমন Sales, Stock) */
+#app > div[style*="background:#fff"] h3, 
+#app > div[style*="background:#fff"] span {
+    color: #64ffda !important; /* নিওন সবুজ */
+}
+
+/* ৩. রিপোর্ট পেজের Today, This Month বাটন */
+.tabs .tab {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #8892b0 !important;
+}
+
+.tabs .tab.active {
+    background: #64ffda !important; /* অ্যাক্টিভ ট্যাব নিওন হবে */
+    color: #0a192f !important;
+    border-color: #64ffda !important;
+    font-weight: bold;
+}
+
+/* ৪. রিপোর্ট পেজের ভেতরের স্ট্যাট বক্সগুলো (Total, Profit ইত্যাদি) */
+#app .stat, 
+#app .grid2 > div {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+}
+/* ========================================================= */
+/* FIX CART TABLE & UNIT SELECT DROPDOWN                     */
+/* ========================================================= */
+
+/* ১. কার্টের ভেতরের সাদা ইউনিট সিলেক্ট বক্স (kg, pcs) ঠিক করা */
+.modern-cart-table .unit-select,
+.modern-cart-table select,
+.modern-cart-table input[type="number"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+    box-shadow: none !important;
+}
+
+/* ২. টেবিলের হোভার ইফেক্ট (মাউস নিলে যাতে সাদা না হয়) */
+.modern-cart-table tbody tr:hover {
+    background: rgba(100, 255, 218, 0.05) !important; /* হালকা নিওন আভা */
+    border-color: rgba(100, 255, 218, 0.2) !important;
+}
+
+/* ৩. কার্ট টেবিলের ভেতরের লেখা */
+.modern-cart-table td {
+    color: #e6f1ff !important;
+}
+.modern-cart-table td b {
+    color: #64ffda !important;
+}
+/* ========================================================= */
+/* FIX INVOICE PRINT (MAKE IT WHITE AGAIN)                   */
+/* ========================================================= */
+
+#invoicePrint, 
+#challanPrint,
+.inv-format-1, .inv-format-2, .inv-format-3, .inv-format-4, .inv-format-5 {
+    background: #ffffff !important;
+    color: #000000 !important;
+}
+
+/* ইনভয়েসের ভেতরের টেক্সট, টেবিল, বর্ডার ঠিক করা */
+#invoicePrint *:not(.invoice-watermark),
+#challanPrint *:not(.invoice-watermark) {
+  color: #000 !important;
+}
+#invoicePrint table, 
+#invoicePrint td, 
+#invoicePrint th,
+#challanPrint table,
+#challanPrint td,
+#challanPrint th {
+    border-color: #000 !important;
+}
+/* ========================================================= */
+/* FIX BILLING MODAL WHITE SUMMARY BOX                       */
+/* ========================================================= */
+
+/* ১. সামারি বক্স (যেখানে Subtotal, Discount দেখাচ্ছে) */
+#billSummary {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e6f1ff !important;
+    border-radius: 8px !important;
+}
+
+/* ২. সামারি বক্সের ভেতরের টেক্সট কালার */
+#billSummary span, #billSummary b {
+    color: #e6f1ff !important;
+}
+
+/* ৩. মডালের উপরে যে সাব-টোটাল দেখা যাচ্ছে (Subtotal: ৳১৬) */
+.modal div[style*="background:#f0f2f5"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e6f1ff !important;
+}
+/* সব মডালের ভেতরের ইনপুট ফিল্ড ডার্ক করা */
+.modal input, .modal select, .modal textarea {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #fff !important;
+}
+/* ========================================================= */
+/* CHALLAN TABLE BORDER FIX (FOR ALL FORMATS)                */
+/* ========================================================= */
+#challanPrint table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+    border: 1px solid #000 !important;
+}
+#challanPrint th, #challanPrint td {
+    border: 1px solid #000 !important;
+    padding: 6px !important;
+}
+#challanPrint th {
+    background-color: #f0f0f0 !important;
+    color: #000 !important;
+    text-align: center !important;
+    font-weight: bold !important;
+}
 </style>
 </head>
 <body>
@@ -2756,7 +3035,7 @@ function showInvoice(saleId) {
   }
 
   var watermarkCSS = `
-    .invoice-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 80px; font-weight: 900; color: rgba(0,0,0,0.04); white-space: nowrap; pointer-events: none; z-index: 0; text-transform: uppercase; letter-spacing: 5px; }
+    .invoice-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 70px !important; font-weight: 900; color: #cccccc !important; opacity: 0.3 !important; white-space: nowrap; pointer-events: none; z-index: 0; text-transform: uppercase; letter-spacing: 5px; }
     .invoice-side-text { position: absolute; left: 2px; bottom: 10px; transform-origin: bottom left; transform: rotate(-90deg); font-size: 11px; color: #888; letter-spacing: 2px; white-space: nowrap; font-weight: 700; }
   `;
 
@@ -8924,7 +9203,12 @@ window.showChallan = function(challanId) {
   var savedPhone = localStorage.getItem('smp_phone_' + currentShop.id) || currentShop.phone || '';
   var savedSubtitle = localStorage.getItem('smp_subtitle_' + currentShop.id) || currentShop.subtitle || '';
   
-  var html = '<div class="modal-overlay" id="challanModal">';
+    var html = '<div class="modal-overlay" id="challanModal">';
+  
+  if (c.status === 'Delivered') {
+      html += '<div style="position:absolute; top:100px; right:40px; border:3px solid #2ed573; color:#2ed573; padding:5px 15px; font-size:20px; font-weight:900; transform:rotate(-10deg); z-index:10;">DELIVERED</div>';
+  }
+
   html += '<div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
   html += '<div id="challanPrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; background:#fff; color:#000; position:relative; overflow:hidden;">';
 
@@ -8939,8 +9223,7 @@ window.showChallan = function(challanId) {
     html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
     html += '<h2 style="color:#ff9800; margin:0; font-size:22px; letter-spacing:1px;">DELIVERY CHALLAN</h2>';
     html += '<p style="font-size:13px; margin:8px 0 0;"><b>' + c.challanNo + '</b></p>';
-    html += '<p style="font-size:11px; color:#666; margin:3px 0 0;">Date: ' + chDate + '</p>';
-    html += '</div></div>';
+    html += '<p style="font-size:11px; color:#666; margin:3px 0 0;">Date: ' + chDate + '</p>';   
 
     html += '<div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:12px;">';
     html += '<div style="width:50%;"><b style="font-size:11px; text-transform:uppercase;">DELIVER TO:</b><br>';
@@ -8951,33 +9234,45 @@ window.showChallan = function(challanId) {
     html += '<b>Cell:</b> ' + (c.customerPhone || 'N/A');
     html += '</div></div>';
 
-    html += '<table class="ns-table" style="position:relative; z-index:1;">';
-    html += '<thead><tr><th style="width:5%;">SL.</th><th style="width:50%;">ITEMS / PRODUCT</th><th style="width:15%;">QTY</th><th style="width:15%;">UNIT</th><th style="width:15%;">CHECK ✓</th></tr></thead><tbody>';
-        for (var j = 0; j < c.items.length; j++) {
-      var it = c.items[j];
-      var pSize = it.size || '';
-      var pModel = it.model || '';
-      var pBrand = it.brand || '';
-      
-      // যদি চালানে না থাকে, তবে প্রোডাক্ট ডেটাবেস থেকে খোঁজা
-      if ((!pSize || !pModel || !pBrand) && it.productId) {
-        var allProds = DB.get('products');
-        for (var pi = 0; pi < allProds.length; pi++) {
-          if (allProds[pi].id === it.productId) {
-            if (!pSize) pSize = allProds[pi].size || '';
-            if (!pModel) pModel = allProds[pi].model || '';
-            if (!pBrand) pBrand = allProds[pi].brand || '';
-            break;
-          }
+    html += '<table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:15px; border:1px solid #000;">';
+    html += '<thead><tr style="background:#f0f0f0; border:1px solid #000; text-align:center; font-weight:bold;">';
+html += '<th style="border:1px solid #000; padding:6px; width:5%;">Sl No</th>';
+html += '<th style="border:1px solid #000; padding:6px; width:55%;">Description</th>';
+html += '<th style="border:1px solid #000; padding:6px; width:10%;">Qty</th>';
+html += '<th style="border:1px solid #000; padding:6px; width:15%;">Unit</th>';
+html += '<th style="border:1px solid #000; padding:6px; width:15%;">Check</th>';
+html += '</tr></thead><tbody>';
+           for (var j = 0; j < c.items.length; j++) {
+        var it = c.items[j];
+        var pSize = it.size || '';
+        var pModel = it.model || '';
+        var pBrand = it.brand || '';
+        
+        // ডেটাবেস থেকে সাইজ/মডেল/ব্র্যান্ড খোঁজা (যদি চালানে না থাকে)
+        if ((!pSize || !pModel || !pBrand) && it.productId) {
+            var allProds = DB.get('products');
+            for (var pi = 0; pi < allProds.length; pi++) {
+                if (allProds[pi].id === it.productId) {
+                    if (!pSize) pSize = allProds[pi].size || '';
+                    if (!pModel) pModel = allProds[pi].model || '';
+                    if (!pBrand) pBrand = allProds[pi].brand || '';
+                    break;
+                }
+            }
         }
-      }
-      
-      var displayName = pSize ? (pSize + ' ' + it.name) : it.name;
-      if (pModel || pBrand) {
-        displayName += '<br><small style="color:#666;font-size:10px">' + (pModel ? 'Model: ' + pModel : '') + (pBrand ? ' | Brand: ' + pBrand : '') + '</small>';
-      }
-      
-      html += '<tr><td style="text-align:center;">' + (j + 1) + '</td><td>' + displayName + '</td><td style="text-align:center;">' + it.qty + '</td><td style="text-align:center;">' + (it.unit || 'pcs') + '</td><td style="text-align:center;"><span style="display:inline-block;width:18px;height:18px;border:1.5px solid #999;border-radius:3px;"></span></td></tr>';
+        
+        var displayName = pSize ? (pSize + ' ' + it.name) : it.name;
+        if (pModel || pBrand) {
+            displayName += '<br><small style="color:#666;font-size:10px">' + (pModel ? 'Model: ' + pModel : '') + (pBrand ? ' | Brand: ' + pBrand : '') + '</small>';
+        }
+               html += '<tr>';
+html += '<td style="border:1px solid #000; padding:6px; text-align:center;">' + (j + 1) + '</td>';
+html += '<td style="border:1px solid #000; padding:6px;">' + displayName + '</td>';
+html += '<td style="border:1px solid #000; padding:6px; text-align:center;">' + it.qty + '</td>';
+html += '<td style="border:1px solid #000; padding:6px; text-align:center;">' + (it.unit || 'pcs') + '</td>';
+html += '<td style="border:1px solid #000; padding:6px; text-align:center;"><span style="display:inline-block;width:15px;height:15px;border:1.5px solid #000;border-radius:2px;"></span></td>';
+html += '</tr>';
+        html += '</tr>';
     }
     html += '</tbody></table>';
     html += '<div style="margin-top:15px; padding:10px; background:#fff3cd; border-left:4px solid #ffa500; color:#856404; font-weight:bold;">Total Quantity: ' + c.totalQty + '</div>';
@@ -9166,6 +9461,10 @@ window.shareChallanWhatsApp = function(challanId) {
   var c = null;
   for (var i = 0; i < challans.length; i++) if (challans[i].id === challanId) c = challans[i];
   if (!c) return;
+  var deliveredSeal = '';
+  if (c.status === 'Delivered') {
+    deliveredSeal = '<div style="position:absolute; top:120px; right:20px; border:3px solid #2ed573; color:#2ed573; padding:5px 15px; font-size:24px; font-weight:900; transform:rotate(-15deg); opacity:0.8; text-transform:uppercase; letter-spacing:3px; z-index:10;">DELIVERED</div>';
+  }
   
   var msg = '*' + currentShop.name + '*\n━━━━━━━━━━━━━━━━\n';
   msg += '*DELIVERY CHALLAN*\n';
