@@ -933,6 +933,38 @@ body.dark-mode .stock-status-card .ss-lbl {
 #app div[onclick^="loadCustomerLedger"] div[style*="color:#ff4757"] {
     color: #ff6b6b !important;
 }
+/* Fix Customer Ledger Modal White Boxes in Dark Mode */
+#ledgerModal .card, 
+#ledgerModal div[style*="background:#f8f9fa"],
+#ledgerModal div[style*="background:#fff"] {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e6f1ff !important;
+}
+
+#ledgerModal select, 
+#ledgerModal input {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.2) !important;
+    color: #fff !important;
+}
+
+#ledgerModal table th {
+    background: rgba(30, 60, 114, 0.8) !important;
+    color: #fff !important;
+}
+
+#ledgerModal table td {
+    background: rgba(255,255,255,0.02) !important;
+    color: #e6f1ff !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+#ledgerModal .btn-primary[onclick*="openPaymentModal"] {
+    /* Receive Payment বাটন */
+    background: linear-gradient(135deg, #2ed573, #1e7e34) !important;
+    color: #fff !important;
+}
 </style>
 </head>
 <body>
@@ -2611,7 +2643,7 @@ function openPaymentModal(customerId) {
   html += '<div class="modal">';
   html += '<h3>💵 Receive Payment</h3>';
   
-  html += '<div style="background:#e3f2fd;padding:10px;border-radius:8px;margin-bottom:10px;font-size:12px;line-height:1.6">';
+  html += '<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:10px; font-size:12px; line-height:1.6; border:1px solid rgba(255,255,255,0.1); color:#e6f1ff;">';
   html += '<b>Customer:</b> ' + c.name + '<br>';
   html += '<b>Total Due:</b> <span style="color:#ff4757;font-weight:800;font-size:14px">' + fmt(c.due) + '</span>';
   html += '</div>';
@@ -3316,7 +3348,7 @@ function completeSale() {
   closeModal();
   var html = '<div class="modal-overlay" id="billingModal"><div class="modal">';
   html += '<h3>🧾 Billing Details</h3>';
-  html += '<div style="background:#f0f2f5;padding:10px;border-radius:8px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>' + fmt(subtotal) + '</b></div></div>';
+  html += '<div style="background:rgba(255,255,255,0.05);padding:10px;border-radius:8px;margin-bottom:10px"><div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>' + fmt(subtotal) + '</b></div></div>';
   html += '<label style="font-size:11px;color:#666">💰 Paid Amount</label><input id="billPaid" type="number" value="" placeholder="0" oninput="calcBilling()">';
   html += '<label style="font-size:11px;color:#666">💸 Discount</label>';
   html += '<div style="display:flex;gap:6px;margin-bottom:7px">';
