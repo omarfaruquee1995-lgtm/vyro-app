@@ -829,6 +829,110 @@ body.dark-mode .due-table td,
 body.dark-mode .stock-status-card .ss-lbl {
   color: #a8b2d1 !important;
 }
+/* Cyberpunk Login Page Styles */
+#loginScreen {
+    background: radial-gradient(circle at center, #0a192f 0%, #020c1b 100%) !important;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    z-index: 9999; /* যাতে সবকিছুর উপরে থাকে */
+}
+/* Outer Neon Frame */
+.cyber-frame {
+    position: relative;
+    padding: 30px;
+    background: rgba(10, 25, 47, 0.8);
+    border: 1px solid rgba(100, 255, 218, 0.2);
+    box-shadow: 0 0 20px rgba(100, 255, 218, 0.1), inset 0 0 20px rgba(100, 255, 218, 0.1);
+    backdrop-filter: blur(10px);
+    max-width: 420px;
+    width: 100%;
+    z-index: 10;
+}
+
+/* Corner Decorations */
+.cyber-frame::before, .cyber-frame::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 2px solid #64ffda;
+    box-shadow: 0 0 10px #64ffda;
+    transition: all 0.3s ease;
+}
+
+.cyber-frame::before {
+    top: -2px; left: -2px;
+    border-right: none; border-bottom: none;
+}
+
+.cyber-frame::after {
+    bottom: -2px; right: -2px;
+    border-left: none; border-top: none;
+}
+
+/* Inner Border Line */
+.cyber-inner {
+    border: 1px solid rgba(100, 255, 218, 0.4);
+    padding: 25px 20px;
+    border-radius: 4px;
+    position: relative;
+    background: linear-gradient(180deg, rgba(10,25,47,0.9) 0%, rgba(2,12,27,0.95) 100%);
+}
+
+/* Glowing Text */
+.cyber-title {
+    color: #64ffda;
+    text-shadow: 0 0 10px rgba(100, 255, 218, 0.8), 0 0 20px rgba(100, 255, 218, 0.4);
+    font-weight: 900;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+/* Fix Ledger Cards & Tables White Background in Dark Mode */
+#app .card[onclick^="loadCustomerLedger"] {
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e6f1ff !important;
+}
+#app .card[onclick^="loadCustomerLedger"]:hover {
+    background: rgba(100,255,218,0.1) !important;
+    border-color: #64ffda !important;
+}
+#ledgerDetailsArea .card, 
+#ledgerDetailsArea div[style*="background:#fff"], 
+#ledgerDetailsArea div[style*="background:#f8f9fa"],
+#ledgerDetailsArea div[style*="background: rgb(248, 249, 250)"] {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+    color: #e6f1ff !important;
+}
+#ledgerDetailsArea .text-dark, 
+#ledgerDetailsArea b {
+    color: #e6f1ff !important;
+}
+/* Force Dark Background for Customer List Cards */
+#app div[onclick^="loadCustomerLedger"] {
+    background-color: rgba(10, 25, 47, 0.8) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    color: #e6f1ff !important;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hover & Active Effect */
+#app div[onclick^="loadCustomerLedger"]:hover {
+    background-color: rgba(100, 255, 218, 0.15) !important;
+    border-color: #64ffda !important;
+    box-shadow: 0 0 10px rgba(100, 255, 218, 0.2);
+}
+
+/* Ensure text colors inside are visible */
+#app div[onclick^="loadCustomerLedger"] div {
+    color: #e6f1ff !important;
+}
+
+#app div[onclick^="loadCustomerLedger"] div[style*="color:#ff4757"] {
+    color: #ff6b6b !important;
+}
 </style>
 </head>
 <body>
@@ -858,21 +962,35 @@ body.dark-mode .stock-status-card .ss-lbl {
 </div>
 
 <div id="loginScreen">
-  <div class="login-box">
-    <img src="vyro-logo.png" class="vyro-logo-img" onerror="this.style.display='none'">
-    <h2>VYRO</h2>
-    <div class="brand">Shop Management • Powered by O-FR Pro Software</div>
-    <select id="loginShop" style="margin-bottom:8px"></select>
-    <input id="loginUser" placeholder="Username">
-    <input id="loginPass" type="password" placeholder="Password">
-    <button class="btn-primary" onclick="doLogin()">🔐 Login</button>
-    <div class="login-err" id="loginErr"></div>
-   
+  <!-- Cyberpunk Outer Frame -->
+  <div class="cyber-frame">
+    <div class="cyber-inner">
+      <div style="text-align:center; margin-bottom:15px">
+        <img src="vyro-logo.png" class="vyro-logo-img" onerror="this.style.display='none'" style="width:60px; margin-bottom:5px;">
+        <h2 class="cyber-title" style="font-size:24px; margin:0">VYRO</h2>
+        <div style="color:#8892b0; font-size:10px; letter-spacing:1px; margin-top:5px; text-transform:uppercase">Shop Management System</div>
+      </div>
+      
+      <select id="loginShop" style="background:rgba(100,255,218,0.05); border:1px solid rgba(100,255,218,0.3); color:#fff; margin-bottom:10px"></select>
+      <input id="loginUser" placeholder="Username" style="background:rgba(255,255,255,0.05); border:1px solid rgba(100,255,218,0.3); color:#fff; margin-bottom:10px">
+      <input id="loginPass" type="password" placeholder="Password" style="background:rgba(255,255,255,0.05); border:1px solid rgba(100,255,218,0.3); color:#fff; margin-bottom:15px">
+      
+      <button class="btn-primary" onclick="doLogin()" style="background:linear-gradient(90deg, #1e3c72, #64ffda); color:#fff; font-weight:800; letter-spacing:1px; box-shadow:0 0 15px rgba(100,255,218,0.4); border:none; padding:12px; text-transform:uppercase">🔐 Login</button>
+      
+      <div class="login-err" id="loginErr" style="color:#ff4757; text-shadow:0 0 5px rgba(255,71,87,0.5)"></div>
 
-    <div style="margin-top:12px;padding-top:10px;border-top:1px dashed #ddd;font-size:10px;color:#888;text-align:center"><b>Demo:</b> admin / admin123</div>
+      <div style="margin-top:15px; padding-top:10px; border-top:1px dashed rgba(100,255,218,0.2); font-size:10px; color:#8892b0; text-align:center">
+        <b>Demo:</b> admin / admin123
+      </div>
+      
+      <div id="cloudBtns" style="margin-top:15px; padding-top:15px; border-top:2px dashed rgba(100,255,218,0.2)">
+        <div style="font-size:10px; color:#64ffda; text-align:center; margin-bottom:10px; font-weight:700; letter-spacing:1px">☁️ CLOUD ACCOUNT</div>
+        <button class="btn-primary" style="background:linear-gradient(90deg, #0f9b0f, #64ffda); width:100%; padding:12px; margin-bottom:8px; font-weight:800; border:none; box-shadow:0 0 10px rgba(100,255,218,0.2)" onclick="cloudRegister()">✨ New Account (14-day trial)</button>
+        <button class="btn-primary" style="background:linear-gradient(90deg, #1e3c72, #2a5298); width:100%; padding:12px; font-weight:800; border:none" onclick="cloudLogin()">☁️ Cloud Login</button>
+      </div>
+    </div>
   </div>
 </div>
-
 <div class="biz-header" id="topbar" style="display:none">
   <div class="biz-header-left" style="flex: 1; min-width: 0; padding-right: 8px; position: relative; top: 4px;">
     <div class="biz-title">
@@ -11454,64 +11572,110 @@ window.renderLedgerData = function() {
 // FIXED CUSTOMER LEDGER PAGE (NO SYNTAX ERROR)
 // ============================================================
 
-window._activeLedgerCustId = 0;
-
 window.renderLedgerPage = function(app) {
-  var customers = DB.get('customers');
-  var dueCustomers = customers.filter(function(c) { return (c.due || 0) > 0; });
-  dueCustomers.sort(function(a, b) { return (b.due || 0) - (a.due || 0); });
-
-  if (window._activeLedgerCustId) {
-    var stillHasDue = false;
-    for (var i = 0; i < dueCustomers.length; i++) {
-      if (dueCustomers[i].id === window._activeLedgerCustId) { stillHasDue = true; break; }
+  
+  app.innerHTML = '<div style="text-align:center; padding:50px; color:#64ffda; font-size:16px;">⏳ ডাটা লোড হচ্ছে...</div>';
+  
+  setTimeout(function() {
+    var shopId = DB.currentShopId || JSON.parse(localStorage.getItem('smp_session') || '{}').shopId;
+    
+    // ১. লোকাল স্টোরেজ থেকে ডাটা নেওয়া
+    var customers = [];
+    var sales = [];
+    
+    if (shopId) {
+      try {
+        var rawC = localStorage.getItem('smp_customers_' + shopId);
+        if (rawC) customers = JSON.parse(rawC);
+        
+        var rawS = localStorage.getItem('smp_sales_' + shopId);
+        if (rawS) sales = JSON.parse(rawS);
+      } catch(e) {}
     }
-    if (!stillHasDue) window._activeLedgerCustId = 0;
-  }
 
-  var html = '<div class="card" style="padding:10px; margin-bottom:10px;">';
-  html += '<h3 style="margin:0; color:#2a5298; font-size:15px;">📒 Customer Ledger</h3>';
-  html += '<p style="font-size:11px; color:#666; margin-top:4px;">মোট বাকিদার: <b>' + dueCustomers.length + '</b> জন</p>';
-  html += '</div>';
+    if (customers.length === 0) customers = DB.get('customers') || [];
+    if (sales.length === 0) sales = DB.get('sales') || [];
 
-  html += '<div class="grid2" style="display:grid; grid-template-columns: 1fr 1.2fr; gap:10px;">';
-
-  // বাম দিকের কলাম
-  html += '<div class="card" style="padding:8px; max-height:75vh; overflow-y:auto;">';
-  if (dueCustomers.length === 0) {
-    html += '<p style="text-align:center; font-size:12px; color:#888; padding:20px;">কোনো বাকি নেই</p>';
-  } else {
-    for (var i = 0; i < dueCustomers.length; i++) {
-      var c = dueCustomers[i];
-      var isActive = window._activeLedgerCustId === c.id;
-      var bg = isActive ? '#e3f2fd' : '#fff';
-      var border = isActive ? '2px solid #2a5298' : '1px solid #eee';
+    // ২. লাইভ বাকি (Due) হিসাব করা সেলস থেকে
+    var dueCustomers = [];
+    
+    for (var i = 0; i < customers.length; i++) {
+      var c = customers[i];
+      var liveDue = 0;
       
-      html += '<div onclick="loadCustomerLedger(' + c.id + ')" style="background:' + bg + '; border:' + border + '; border-radius:6px; padding:8px; margin-bottom:6px; cursor:pointer;">';
-      html += '<div style="font-size:11px; font-weight:700; color:#2a5298;">' + (i+1) + '. ' + c.name + '</div>';
-      html += '<div style="font-size:10px; color:#ff4757; font-weight:700; margin-top:2px;">Due: ' + fmt(c.due) + '</div>';
-      html += '</div>';
+      // এই কাস্টমারের সব সেলস চেক করে বাকি বের করা
+      for (var j = 0; j < sales.length; j++) {
+        if (sales[j].customerId === c.id && (sales[j].due || 0) > 0) {
+          liveDue += (sales[j].due || 0);
+        }
+      }
+      
+      // যদি লাইভ বাকি থাকে, তবে লিস্টে যোগ করা
+      if (liveDue > 0) {
+        dueCustomers.push({ id: c.id, name: c.name, due: liveDue });
+      }
     }
-  }
-  html += '</div>';
+    
+    dueCustomers.sort(function(a, b) { return (b.due || 0) - (a.due || 0); });
 
-  // ডান দিকের কলাম
-  html += '<div class="card" id="ledgerDetailsArea" style="padding:10px; max-height:75vh; overflow-y:auto;">';
-  if (window._activeLedgerCustId) {
-    html += getCustomerLedgerHTML(window._activeLedgerCustId);
-  } else {
-    html += '<div style="text-align:center; padding:40px 10px; color:#888; font-size:12px;">👈 বাম দিক থেকে কাস্টমার সিলেক্ট করুন</div>';
-  }
-  html += '</div>';
+    // ৩. HTML তৈরি করা
+    var html = '<div class="card" style="padding:10px; margin-bottom:10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);">';
+    html += '<h3 style="margin:0; color:#64ffda; font-size:15px;">📒 Customer Ledger</h3>';
+    html += '<p style="font-size:11px; color:#8892b0; margin-top:4px;">মোট বাকিদার: <b>' + dueCustomers.length + '</b> জন</p>';
+    html += '</div>';
 
-  html += '</div>';
-  app.innerHTML = html;
+    html += '<div class="grid2" style="display:grid; grid-template-columns: 1fr 1.2fr; gap:10px;">';
+
+    // বাম দিকের কলাম
+    html += '<div class="card" style="padding:8px; max-height:75vh; overflow-y:auto; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);">';
+    if (dueCustomers.length === 0) {
+      html += '<p style="text-align:center; font-size:12px; color:#8892b0; padding:20px;">কোনো বাকি নেই</p>';
+    } else {
+      for (var k = 0; k < dueCustomers.length; k++) {
+        var cc = dueCustomers[k];
+        var isActive = window._activeLedgerCustId === cc.id;
+      var bg = isActive ? 'rgba(100,255,218,0.15)' : 'rgba(10,25,47,0.8)';
+      var border = isActive ? '1px solid #64ffda' : '1px solid rgba(255,255,255,0.1)';
+        
+        html += '<div onclick="loadCustomerLedger(' + cc.id + ')" style="background:' + bg + '; border:' + border + '; border-radius:8px; padding:10px; margin-bottom:8px; cursor:pointer; transition:all 0.2s;">';
+        html += '<div style="font-size:12px; font-weight:700; color:#64ffda;">' + (k+1) + '. ' + cc.name + '</div>';
+        html += '<div style="font-size:11px; color:#ff4757; font-weight:700; margin-top:4px;">Due: ' + fmt(cc.due) + '</div>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+
+    // ডান দিকের কলাম
+    html += '<div class="card" id="ledgerDetailsArea" style="padding:10px; max-height:75vh; overflow-y:auto; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1);">';
+    if (window._activeLedgerCustId) {
+      html += getCustomerLedgerHTML(window._activeLedgerCustId);
+    } else {
+      html += '<div style="text-align:center; padding:40px 10px; color:#8892b0; font-size:12px;">👈 বাম দিক থেকে কাস্টমার সিলেক্ট করুন</div>';
+    }
+    html += '</div>';
+
+    html += '</div>';
+    app.innerHTML = html;
+
+  }, 1000);
 };
-
 window.loadCustomerLedger = function(custId) {
   window._activeLedgerCustId = custId;
   
   var detailArea = document.getElementById('ledgerDetailsArea');
+  // হোভার করলে ডার্ক থাকার জন্য
+  var activeCards = document.querySelectorAll('#app .card[onclick^="loadCustomerLedger"]');
+  for (var i = 0; i < activeCards.length; i++) {
+    activeCards[i].style.background = 'rgba(255,255,255,0.03)';
+    activeCards[i].style.border = '1px solid rgba(255,255,255,0.1)';
+    activeCards[i].style.color = '#e6f1ff';
+  }
+  // সিলেক্ট করা কার্ডটা হাইলাইট করা
+  var selectedCards = document.querySelectorAll('#app .card[onclick="loadCustomerLedger(' + custId + ')"]');
+  for (var j = 0; j < selectedCards.length; j++) {
+    selectedCards[j].style.background = 'rgba(100,255,218,0.1)';
+    selectedCards[j].style.border = '1px solid #64ffda';
+  }
   if (detailArea) {
     detailArea.innerHTML = getCustomerLedgerHTML(custId);
   }
@@ -11577,10 +11741,18 @@ function getCustomerLedgerHTML(custId) {
   });
 
   var html = '';
-  html += '<div style="background:#f8f9fa; padding:10px; border-radius:8px; margin-bottom:10px; border-left:4px solid #2a5298;">';
-  html += '<div style="font-size:14px; font-weight:800; color:#2a5298;">' + c.name + '</div>';
-  if (c.phone) html += '<div style="font-size:11px; color:#666;">📞 ' + c.phone + '</div>';
-  html += '<div style="font-size:12px; color:#ff4757; font-weight:800; margin-top:4px;">Total Due: ' + fmt(c.due) + '</div>';
+  html += '<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:8px; margin-bottom:10px; border-left:4px solid #2a5298; color:#e6f1ff;">';
+  html += '<div style="font-size:14px; font-weight:800; color:#64ffda;">' + c.name + '</div>';
+  if (c.phone) html += '<div style="font-size:11px; color:#8892b0;">📞 ' + c.phone + '</div>';
+  // লাইভ ডিউ হিসাব করা
+  var liveDue = 0;
+  var tempSales = DB.get('sales');
+  for (var s = 0; s < tempSales.length; s++) {
+    if (tempSales[s].customerId === custId && (tempSales[s].due || 0) > 0) {
+      liveDue += (tempSales[s].due || 0);
+    }
+  }
+  html += '<div style="font-size:12px; color:#ff4757; font-weight:800; margin-top:4px;">Total Due: ' + fmt(liveDue) + '</div>';
   html += '</div>';
 
   if (allData.length === 0) {
