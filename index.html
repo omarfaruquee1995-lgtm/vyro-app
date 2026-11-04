@@ -610,6 +610,203 @@ body.dark-mode .card, body.dark-mode .stat, body.dark-mode .modal {
     text-align: center !important;
     font-weight: bold !important;
 }
+/* ========================================================= */
+/* FIX BACKUP MODAL WHITE BOXES                              */
+/* ========================================================= */
+
+/* ১. মডালের ভেতরের সামারি বক্স (যেখানে Business Summary আছে) */
+#backupStats {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e6f1ff !important;
+    border-radius: 8px !important;
+    padding: 10px !important;
+}
+
+#backupStats b, #backupStats span, #backupStats div {
+    color: #e6f1ff !important;
+}
+
+/* ২. Business Summary এবং Due Summary এর হালকা রঙের বক্সগুলো */
+#backupStats div[style*="background:#d4f5dd"],
+#backupStats div[style*="background:#e3f2fd"],
+#backupStats div[style*="background:#fff3cd"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #e6f1ff !important;
+}
+
+/* ৩. মডালের ভেতরের অ্যালার্ট বক্স (Backup Reminder ইত্যাদি) */
+.modal .alert {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-left: 4px solid #ffa502 !important;
+    color: #e6f1ff !important;
+}
+/* ========================================================= */
+/* FIX BACKUP MODAL & SETTINGS TEXT COLOR                    */
+/* ========================================================= */
+
+/* ১. Backup মডালের ভেতরের যে হালকা নীল বক্স আছে, সেটাকে ডার্ক করা এবং লেখা কালো করা */
+#backupStats {
+    background: #ffffff !important; /* সাদা ব্যাকগ্রাউন্ড */
+    color: #000000 !important;      /* কালো লেখা */
+    border: 1px solid #ddd !important;
+}
+
+#backupStats * {
+    color: #000000 !important; /* ভেতরের সব লেখা কালো */
+}
+
+/* ২. Business Summary বক্সের ভেতরের সব লেখা কালো করা */
+#backupStats div[style*="background:#d4f5dd"],
+#backupStats div[style*="background:#e3f2fd"],
+#backupStats div[style*="background:#fff3cd"] {
+    color: #000000 !important;
+}
+
+/* ৩. Settings মডালের ভেতরের সাদা ব্যাকগ্রাউন্ডের লেখা (যেমন Markdown User Guide) */
+.settings-row[style*="background:#fff"], 
+.settings-row[style*="background: #fff"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e6f1ff !important;
+}
+/* ========================================================= */
+/* FIX BACKUP MODAL AND SETTINGS WHITE BOXES (FORCE)         */
+/* ========================================================= */
+
+/* ১. Backup Modal এর ভেতরের সাদা/হালকা বক্সগুলো ডার্ক করা */
+#backupModal .modal div[style*="background:#fff"],
+#backupModal .modal div[style*="background: #fff"],
+#backupModal .modal div[style*="background:#e3f2fd"],
+#backupModal .modal div[style*="background: #e3f2fd"],
+#backupModal .modal div[style*="background:#d4f5dd"],
+#backupModal .modal div[style*="background: #d4f5dd"],
+#backupModal .modal div[style*="background:#fff3cd"],
+#backupModal .modal div[style*="background: #fff3cd"] {
+    background: rgba(255, 255, 255, 0.05) !important; /* ডার্ক গ্লাস */
+    color: #e6f1ff !important; /* হালকা সাদা টেক্সট */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Backup Modal এর ভেতরের সব লেখা হালকা সাদা করা */
+#backupModal .modal div[style*="background"] * {
+    color: #e6f1ff !important;
+}
+
+/* ২. Settings Modal এর সাদা ব্যাকগ্রাউন্ডের সারি (যেমন Edit Invoice) */
+#settingsModal .settings-row[style*="background:#fff"],
+#settingsModal .settings-row[style*="background: #fff"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e6f1ff !important;
+}
+/* ========================================================= */
+/* FIX SETTINGS CENTER WHITE ROWS                            */
+/* ========================================================= */
+
+/* ১. সেটিংসের সাদা ব্যাকগ্রাউন্ডের সারি (Customer Address, Markdown User Guide ইত্যাদি) */
+#settingsModal .settings-row[style*="background:#fff"],
+#settingsModal .settings-row[style*="background: #fff"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e6f1ff !important;
+}
+
+/* ২. Invoice Font এর ভেতরের সাদা বক্সগুলো ডার্ক করা */
+#settingsModal .font-option {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #e6f1ff !important;
+}
+
+#settingsModal .font-option.selected {
+    background: #2a5298 !important;
+    border-color: #64ffda !important;
+    color: #fff !important;
+}
+
+/* ৩. Invoice Color বক্সগুলোতে সাদা বর্ডার ঠিক করা */
+#settingsModal .color-option {
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+#settingsModal .color-option.selected {
+    border-color: #64ffda !important;
+}
+/* ========================================================= */
+/* FIX BACKUP MODAL SHOP NAME TEXT                           */
+/* ========================================================= */
+
+/* শপের নামের বক্স (যেখানে সাদা ব্যাকগ্রাউন্ড) */
+#backupStats div[style*="background:#fff"],
+#backupStats div[style*="background: #fff"] {
+    background: rgba(255, 255, 255, 0.05) !important; /* ডার্ক গ্লাস */
+    color: #64ffda !important; /* নিওন সবুজ/সায়ান কালার */
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 6px !important;
+    padding: 5px 10px !important;
+    display: inline-block !important;
+    margin-bottom: 5px !important;
+}
+/* ========================================================= */
+/* FIX SETTINGS HOVER EFFECT (WHITE BACKGROUND TO DARK)      */
+/* ========================================================= */
+
+/* সেটিংসের যেকোনো সারিতে মাউস নিলে সাদা হবে না, হালকা নিওন আভা হবে */
+#settingsModal .settings-row:hover {
+    background: rgba(100, 255, 218, 0.1) !important; /* হালকা নিওন সবুজ আভা */
+    border-radius: 8px !important; /* সুন্দর কোণা */
+    transition: all 0.2s ease-in-out !important;
+}
+
+/* মাউস নিলে লেখার রঙ আরও উজ্জ্বল হবে */
+#settingsModal .settings-row:hover .sr-label {
+    color: #64ffda !important;
+}
+
+/* সেটিংসের ভেতরের সাদা ব্যাকগ্রাউন্ডের সারিগুলো (যেমন Amount in Words) ডার্ক করা */
+#settingsModal .settings-row[style*="background:#fff"],
+#settingsModal .settings-row[style*="background: #fff"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #e6f1ff !important;
+}
+/* ========================================================= */
+/* FIX REMAINING WHITE BOXES IN BACKUP MODAL                 */
+/* ========================================================= */
+
+/* ১. "Your data" লেখার নিচে শপের নামের যে সাদা বক্সটা আছে, সেটা ডার্ক করা */
+#backupStats div[style*="background:#fff"],
+#backupStats div[style*="background: #fff"],
+#backupStats div[style*="background:#e3f2fd"],
+#backupStats div[style*="background: #e3f2fd"] {
+    background: rgba(255, 255, 255, 0.05) !important; /* ডার্ক গ্লাস */
+    color: #64ffda !important; /* নিওন সবুজ/সায়ান */
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 6px !important;
+    padding: 5px 10px !important;
+    display: inline-block !important;
+    margin-bottom: 5px !important;
+}
+
+/* ২. "Due Summary" এর ভেতরের সাদা বক্স (যেখানে Customer Due, Supplier Due আছে) ডার্ক করা */
+#backupStats div[style*="background:#fff3cd"],
+#backupStats div[style*="background: #fff3cd"],
+#backupStats div[style*="background:#d4f5dd"],
+#backupStats div[style*="background: #d4f5dd"] {
+    background: rgba(255, 255, 255, 0.05) !important; 
+    color: #e6f1ff !important; 
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 6px !important;
+    padding: 10px !important;
+    margin-top: 10px !important;
+}
+
+/* ৩. Due Summary এর ভেতরের সব লেখা সাদা করা */
+#backupStats div[style*="background:#fff3cd"] *, 
+#backupStats div[style*="background:#d4f5dd"] * {
+    color: #e6f1ff !important;
+}
+/* Backup Stats এর ভেতরের সব লেখা জোর করে সাদা করা */
+#backupStats, #backupStats * {
+    color: #e6f1ff !important;
+}
 </style>
 </head>
 <body>
@@ -773,11 +970,11 @@ body.dark-mode .card, body.dark-mode .stat, body.dark-mode .modal {
 <div id="backupModal" class="modal-overlay hidden">
   <div class="modal">
     <h3>💾 Backup & Restore <span style="float:right;cursor:pointer" onclick="document.getElementById('backupModal').classList.add('hidden')">✕</span></h3>
-    <div id="backupInfo" style="background:#e3f2fd;padding:12px;border-radius:8px;font-size:12px;margin-bottom:12px;line-height:1.7;border-left:4px solid #2196f3">
+    <div id="backupInfo" style="background:rgba(255,255,255,0.05);padding:12px;border-radius:8px;font-size:12px;margin-bottom:12px;line-height:1.7;border-left:4px solid #2196f3">
       <b>📊 আপনার ডেটা:</b><br>
       <span id="backupStats">Loading...</span>
     </div>
-    <div class="alert" style="background:#fff3cd;border-color:#ffa502;font-size:11px">
+    <div class="alert" style="background:rgba(255,255,255,0.05);border-color:#ffa502;font-size:11px">
       <b>💡 পরামর্শ:</b> সপ্তাহে একবার Backup নিন। ফাইলটা Google Drive-এ রাখুন।
     </div>
     <button class="btn-primary" style="background:#2ed573" onclick="doBackup()">📥 Download Backup</button>
@@ -6419,11 +6616,11 @@ function showEnhancedBackupStats() {
   var data = result.data;
   var s = result.summary;
   
-  var html = '<b style="font-size:14px">🏪 ' + currentShop.name + '</b><br>';
+  var html = '<div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; margin-bottom:6px; display:inline-block; border:1px solid rgba(255,255,255,0.1);"><b style="font-size:14px; color:#64ffda;">🏪 ' + currentShop.name + '</b></div><br>';
   html += '<div style="font-size:10px;color:#888;margin-bottom:8px">' + new Date().toLocaleString('en-GB') + '</div>';
   
   // Data counts
-  html += '<div style="background:#e3f2fd;padding:8px;border-radius:6px;margin-bottom:6px;font-size:11px">';
+  html += '<div style="background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;margin-bottom:6px;font-size:11px">';
   html += '<b>📦 Data Inventory</b><br>';
   html += '• Products: <b>' + s.totalProducts + '</b><br>';
   html += '• Sales (Invoices): <b>' + s.totalSales + '</b><br>';
@@ -6436,7 +6633,7 @@ function showEnhancedBackupStats() {
   html += '</div>';
   
   // Business summary
-  html += '<div style="background:#d4f5dd;padding:8px;border-radius:6px;margin-bottom:6px;font-size:11px">';
+  html += '<div style="background:rgba(255,255,255,0.05);padding:8px;border-radius:6px;margin-bottom:6px;font-size:11px">';
   html += '<b>💰 Business Summary</b><br>';
   html += '• Total Sales: <b>' + fmt(s.salesAmount) + '</b><br>';
   html += '• Total Profit: <b>' + fmt(s.profitAmount) + '</b><br>';
@@ -6447,7 +6644,7 @@ function showEnhancedBackupStats() {
   html += '</div>';
   
   // Due summary
-  html += '<div style="background:#fff3cd;padding:8px;border-radius:6px;font-size:11px">';
+  html += '<div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); padding:8px; border-radius:6px; font-size:11px; color:#e6f1ff;">';
   html += '<b>📊 Due Summary</b><br>';
   html += '• Customer Due: <b style="color:#ff4757">' + fmt(s.customerDue) + '</b><br>';
   html += '• Supplier Due: <b style="color:#ffa502">' + fmt(s.supplierDue) + '</b>';
@@ -9204,10 +9401,6 @@ window.showChallan = function(challanId) {
   var savedSubtitle = localStorage.getItem('smp_subtitle_' + currentShop.id) || currentShop.subtitle || '';
   
     var html = '<div class="modal-overlay" id="challanModal">';
-  
-  if (c.status === 'Delivered') {
-      html += '<div style="position:absolute; top:100px; right:40px; border:3px solid #2ed573; color:#2ed573; padding:5px 15px; font-size:20px; font-weight:900; transform:rotate(-10deg); z-index:10;">DELIVERED</div>';
-  }
 
   html += '<div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
   html += '<div id="challanPrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; background:#fff; color:#000; position:relative; overflow:hidden;">';
@@ -9223,7 +9416,7 @@ window.showChallan = function(challanId) {
     html += '<div style="text-align:right; font-size:12px; line-height:1.4;">';
     html += '<h2 style="color:#ff9800; margin:0; font-size:22px; letter-spacing:1px;">DELIVERY CHALLAN</h2>';
     html += '<p style="font-size:13px; margin:8px 0 0;"><b>' + c.challanNo + '</b></p>';
-    html += '<p style="font-size:11px; color:#666; margin:3px 0 0;">Date: ' + chDate + '</p>';   
+    html += '<p style="font-size:11px; color:#666; margin:3px 0 0;">Date: ' + chDate + '</p>';
 
     html += '<div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:12px;">';
     html += '<div style="width:50%;"><b style="font-size:11px; text-transform:uppercase;">DELIVER TO:</b><br>';
@@ -9462,9 +9655,6 @@ window.shareChallanWhatsApp = function(challanId) {
   for (var i = 0; i < challans.length; i++) if (challans[i].id === challanId) c = challans[i];
   if (!c) return;
   var deliveredSeal = '';
-  if (c.status === 'Delivered') {
-    deliveredSeal = '<div style="position:absolute; top:120px; right:20px; border:3px solid #2ed573; color:#2ed573; padding:5px 15px; font-size:24px; font-weight:900; transform:rotate(-15deg); opacity:0.8; text-transform:uppercase; letter-spacing:3px; z-index:10;">DELIVERED</div>';
-  }
   
   var msg = '*' + currentShop.name + '*\n━━━━━━━━━━━━━━━━\n';
   msg += '*DELIVERY CHALLAN*\n';
