@@ -807,6 +807,12 @@ body.dark-mode .card, body.dark-mode .stat, body.dark-mode .modal {
 #backupStats, #backupStats * {
     color: #e6f1ff !important;
 }
+/* Force Dark Mode for Quotation Table Inputs */
+#qItemsBody input, #qItemsBody select {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: #fff !important;
+  border: 1px solid #444 !important;
+}
 </style>
 </head>
 <body>
@@ -2635,7 +2641,7 @@ var uArr = getUOMList();
   html += '</select>';
   
   html += '<input type="text" id="saleSearchBox" placeholder="🔍 Type product name..." autocomplete="off" oninput="filterSaleProducts(this.value)" style="margin-bottom:6px;border:2px solid #2a5298">';
-  html += '<div id="saleProdResults" style="max-height:220px;overflow-y:auto;border:1px solid #eee;border-radius:8px;display:none;margin-bottom:8px;background:#fff"></div>';
+  html += '<div id="saleProdResults" style="max-height:220px;overflow-y:auto;border:1px solid #444;border-radius:8px;display:none;margin-bottom:8px;background: rgba(255,255,255,0.05); color: #fff;"></div>';
   
   html += '<select id="saleProdSelect" onchange="addToCartFromSelect()"><option value="">-- Or Select Product --</option>';
   for (var i = 0; i < products.length; i++) {
@@ -2764,7 +2770,7 @@ function filterSaleProducts(query) {
     var history = custId ? getCustomerProductHistory(custId, p.id) : [];
     var lastSale = history.length > 0 ? history[0] : null;
     
-    html += '<div onclick="addToCartById(' + p.id + ')" style="padding:10px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px">';
+    html += '<div onclick="addToCartById(' + p.id + ')" style="padding:10px;border-bottom:1px solid #444;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;background: transparent;">';
     html += '<div style="flex:1;min-width:0">';
     var searchDisplayName = p.size ? (p.size + ' ' + p.name) : p.name;
 html += '<b style="font-size:13px">' + safe(searchDisplayName) + '</b><br>';
@@ -3396,7 +3402,13 @@ html += '<h2 style="color:#8b1e1e; font-size:22px; margin:0; letter-spacing:1px;
     // সঠিক গ্র্যান্ড টোটাল হিসাব
     var grandTotalCalc = (s.subtotal || 0) - (s.discount || 0) + (s.vatAmount || 0) + (s.transportCost || 0);
     
-       html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; background:#f0f0f0;">GRAND TOTAL AMOUNT OF BILL IN BDT :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; background:#f0f0f0;">৳ ' + grandTotalCalc.toFixed(2) + '</td></tr>';
+           // PAID & DUE (যদি Paid Amount ০ এর বেশি হয়)
+    if (s.paid > 0) {
+      html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; color:#1e7e34;">PAID AMOUNT :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; color:#1e7e34;">৳ ' + (s.paid || 0).toFixed(2) + '</td></tr>';
+    }
+    if (s.due > 0) {
+      html += '<tr><td colspan="2" style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; text-transform:uppercase; color:#8b1e1e;">DUE AMOUNT :</td><td style="border:1px solid #000; padding:6px; text-align:right; font-weight:bold; color:#8b1e1e;">৳ ' + (s.due || 0).toFixed(2) + '</td></tr>';
+    }
     html += '<tr><td colspan="3" style="border:1px solid #000; padding:6px; font-weight:bold; font-style:italic;">IN WORD : BDT ' + amountToWords(grandTotalCalc).toUpperCase() + '</td></tr>';
     html += '</table>';
     // ==========================================
@@ -5156,7 +5168,7 @@ function showResumePrompt(saved) {
   var html = '<div class="modal-overlay" id="resumePromptModal" style="z-index:99999">';
   html += '<div class="modal" style="max-width:420px">';
   html += '<h3>📋 আগের Quotation অসম্পূর্ণ আছে</h3>';
-  html += '<div style="background:#e3f2fd;border-left:4px solid #2196f3;padding:12px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.8">';
+  html += '<div style="background:rgba(255,255,255,0.05);border-left:4px solid #2196f3;padding:12px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.8; color:#fff;">';
   html += '<div><b>Quotation No:</b> ' + (saved.qNo || '-') + '</div>';
   html += '<div><b>Customer:</b> ' + (saved.customer && saved.customer.name ? saved.customer.name : '(none)') + '</div>';
   html += '</div>';
@@ -5449,7 +5461,7 @@ function updateQuote() {
   var advAmt = grand * (q.payment.advPct||0) / 100;
   var due = grand - advAmt;
 
-  var sumHtml = '<div style="font-size:13px;line-height:2;background:#f8f9fa;padding:12px;border-radius:8px">';
+    var sumHtml = '<div style="font-size:13px;line-height:2;background:rgba(255,255,255,0.05);padding:12px;border-radius:8px; border:1px solid rgba(255,255,255,0.1)">';
   sumHtml += '<div style="display:flex;justify-content:space-between"><span>Subtotal:</span><b>'+fmt(sub)+'</b></div>';
   sumHtml += '<div style="display:flex;justify-content:space-between;color:#ff4757"><span>Discount:</span><b>− '+fmt(disc)+'</b></div>';
   sumHtml += '<div style="display:flex;justify-content:space-between;color:#ffa502"><span>VAT/Tax:</span><b>+ '+fmt(vat)+'</b></div>';
@@ -8445,7 +8457,7 @@ window.renderQuotation = function(app) {
   
   // Items table
   html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:750px">';
-  html += '<thead><tr style="background:#f0f2f5">';
+    html += '<thead><tr style="background:rgba(255,255,255,0.05); color:#fff;">';
   html += '<th style="padding:6px">Product</th><th style="padding:6px">Qty</th>';
 html += '<th style="padding:6px">Unit</th><th style="padding:6px">Price</th><th style="padding:6px;text-align:right">Total</th><th></th>';
 html += '</tr></thead><tbody id="qItemsBody"></tbody></table></div>';
@@ -8581,12 +8593,20 @@ window.filterQuoteStock = function() {
 // ---------- Build Quote Stock List (FIXED with Size, Model, Brand) ----------
 function buildQuoteStockList(products, search) {
   if (!products.length) return '<p style="text-align:center;color:#888;padding:30px">No products found</p>';
+  
   var html = '';
+  var addedProducts = []; // ডুপ্লিকেট রুখতে
+
   for (var i = 0; i < products.length; i++) {
     var p = products[i];
-    var low = p.stock <= (p.lowAlert || 5);
     
-    // সাইজ, মডেল, ব্র্যান্ড সহ নাম তৈরি করা
+    // খালি বা ডুপ্লিকেট প্রোডাক্ট স্কিপ
+    if (!p.name || p.name.trim() === '') continue;
+    var uniqueKey = p.name + '_' + p.size + '_' + p.sellPrice;
+    if (addedProducts.indexOf(uniqueKey) !== -1) continue;
+    addedProducts.push(uniqueKey);
+
+    var low = p.stock <= (p.lowAlert || 5);
     var displayName = (p.size && p.size.trim() !== '') ? (p.size + ' ' + p.name) : p.name;
     var extraInfo = '';
     if (p.model) extraInfo += 'Model: ' + p.model;
@@ -8599,26 +8619,28 @@ function buildQuoteStockList(products, search) {
         var term = terms[t];
         if (!term) continue;
         var regex = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
-        name = name.replace(regex, '<mark style="background:#ffe082;padding:0 2px;border-radius:2px">$1</mark>');
+        name = name.replace(regex, '<mark style="background:#ffe082;padding:0 2px;border-radius:2px;color:#000;">$1</mark>');
       }
     }
+
+    html += '<div onclick="addQuoteItemFromStock(' + p.id + ')" style="padding:12px; border-bottom:1px solid #444; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:8px; transition:background .15s; color: #fff;" onmouseover="this.style.background=\'rgba(255,255,255,0.1)\'" onmouseout="this.style.background=\'transparent\'">';
     
-    html += '<div onclick="addQuoteItemFromStock(' + p.id + ')" style="padding:12px;border-bottom:1px solid #eee;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;transition:background .15s" onmouseover="this.style.background=\'#f0f7ff\'" onmouseout="this.style.background=\'#fff\'">';
-    html += '<div style="flex:1;min-width:0">';
-    html += '<div style="font-size:13px;font-weight:700;color:#2a5298">' + name + '</div>';
+    html += '<div style="flex:1; min-width:0">';
+    html += '<div style="font-size:13px; font-weight:700; color:#64ffda">' + name + '</div>';
     
-    // সাইজ, মডেল, ব্র্যান্ড দেখানো
     if (extraInfo) {
-       html += '<div style="font-size:10px;color:#2a5298;font-weight:700;margin-top:2px">' + extraInfo + '</div>';
+      html += '<div style="font-size:10px; color:#8892b0; font-weight:700; margin-top:2px">' + extraInfo + '</div>';
     }
     
-    html += '<div style="font-size:10px;color:#888;margin-top:2px">' + (p.sku || '-') + ' | ' + (p.barcode || '-') + '</div>';
+    html += '<div style="font-size:10px; color:#8892b0; margin-top:2px">' + (p.sku || '-') + ' | ' + (p.barcode || '-') + '</div>';
     html += '</div>';
-    html += '<div style="text-align:right;flex-shrink:0">';
-    html += '<div style="font-size:14px;font-weight:800;color:#2a5298">' + fmt(p.sellPrice || 0) + '</div>';
-    html += '<div style="font-size:10px;color:' + (low ? '#ff4757' : '#2ed573') + ';font-weight:700">Stock: ' + (p.stock || 0) + ' ' + (p.unit || 'pcs') + '</div>';
+    
+    html += '<div style="text-align:right; flex-shrink:0">';
+    html += '<div style="font-size:14px; font-weight:800; color:#64ffda">' + fmt(p.sellPrice || 0) + '</div>';
+    html += '<div style="font-size:10px; color:' + (low ? '#ff4757' : '#2ed573') + '; font-weight:700">Stock: ' + (p.stock || 0) + ' ' + (p.unit || 'pcs') + '</div>';
     html += '</div></div>';
   }
+  
   return html;
 }
 // ---------- Add Quote Item from Stock (auto-fill) ----------
