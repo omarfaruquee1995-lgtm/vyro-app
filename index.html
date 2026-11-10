@@ -1010,6 +1010,11 @@ body.dark-mode .stock-status-card .ss-lbl {
       <button class="btn-primary" onclick="doLogin()" style="background:linear-gradient(90deg, #1e3c72, #64ffda); color:#fff; font-weight:800; letter-spacing:1px; box-shadow:0 0 15px rgba(100,255,218,0.4); border:none; padding:12px; text-transform:uppercase">🔐 Login</button>
       
       <div class="login-err" id="loginErr" style="color:#ff4757; text-shadow:0 0 5px rgba(255,71,87,0.5)"></div>
+      <!-- 👇 নতুন যোগ করা Forgot Password বাটন 👇 -->
+      <div style="text-align:right; margin-top:5px; margin-bottom:10px;">
+        <span onclick="document.getElementById('forgotPassModal').classList.remove('hidden'); document.getElementById('forgotPassModal').style.display='flex';" style="color:#64ffda; font-size:11px; cursor:pointer; text-decoration:underline; display:inline-block; padding:5px;">Forgot Password?</span>
+      </div>
+      <!-- 👆 এখান পর্যন্ত 👆 -->
 
       <div style="margin-top:15px; padding-top:10px; border-top:1px dashed rgba(100,255,218,0.2); font-size:10px; color:#8892b0; text-align:center">
         <b>Demo:</b> admin / admin123
@@ -1311,7 +1316,7 @@ var SECRET_KEY = 'OMARFARUQUE1995SHOP';
 async function hashPassword(password) {
   if (!password) return '';
   try {
-    var msgBuffer = new TextEncoder().encode(password);
+    var msgBuffer = new TextEncoder().encode(password + "vyro-secret-salt-2024");
     var hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
     var hashArray = Array.from(new Uint8Array(hashBuffer));
     var hashHex = hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
@@ -12387,5 +12392,121 @@ function saveSignatureNames() {
   alert('✅ Signature names saved!');
 }
 </script>
+<!-- 👇 নতুন যোগ করা Forgot Password Modal 👇 -->
+<div id="forgotPassModal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal" style="max-width:400px; background:#112240; border:1px solid rgba(100,255,218,0.2);">
+    <h3 style="color:#64ffda; text-shadow:0 0 10px rgba(100,255,218,0.5);">🔑 Reset Password <span style="float:right;cursor:pointer; color:#ff4757" onclick="document.getElementById('forgotPassModal').classList.add('hidden')">✕</span></h3>
+    
+    <div class="alert" style="background:rgba(100,255,218,0.1); border-left:4px solid #64ffda; color:#64ffda; font-size:11px; margin-bottom:15px;">
+      ⚠️ আপনার রেজিস্ট্রেশনে দেওয়া মোবাইল নাম্বার এবং নতুন পাসওয়ার্ড দিন।
+    </div>
+    
+    <label style="font-size:11px;color:#8892b0">Mobile Number *</label>
+    <input id="resetPhone" type="tel" placeholder="01XXXXXXXXX" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:10px;">
+    
+    <label style="font-size:11px;color:#8892b0">New Password * (কমপক্ষে ৬ অক্ষর)</label>
+    <input id="resetNewPass" type="password" placeholder="New Password" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:10px;">
+    
+    <label style="font-size:11px;color:#8892b0">Confirm Password *</label>
+    <input id="resetConfirmPass" type="password" placeholder="Confirm Password" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:15px;">
+    
+    <button class="btn-primary" style="background:linear-gradient(90deg, #1e3c72, #64ffda); color:#fff; font-weight:bold; padding:12px; width:100%; margin-top:5px;" onclick="submitPasswordReset()">🔄 Reset Password</button>
+    <button class="btn-primary" style="background:#333; color:#fff; margin-top:8px; width:100%; padding:10px;" onclick="document.getElementById('forgotPassModal').classList.add('hidden')">Cancel</button>
+    
+    <div id="resetMsg" style="text-align:center; font-size:12px; margin-top:10px; font-weight:bold; min-height:18px;"></div>
+  </div>
+</div>
+<!-- 👆 এখান পর্যন্ত 👆 -->
+<!-- ========================================== -->
+<!-- STEP 3: FORGOT PASSWORD JAVASCRIPT LOGIC   -->
+<!-- ========================================== -->
+<script>
+window.openForgotPasswordModal = function() {
+  document.getElementById('forgotPassModal').classList.remove('hidden');
+  document.getElementById('resetPhone').value = '';
+  document.getElementById('resetNewPass').value = '';
+  document.getElementById('resetConfirmPass').value = '';
+  document.getElementById('resetMsg').innerHTML = '';
+};
+
+window.submitPasswordReset = async function() {
+  var phone = document.getElementById('resetPhone').value.trim();
+  var newPass = document.getElementById('resetNewPass').value;
+  var confirmPass = document.getElementById('resetConfirmPass').value;
+  var msgEl = document.getElementById('resetMsg');
+  
+  // ভ্যালিডেশন
+  if (!phone || !newPass || !confirmPass) {
+    msgEl.style.color = '#ff4757';
+    msgEl.innerHTML = '❌ সব ফিল্ড পূরণ করুন';
+    return;
+  }
+  if (newPass.length < 6) {
+    msgEl.style.color = '#ff4757';
+    msgEl.innerHTML = '❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে';
+    return;
+  }
+  if (newPass !== confirmPass) {
+    msgEl.style.color = '#ff4757';
+    msgEl.innerHTML = '❌ দুটি পাসওয়ার্ড মিলছে না';
+    return;
+  }
+
+  msgEl.style.color = '#ffa502';
+  msgEl.innerHTML = '⏳ Resetting...';
+
+  try {
+    // পাসওয়ার্ড হ্যাশ করা
+    var hashedPass = await hashPassword(newPass);
+
+    // Cloud API-তে রিকোয়েস্ট পাঠানো
+    var response = await fetch(VYRO_API_URL + '/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        phone: phone,
+        new_password: hashedPass
+      })
+    });
+
+    var result = await response.json();
+
+    if (result.success) {
+      msgEl.style.color = '#2ed573';
+      msgEl.innerHTML = '✅ পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!';
+      
+      setTimeout(function() {
+        document.getElementById('forgotPassModal').classList.add('hidden');
+        // লগইন ফিল্ডে ফোন নাম্বার বসিয়ে দেওয়া
+        document.getElementById('loginUser').value = phone; 
+      }, 2000);
+    } else {
+      msgEl.style.color = '#ff4757';
+      msgEl.innerHTML = '❌ ' + (result.error || 'এই মোবাইল নাম্বার দিয়ে কোনো একাউন্ট নেই');
+    }
+  } catch(e) {
+    msgEl.style.color = '#ff4757';
+    msgEl.innerHTML = '❌ Error: ' + e.message;
+  }
+};
+document.addEventListener('click', function(e) {
+    // যদি ক্লিক করা জায়গায় 'Forgot Password' লেখা থাকে
+    if (e.target.innerHTML && e.target.innerHTML.trim().includes('Forgot Password')) {
+        alert('বাটনটি কাজ করছে! এখন পপআপ ওপেন হবে।'); // টেস্ট এলার্ট
+        
+        var modal = document.getElementById('forgotPassModal');
+        if (modal) {
+            // জোর করে পপআপটি দেখানো হচ্ছে
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            modal.style.opacity = '1';
+            modal.style.zIndex = '99999';
+        } else {
+            alert('পপআপ কোডটি (forgotPassModal) খুঁজে পাওয়া যায়নি!');
+        }
+    }
+});
+</script>
+<!-- ========================================== -->
 </body>
 </html>
