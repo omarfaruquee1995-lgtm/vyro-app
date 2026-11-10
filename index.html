@@ -1012,7 +1012,7 @@ body.dark-mode .stock-status-card .ss-lbl {
       <div class="login-err" id="loginErr" style="color:#ff4757; text-shadow:0 0 5px rgba(255,71,87,0.5)"></div>
       <!-- 👇 নতুন যোগ করা Forgot Password বাটন 👇 -->
       <div style="text-align:right; margin-top:5px; margin-bottom:10px;">
-        <span onclick="document.getElementById('forgotPassModal').classList.remove('hidden'); document.getElementById('forgotPassModal').style.display='flex';" style="color:#64ffda; font-size:11px; cursor:pointer; text-decoration:underline; display:inline-block; padding:5px;">Forgot Password?</span>
+        <span onclick="document.getElementById('forgotPassModal').style.display='flex';" style="color:#64ffda; font-size:11px; cursor:pointer; text-decoration:underline;">Forgot Password?</span>
       </div>
       <!-- 👆 এখান পর্যন্ত 👆 -->
 
@@ -12392,107 +12392,185 @@ function saveSignatureNames() {
   alert('✅ Signature names saved!');
 }
 </script>
-<!-- 👇 নতুন যোগ করা Forgot Password Modal 👇 -->
+<!-- OTP Based Forgot Password Modal -->
 <div id="forgotPassModal" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
   <div class="modal" style="max-width:400px; background:#112240; border:1px solid rgba(100,255,218,0.2);">
     <h3 style="color:#64ffda; text-shadow:0 0 10px rgba(100,255,218,0.5);">🔑 Reset Password <span style="float:right;cursor:pointer; color:#ff4757" onclick="document.getElementById('forgotPassModal').classList.add('hidden')">✕</span></h3>
     
-    <div class="alert" style="background:rgba(100,255,218,0.1); border-left:4px solid #64ffda; color:#64ffda; font-size:11px; margin-bottom:15px;">
-      ⚠️ আপনার রেজিস্ট্রেশনে দেওয়া মোবাইল নাম্বার এবং নতুন পাসওয়ার্ড দিন।
+    <!-- STEP 1: Number Input -->
+    <div id="forgotStep1">
+      <div class="alert" style="background:rgba(100,255,218,0.1); border-left:4px solid #64ffda; color:#64ffda; font-size:11px; margin-bottom:15px;">
+        ⚠️ আপনার রেজিস্ট্রেশনে দেওয়া মোবাইল নাম্বার দিন। আমরা একটি OTP পাঠাবো।
+      </div>
+      
+      <label style="font-size:11px;color:#8892b0">Mobile Number *</label>
+      <input id="otpPhone" type="tel" placeholder="01XXXXXXXXX" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:15px; width:100%; padding:10px; border-radius:8px;">
+      
+      <button class="btn-primary" style="background:linear-gradient(90deg, #1e3c72, #64ffda); color:#fff; font-weight:bold; padding:12px; width:100%;" onclick="sendOTPCode()">📩 Send OTP</button>
+      <div id="otpMsg1" style="text-align:center; font-size:12px; margin-top:10px; font-weight:bold; min-height:18px; color:#ff4757;"></div>
     </div>
-    
-    <label style="font-size:11px;color:#8892b0">Mobile Number *</label>
-    <input id="resetPhone" type="tel" placeholder="01XXXXXXXXX" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:10px;">
-    
-    <label style="font-size:11px;color:#8892b0">New Password * (কমপক্ষে ৬ অক্ষর)</label>
-    <input id="resetNewPass" type="password" placeholder="New Password" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:10px;">
-    
-    <label style="font-size:11px;color:#8892b0">Confirm Password *</label>
-    <input id="resetConfirmPass" type="password" placeholder="Confirm Password" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:15px;">
-    
-    <button class="btn-primary" style="background:linear-gradient(90deg, #1e3c72, #64ffda); color:#fff; font-weight:bold; padding:12px; width:100%; margin-top:5px;" onclick="submitPasswordReset()">🔄 Reset Password</button>
-    <button class="btn-primary" style="background:#333; color:#fff; margin-top:8px; width:100%; padding:10px;" onclick="document.getElementById('forgotPassModal').classList.add('hidden')">Cancel</button>
-    
-    <div id="resetMsg" style="text-align:center; font-size:12px; margin-top:10px; font-weight:bold; min-height:18px;"></div>
+
+    <!-- STEP 2: OTP & New Password Input -->
+    <div id="forgotStep2" style="display:none;">
+      <div class="alert" style="background:rgba(255,165,2,0.1); border-left:4px solid #ffa502; color:#ffa502; font-size:11px; margin-bottom:15px;">
+        📱 মোবাইলে পাঠানো ৬ ডিজিটের OTP কোডটি দিন এবং নতুন পাসওয়ার্ড সেট করুন।
+      </div>
+      
+      <label style="font-size:11px;color:#8892b0">Enter OTP *</label>
+      <input id="otpCode" type="text" placeholder="XXXXXX" maxlength="6" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:10px; text-align:center; letter-spacing:5px; font-size:18px; width:100%; padding:10px; border-radius:8px;">
+      
+      <label style="font-size:11px;color:#8892b0">New Password *</label>
+      <input id="resetNewPass" type="password" placeholder="New Password" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:10px; width:100%; padding:10px; border-radius:8px;">
+      
+      <label style="font-size:11px;color:#8892b0">Confirm Password *</label>
+      <input id="resetConfirmPass" type="password" placeholder="Confirm Password" style="background:rgba(255,255,255,0.05); color:#fff; border:1px solid rgba(100,255,218,0.3); margin-bottom:15px; width:100%; padding:10px; border-radius:8px;">
+      
+      <button class="btn-primary" style="background:linear-gradient(90deg, #1e3c72, #64ffda); color:#fff; font-weight:bold; padding:12px; width:100%; margin-top:5px;" onclick="verifyOTPAndReset()">🔄 Verify & Reset Password</button>
+      <button class="btn-primary" style="background:#333; color:#fff; margin-top:8px; width:100%; padding:10px;" onclick="backToPhoneStep()">⬅ Back</button>
+      
+      <div id="resetMsg" style="text-align:center; font-size:12px; margin-top:10px; font-weight:bold; min-height:18px; color:#ff4757;"></div>
+    </div>
   </div>
 </div>
-<!-- 👆 এখান পর্যন্ত 👆 -->
 <!-- ========================================== -->
 <!-- STEP 3: FORGOT PASSWORD JAVASCRIPT LOGIC   -->
 <!-- ========================================== -->
 <script>
+// ============ OTP BASED FORGOT PASSWORD LOGIC ============
 window.openForgotPasswordModal = function() {
   document.getElementById('forgotPassModal').classList.remove('hidden');
-  document.getElementById('resetPhone').value = '';
+  document.getElementById('forgotStep1').style.display = 'block';
+  document.getElementById('forgotStep2').style.display = 'none';
+  document.getElementById('otpPhone').value = '';
+  document.getElementById('otpCode').value = '';
   document.getElementById('resetNewPass').value = '';
   document.getElementById('resetConfirmPass').value = '';
+  document.getElementById('otpMsg1').innerHTML = '';
   document.getElementById('resetMsg').innerHTML = '';
 };
 
-window.submitPasswordReset = async function() {
-  var phone = document.getElementById('resetPhone').value.trim();
-  var newPass = document.getElementById('resetNewPass').value;
-  var confirmPass = document.getElementById('resetConfirmPass').value;
-  var msgEl = document.getElementById('resetMsg');
+window.sendOTPCode = async function() {
+  var phone = document.getElementById('otpPhone').value.trim();
+  var msgEl = document.getElementById('otpMsg1');
+  if (!phone) { msgEl.innerHTML = '❌ মোবাইল নাম্বার দিন'; return; }
   
-  // ভ্যালিডেশন
-  if (!phone || !newPass || !confirmPass) {
-    msgEl.style.color = '#ff4757';
-    msgEl.innerHTML = '❌ সব ফিল্ড পূরণ করুন';
-    return;
-  }
-  if (newPass.length < 6) {
-    msgEl.style.color = '#ff4757';
-    msgEl.innerHTML = '❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর হতে হবে';
-    return;
-  }
-  if (newPass !== confirmPass) {
-    msgEl.style.color = '#ff4757';
-    msgEl.innerHTML = '❌ দুটি পাসওয়ার্ড মিলছে না';
-    return;
-  }
-
   msgEl.style.color = '#ffa502';
-  msgEl.innerHTML = '⏳ Resetting...';
-
+  msgEl.innerHTML = '⏳ OTP পাঠানো হচ্ছে...';
+  
   try {
-    // পাসওয়ার্ড হ্যাশ করা
-    var hashedPass = await hashPassword(newPass);
-
-    // Cloud API-তে রিকোয়েস্ট পাঠানো
-    var response = await fetch(VYRO_API_URL + '/api/reset-password', {
+    var response = await fetch(VYRO_API_URL + '/api/send-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        phone: phone,
-        new_password: hashedPass
-      })
+      body: JSON.stringify({ phone: phone })
     });
-
     var result = await response.json();
-
+    
     if (result.success) {
       msgEl.style.color = '#2ed573';
-      msgEl.innerHTML = '✅ পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!';
-      
-      setTimeout(function() {
-        document.getElementById('forgotPassModal').classList.add('hidden');
-        // লগইন ফিল্ডে ফোন নাম্বার বসিয়ে দেওয়া
-        document.getElementById('loginUser').value = phone; 
-      }, 2000);
+      msgEl.innerHTML = '✅ OTP পাঠানো হয়েছে!';
+      alert('📱 [টেস্টিং মোড]\n\nআপনার OTP কোড: ' + result.otp + '\n\n(প্রোডাকশনে এটি SMS-এ যাবে)');
+      document.getElementById('forgotStep1').style.display = 'none';
+      document.getElementById('forgotStep2').style.display = 'block';
     } else {
       msgEl.style.color = '#ff4757';
-      msgEl.innerHTML = '❌ ' + (result.error || 'এই মোবাইল নাম্বার দিয়ে কোনো একাউন্ট নেই');
+      msgEl.innerHTML = '❌ ' + (result.error || 'এই নাম্বার দিয়ে কোনো একাউন্ট নেই');
     }
   } catch(e) {
     msgEl.style.color = '#ff4757';
     msgEl.innerHTML = '❌ Error: ' + e.message;
   }
 };
+
+window.backToPhoneStep = function() {
+  document.getElementById('forgotStep1').style.display = 'block';
+  document.getElementById('forgotStep2').style.display = 'none';
+};
+
+window.verifyOTPAndReset = async function() {
+  var phone = document.getElementById('otpPhone').value.trim();
+  var otp = document.getElementById('otpCode').value.trim();
+  var newPass = document.getElementById('resetNewPass').value;
+  var confirmPass = document.getElementById('resetConfirmPass').value;
+  var msgEl = document.getElementById('resetMsg');
+  
+  if (!otp || !newPass || !confirmPass) { msgEl.style.color = '#ff4757'; msgEl.innerHTML = '❌ সব ফিল্ড পূরণ করুন'; return; }
+  if (newPass.length < 6) { msgEl.style.color = '#ff4757'; msgEl.innerHTML = '❌ পাসওয়ার্ড কমপক্ষে ৬ অক্ষর'; return; }
+  if (newPass !== confirmPass) { msgEl.style.color = '#ff4757'; msgEl.innerHTML = '❌ দুটি পাসওয়ার্ড মিলছে না'; return; }
+
+  msgEl.style.color = '#ffa502'; msgEl.innerHTML = '⏳ Verifying...';
+  try {
+    var hashedPass = await hashPassword(newPass);
+    var response = await fetch(VYRO_API_URL + '/api/verify-otp-reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: phone, otp: otp, new_password: hashedPass })
+    });
+    var result = await response.json();
+
+    if (result.success) {
+      msgEl.style.color = '#2ed573';
+      msgEl.innerHTML = '✅ পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!';
+      setTimeout(function() {
+        document.getElementById('forgotPassModal').classList.add('hidden');
+        document.getElementById('loginUser').value = phone;
+      }, 2000);
+    } else {
+      msgEl.style.color = '#ff4757';
+      msgEl.innerHTML = '❌ ' + (result.error || 'OTP ভুল হয়েছে বা সময় শেষ');
+    }
+  } catch(e) {
+    msgEl.style.color = '#ff4757';
+    msgEl.innerHTML = '❌ Error: ' + e.message;
+  }
+};
+
+// বাটন ক্লিক ইভেন্ট (নিশ্চিত করার জন্য)
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.textContent.includes("Forgot Password")) {
+        e.preventDefault();
+        var modal = document.getElementById('forgotPassModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            document.getElementById('forgotStep1').style.display = 'block';
+            document.getElementById('forgotStep2').style.display = 'none';
+        }
+    }
+});
+// ============ END OF OTP LOGIC ============
+// ============ CLICK EVENT FIX ============
 document.addEventListener('click', function(e) {
     // যদি ক্লিক করা জায়গায় 'Forgot Password' লেখা থাকে
-    if (e.target.innerHTML && e.target.innerHTML.trim().includes('Forgot Password')) {
-        alert('বাটনটি কাজ করছে! এখন পপআপ ওপেন হবে।'); // টেস্ট এলার্ট
+    if (e.target.innerHTML && e.target.innerHTML.includes('Forgot Password')) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var modal = document.getElementById('forgotPassModal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex'; // জোর করে দেখানো
+            
+            document.getElementById('forgotStep1').style.display = 'block';
+            document.getElementById('forgotStep2').style.display = 'none';
+            
+            // ইনপুট ফিল্ড খালি করা
+            document.getElementById('otpPhone').value = '';
+            document.getElementById('otpCode').value = '';
+            document.getElementById('resetNewPass').value = '';
+            document.getElementById('resetConfirmPass').value = '';
+            document.getElementById('otpMsg1').innerHTML = '';
+            document.getElementById('resetMsg').innerHTML = '';
+        } else {
+            alert('পপআপ কোডটি (forgotPassModal) খুঁজে পাওয়া যায়নি!');
+        }
+    }
+});
+// 🔥 ফোর্স ক্লিক ইভেন্ট (যেকোনো জায়গায় ক্লিক করলেই কাজ করবে)
+document.addEventListener('click', function(e) {
+    // যদি ক্লিক করা জায়গায় 'Forgot Password' লেখা থাকে
+    if (e.target && e.target.textContent && e.target.textContent.includes("Forgot Password")) {
+        e.preventDefault();
+        e.stopPropagation();
         
         var modal = document.getElementById('forgotPassModal');
         if (modal) {
@@ -12501,12 +12579,23 @@ document.addEventListener('click', function(e) {
             modal.style.display = 'flex';
             modal.style.opacity = '1';
             modal.style.zIndex = '99999';
+            
+            // ধাপ ১ দেখানো (নাম্বার ইনপুট)
+            document.getElementById('forgotStep1').style.display = 'block';
+            document.getElementById('forgotStep2').style.display = 'none';
+            
+            // ইনপুট ফিল্ডগুলো খালি করা
+            document.getElementById('otpPhone').value = '';
+            document.getElementById('otpCode').value = '';
+            document.getElementById('resetNewPass').value = '';
+            document.getElementById('resetConfirmPass').value = '';
+            document.getElementById('otpMsg1').innerHTML = '';
+            document.getElementById('resetMsg').innerHTML = '';
         } else {
             alert('পপআপ কোডটি (forgotPassModal) খুঁজে পাওয়া যায়নি!');
         }
     }
 });
 </script>
-<!-- ========================================== -->
 </body>
 </html>
