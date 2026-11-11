@@ -1740,7 +1740,7 @@ async function doLogin() {
   
   // Step 1: API login try করুন
   err.textContent = '⏳ Logging in...';
-  var apiResult = await vyroApiLogin(u, p);
+  var apiResult = await vyroApiLogin(u, p, shopId);
   
   if (apiResult && apiResult.success) {
     console.log('✅ Cloud login successful');
