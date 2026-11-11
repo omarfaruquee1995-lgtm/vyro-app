@@ -1702,11 +1702,13 @@ async function vyroApiCall(endpoint, method, body) {
   }
 }
 
-async function vyroApiLogin(username, password) {
+async function vyroApiLogin(username, password, shopId) {
   var result = await vyroApiCall('/api/login', 'POST', {
     username: username,
-    password: password
+    password: password,
+    shop_id: shopId // 👈 নতুন যোগ করা হলো
   });
+  
   if (result && result.success) {
     VYRO_TOKEN = result.token;
     localStorage.setItem('vyro_token', result.token);
