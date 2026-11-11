@@ -3490,6 +3490,7 @@ function showInvoice(saleId) {
   var html = '<div class="modal-overlay" id="invoiceModal"><div class="modal" style="max-width:800px;padding:0;max-height:95vh">';
   html += '<div id="invoicePrint" class="theme-' + theme + ' font-' + font + ' inv-format-' + activeFormat + '" style="padding:30px 40px 30px 50px; min-height:auto; color:#000; position:relative; overflow:hidden;">';
   html += '<style>' + watermarkCSS + '</style>';
+html += '<style>.inv-header { border-bottom: 4px solid #1e3c72 !important; }</style>';
   html += '<div class="invoice-watermark">' + currentShop.name + '</div>';
   html += '<div class="invoice-side-text">VYRO Shop Management • Powered by OF-R Software</div>';
 
@@ -3556,30 +3557,35 @@ html += '<tr><td style="width:60%; border-right:none;">TRANSPORTATION / CARRYING
     html += '<div style="width:30%;"><div style="border-top:1px solid #333; padding-top:5px;"><b>Store Received</b></div><small style="color:#666;">Received By</small></div>';
     html += '</div>';
 
-  } else if (activeFormat === 5) {
+    } else if (activeFormat === 5) {
     // ==========================================
-    // FORMAT 5 - MODERN BORDER STYLE
+    // FORMAT 5 - MODERN BORDER STYLE (UPDATED HEADER)
     // ==========================================
-    html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #ddd; padding-bottom:10px; margin-bottom:15px;">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:4px solid #1e3c72; padding-bottom:15px; margin-bottom:15px;">';
     
-    // Left: Shop Info
+    // Left: Shop Info (বড় ফন্ট ও কালার)
     html += '<div style="width:45%; overflow: hidden;">';
-html += '<h1 style="color:#8b1e1e; font-size:16px; margin:0; font-weight:900; text-transform:uppercase; white-space:nowrap;">' + currentShop.name + '</h1>';
-    html += '<p style="font-size:11px; color:#444; margin:4px 0 0; font-weight:600;">' + (savedSubtitle || '') + '</p>';
-    html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📍 ' + (savedAddress || '') + '</p>';
-    html += '<p style="font-size:11px; color:#666; margin:2px 0 0;">📞 ' + (savedPhone || '') + '</p>';
+    html += '<h1 style="color:var(--inv-primary, #1e3c72); font-size:26px; margin:0; font-weight:900; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap;">' + currentShop.name + '</h1>';
+    html += '<p style="font-size:13px; color:#555; margin:6px 0 0; font-weight:600;">' + (savedSubtitle || '') + '</p>';
+    html += '<p style="font-size:13px; color:#555; margin:3px 0 0; font-weight:600;">📍 ' + (savedAddress || '') + '</p>';
+    html += '<p style="font-size:13px; color:#555; margin:3px 0 0; font-weight:600;">📞 ' + (savedPhone || '') + '</p>';
+    if(currentShop.email || localStorage.getItem('smp_email_' + currentShop.id)) {
+      var savedEmail = localStorage.getItem('smp_email_' + currentShop.id) || currentShop.email;
+      html += '<p style="font-size:13px; color:#555; margin:3px 0 0; font-weight:600;">✉️ ' + savedEmail + '</p>';
+    }
     html += '</div>';
 
-    // Center: INVOICE
+    // Center: INVOICE (বড় ফন্ট ও কালার)
     html += '<div style="width:25%; text-align:center; padding-top:5px;">';
-html += '<h2 style="color:#8b1e1e; font-size:22px; margin:0; letter-spacing:1px; font-weight:900;">INVOICE</h2>';
+    html += '<h2 style="color:var(--inv-primary, #1e3c72); font-size:32px; margin:0; letter-spacing:1px; font-weight:900;">INVOICE</h2>';
     html += '</div>';
 
     // Right: Invoice Details
-    html += '<div style="width:30%; text-align:right; font-size:12px; line-height:1.6;">';
-    html += '<div><b>Invoice #:</b> ' + (s.invoiceNo || s.id) + '</div>';
+    html += '<div style="width:30%; text-align:right; font-size:13px; line-height:1.6;">';
+    html += '<div><b>Invoice #:</b> <span style="color:#2a5298;">' + (s.invoiceNo || s.id) + '</span></div>';
     html += '<div><b>Invoice Date:</b> ' + s.date + '</div>';
-        // চালান নাম্বার খোঁজা
+    
+    // চালান নাম্বার খোঁজা
     var challanNoText = 'N/A';
     var challansList = DB.get('challans');
     for (var c = 0; c < challansList.length; c++) {
@@ -3588,7 +3594,7 @@ html += '<h2 style="color:#8b1e1e; font-size:22px; margin:0; letter-spacing:1px;
         break;
       }
     }
-    html += '<div><b>Challan No:</b> ' + challanNoText + '</div>';
+    html += '<div><b>Challan No:</b> <span style="color:#2a5298;">' + challanNoText + '</span></div>';
     html += '</div>';
 
     html += '</div>';
@@ -4015,6 +4021,7 @@ function openBrandingEdit() {
   html += '<label style="font-size:11px;color:#666">Subtitle (Slogan)</label><input id="brandSubtitle" value="' + (currentShop.subtitle || '') + '" placeholder="e.g. Total Solution of Fire Safety...">';
   html += '<label style="font-size:11px;color:#666">Address</label><input id="brandAddress" value="' + (currentShop.address || '') + '">';
   html += '<label style="font-size:11px;color:#666">Phone</label><input id="brandPhone" value="' + (currentShop.phone || '') + '">';
+html += '<label style="font-size:11px;color:#666">Email</label><input id="brandEmail" value="' + (currentShop.email || '') + '">';
   html += '<button class="btn-primary" onclick="saveBrandingEdit()">💾 Save</button>';
   html += '<button class="btn-primary" style="background:#888;margin-top:6px" onclick="document.getElementById(\'brandingModal\').remove();openSettings()">Close</button></div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
@@ -4028,6 +4035,7 @@ function saveBrandingEdit() {
   var newSubtitle = document.getElementById('brandSubtitle').value.trim();
   var newAddress = document.getElementById('brandAddress').value.trim();
   var newPhone = document.getElementById('brandPhone').value.trim();
+  var newEmail = document.getElementById('brandEmail').value.trim();
   
   for (var i = 0; i < shops.length; i++) {
     if (shops[i].id === currentShop.id) {
@@ -4036,6 +4044,7 @@ function saveBrandingEdit() {
       shops[i].subtitle = newSubtitle;
       shops[i].address = newAddress;
       shops[i].phone = newPhone;
+      shops[i].email = newEmail;
       break;
     }
   }
@@ -4047,6 +4056,7 @@ function saveBrandingEdit() {
   currentShop.subtitle = newSubtitle;
   currentShop.address = newAddress;
   currentShop.phone = newPhone;
+  currentShop.email = newEmail;
   
   // vyro_shop আপডেট
   try {
@@ -4065,6 +4075,7 @@ function saveBrandingEdit() {
   localStorage.setItem('smp_subtitle_' + currentShop.id, newSubtitle);
   localStorage.setItem('smp_address_' + currentShop.id, newAddress);
   localStorage.setItem('smp_phone_' + currentShop.id, newPhone);
+  localStorage.setItem('smp_email_' + currentShop.id, newEmail);
   
   document.getElementById('brandingModal').remove();
   alert('✅ Shop info সেভ হয়েছে');
