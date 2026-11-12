@@ -5922,7 +5922,7 @@ function convertQuotationToInvoice() {
   showInvoice(saleId);
 }
 
-function printQuotation() {
+window.printQuotation = function() {
   updateQuote();
   var q = currentQuotation;
   if (!q.customer.name) { alert('Customer name required'); return; }
@@ -5964,12 +5964,25 @@ function printQuotation() {
   if (q.customer.customerId) w.document.write('<br>🆔 ' + q.customer.customerId);
   w.document.write('</div>');
 
-    w.document.write('<table><thead><tr><th>#</th><th>Product/Service</th><th>Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead><tbody>');
-    for (var i=0;i<q.items.length;i++) {
+  w.document.write('<table><thead><tr><th>#</th><th>Product/Service</th><th>Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Total</th></tr></thead><tbody>');
+  
+  for (var i = 0; i < q.items.length; i++) {
     var it = q.items[i];
-    var gross = it.qty*it.price;
-    w.document.write('<tr><td>'+(i+1)+'</td><td>'+it.name+(it.desc?'<br><small style="color:#666">'+it.desc+'</small>':'')+'</td><td>'+it.qty+' '+it.unit+'</td><td style="text-align:right">'+fmt(it.price)+'</td><td style="text-align:right"><b>'+fmt(gross)+'</b></td></tr>');
+    var gross = it.qty * it.price;
+    
+    // সাইজ, মডেল ও ব্র্যান্ড লজিক
+    var displayName = it.size ? (it.size + ' ' + it.name) : it.name;
+    var extraInfo = '';
+    if (it.model) extraInfo += 'Model: ' + it.model;
+    if (it.brand) extraInfo += (extraInfo ? ' | ' : '') + 'Brand: ' + it.brand;
+    
+    w.document.write('<tr><td>' + (i+1) + '</td><td>' + displayName);
+    if (extraInfo) {
+        w.document.write('<br><small style="color:#666">' + extraInfo + '</small>');
+    }
+    w.document.write('</td><td>' + it.qty + ' ' + it.unit + '</td><td style="text-align:right">' + fmt(it.price) + '</td><td style="text-align:right"><b>' + fmt(gross) + '</b></td></tr>');
   }
+  
   w.document.write('</tbody></table>');
 
   w.document.write('<div style="display:flex;justify-content:flex-end;margin-top:16px"><div style="min-width:280px;font-size:13px">');
@@ -6007,8 +6020,7 @@ function printQuotation() {
   w.document.write('</div></body></html>');
   w.document.close();
   setTimeout(function(){ w.print(); }, 400);
-}
-
+};
 function shareQuotationWhatsApp() {
   updateQuote();
   var q = currentQuotation;
@@ -6892,28 +6904,55 @@ window.filterQuoteStock = function() {
   document.getElementById('qsResults').innerHTML = buildQuoteStockList(products);
 };
 
+// ---------- Add Quote Item from Stock (with Size, Model, Brand) ----------
 window.addQuoteItemFromStock = function(productId) {
   var products = DB.get('products');
   var p = null;
   for (var i = 0; i < products.length; i++) if (products[i].id === productId) p = products[i];
   if (!p) return;
   if (!currentQuotation) { alert('Quotation not loaded'); return; }
-  currentQuotation.items.push({
-    sku: p.sku || '',
-    name: p.name,
-    desc: '',
-    qty: 1,
-    unit: p.unit || 'pcs',
-    price: p.sellPrice || 0,
-    disc: 0,
-    tax: 0
-  });
-  document.getElementById('quoteStockModal').remove();
+  
+  // Check if already in quote
+  var existing = -1;
+  for (var j = 0; j < currentQuotation.items.length; j++) {
+    if (currentQuotation.items[j].name === p.name && currentQuotation.items[j].price === p.sellPrice && currentQuotation.items[j].size === (p.size || '')) {
+      existing = j;
+      break;
+    }
+  }
+  
+  if (existing >= 0) {
+    currentQuotation.items[existing].qty = (currentQuotation.items[existing].qty || 0) + 1;
+  } else {
+    // Remove empty first item
+    if (currentQuotation.items.length === 1 && !currentQuotation.items[0].name && currentQuotation.items[0].price === 0) {
+      currentQuotation.items = [];
+    }
+    currentQuotation.items.push({
+      sku: p.sku || '',
+      name: p.name,
+      size: p.size || '',
+      model: p.model || '',
+      brand: p.brand || '',
+      desc: '',
+      qty: 1,
+      unit: p.unit || 'pcs',
+      price: p.sellPrice || 0,
+      disc: 0,
+      tax: 0
+    });
+  }
+  
   renderQuoteItems();
   updateQuote();
-  alert('✅ ' + p.name + ' added');
+  
+  // Show success feedback
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#2ed573;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700;font-size:12px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+  toast.innerHTML = '✅ ' + p.name + ' added';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 1500);
 };
-
 // ---------- FIX 6: Cart + Quote UOM via MutationObserver ----------
 var uomObserver = new MutationObserver(function() {
   var list = getUOMList();
@@ -8903,8 +8942,18 @@ window.renderQuoteItems = function() {
 
       html += '<tr style="border-bottom:1px solid #233554">';
       
-      // Product Name
-      html += '<td style="padding:10px"><input value="' + escAttr(it.name) + '" oninput="currentQuotation.items[' + i + '].name=this.value" placeholder="Product name..." style="padding:8px 10px;font-size:13px;margin:0;width:100%;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;"></td>';
+      // Product Name (with Size, Model, Brand)
+      var displayName = it.size ? (it.size + ' ' + it.name) : it.name;
+      var extraInfo = '';
+      if (it.model) extraInfo += 'Model: ' + it.model;
+      if (it.brand) extraInfo += (extraInfo ? ' | ' : '') + 'Brand: ' + it.brand;
+      
+      html += '<td style="padding:10px">';
+      html += '<input value="' + escAttr(displayName) + '" oninput="currentQuotation.items[' + i + '].name=this.value" placeholder="Product name..." style="padding:8px 10px;font-size:13px;margin:0;width:100%;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;font-weight:600;">';
+      if (extraInfo) {
+        html += '<div style="font-size:10px;color:#8892b0;margin-top:3px;padding-left:4px;font-weight:600;">' + extraInfo + '</div>';
+      }
+      html += '</td>';
       
       // Qty
       html += '<td style="padding:10px"><input type="number" value="' + displayQty + '" onfocus="this.select()" oninput="currentQuotation.items[' + i + '].qty=+this.value||0;updateQuote()" placeholder="0" style="padding:8px 10px;font-size:13px;margin:0;width:100%;text-align:center;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;-moz-appearance:textfield;appearance:textfield;-webkit-appearance:none;"></td>';
@@ -9047,18 +9096,22 @@ function buildQuoteStockList(products, search) {
   
   return html;
 }
-// ---------- Add Quote Item from Stock (auto-fill) ----------
+// ---------- Add Quote Item from Stock (with Size, Model, Brand FIXED) ----------
 window.addQuoteItemFromStock = function(productId) {
   var products = DB.get('products');
   var p = null;
   for (var i = 0; i < products.length; i++) if (products[i].id === productId) p = products[i];
   if (!p) return;
+  
   if (!currentQuotation) { alert('Quotation not loaded'); return; }
   
-  // Check if already in quote
+  // ১. প্রোডাক্টের ডাটা কনসোল করা (আপনি ডিবাগ করার জন্য দেখতে পারবেন)
+  console.log('Adding to cart:', p);
+  
+  // Check if already in quote (ম্যাচিং শুধু নাম এবং সাইজ দিয়ে)
   var existing = -1;
   for (var j = 0; j < currentQuotation.items.length; j++) {
-    if (currentQuotation.items[j].name === p.name && currentQuotation.items[j].price === p.sellPrice) {
+    if (currentQuotation.items[j].name === p.name && currentQuotation.items[j].size === (p.size || '')) {
       existing = j;
       break;
     }
@@ -9071,9 +9124,15 @@ window.addQuoteItemFromStock = function(productId) {
     if (currentQuotation.items.length === 1 && !currentQuotation.items[0].name && currentQuotation.items[0].price === 0) {
       currentQuotation.items = [];
     }
+    
+    // ২. কোটেশন আইটেমে ডাটা পুশ করা
     currentQuotation.items.push({
+      productId: p.id,
       sku: p.sku || '',
-      name: p.name,
+      name: p.name || '',
+      size: p.size || '',       // সাইজ নিশ্চিত করা হলো
+      model: p.model || '',     // মডেল নিশ্চিত করা হলো
+      brand: p.brand || '',     // ব্র্যান্ড নিশ্চিত করা হলো
       desc: '',
       qty: 1,
       unit: p.unit || 'pcs',
@@ -9083,21 +9142,16 @@ window.addQuoteItemFromStock = function(productId) {
     });
   }
   
-  // Update UI
   renderQuoteItems();
   updateQuote();
   
   // Show success feedback
-  var resultsDiv = document.getElementById('qsResults');
-  if (resultsDiv) {
-    var toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#2ed573;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700;font-size:12px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3)';
-    toast.innerHTML = '✅ ' + p.name + ' added' + (existing >= 0 ? ' (Qty++)' : '');
-    document.body.appendChild(toast);
-    setTimeout(function() { toast.remove(); }, 1500);
-  }
+  var toast = document.createElement('div');
+  toast.style.cssText = 'position:fixed;top:20px;right:20px;background:#2ed573;color:#fff;padding:12px 18px;border-radius:8px;font-weight:700;font-size:12px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3)';
+  toast.innerHTML = '✅ ' + p.name + ' added';
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 1500);
 };
-
 // ---------- Legacy pickQuoteProduct (kept for compatibility) ----------
 window.pickQuoteProduct = function() {
   pickQuoteProductSearch();
