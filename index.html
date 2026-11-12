@@ -965,6 +965,16 @@ body.dark-mode .stock-status-card .ss-lbl {
     background: linear-gradient(135deg, #2ed573, #1e7e34) !important;
     color: #fff !important;
 }
+/* Number input spinner remove */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
 </style>
 </head>
 <body>
@@ -8716,108 +8726,161 @@ window.openQuotationPage = function() {
   currentPage = 'quotation';
   finishOpenQuotationPage();
 };
-
-// ---------- Enhanced Quotation Render ----------
+// ---------- Enhanced Quotation Render (Tabbed Layout - Premium UI) ----------
 window.renderQuotation = function(app) {
   if (!currentQuotation) currentQuotation = newQuotation();
   var q = currentQuotation;
   var html = '';
   
-  // Action buttons
-  html += '<div class="card" style="padding:10px;display:flex;gap:6px;flex-wrap:wrap">';
-  html += '<button class="btn-sm btn-primary" style="flex:1;min-width:100px;padding:10px" onclick="saveQuotationDraft()">💾 Save Draft</button>';
-  html += '<button class="btn-sm btn-info" style="flex:1;min-width:100px;padding:10px" onclick="printQuotation()">🖨 Print</button>';
-  html += '<button class="btn-sm btn-success" style="flex:1;min-width:100px;padding:10px" onclick="convertQuotationToInvoice()">🧾 To Invoice</button>';
-  html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;background:#25D366;color:#fff" onclick="shareQuotationWhatsApp()">📱 WhatsApp</button>';
-  html += '<button class="btn-sm btn-warning" style="flex:1;min-width:100px;padding:10px" onclick="newQuotationForm()">🆕 New</button>';
-  html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;background:#9c27b0;color:#fff" onclick="openQuotationList()">📚 Saved</button>';
-  html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;background:#888;color:#fff" onclick="nav(\'dashboard\')">✕ Close</button>';
+  // Premium Action Buttons
+  html += '<div class="card" style="padding:10px;display:flex;gap:8px;flex-wrap:wrap; margin-bottom:15px; background:#112240; border:1px solid #233554; box-shadow:0 4px 20px rgba(0,0,0,0.2);">';
+  html += '<button class="btn-sm btn-primary" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;" onclick="saveQuotationDraft()">💾 Save Draft</button>';
+  html += '<button class="btn-sm btn-info" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;" onclick="printQuotation()">🖨 Print</button>';
+  html += '<button class="btn-sm btn-success" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;" onclick="convertQuotationToInvoice()">🧾 To Invoice</button>';
+  html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;background:#25D366;color:#fff" onclick="shareQuotationWhatsApp()">📱 WhatsApp</button>';
+  html += '<button class="btn-sm btn-warning" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;" onclick="newQuotationForm()">🆕 New</button>';
+  html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;background:#9c27b0;color:#fff" onclick="openQuotationList()">📚 Saved</button>';
+  html += '<button class="btn-sm" style="flex:1;min-width:100px;padding:10px;font-weight:600;border-radius:6px;font-size:12px;background:#64748b;color:#fff" onclick="nav(\'dashboard\')">✕ Close</button>';
   html += '</div>';
+
+  // Premium Tabs Navigation
+  html += '<div style="display:flex; gap:10px; margin-bottom:20px; background:#0a192f; padding:6px; border-radius:10px; border:1px solid #233554;">';
+  html += '<button id="tabBtn1" onclick="switchQuoteTab(1)" style="flex:1; padding:12px; border-radius:8px; font-weight:700; font-size:13px; border:none; cursor:pointer; background:#64ffda; color:#0a192f; box-shadow:0 0 15px rgba(100,255,218,0.3); transition:all 0.3s;">📋 Page 1: Customer Info</button>';
+  html += '<button id="tabBtn2" onclick="switchQuoteTab(2)" style="flex:1; padding:12px; border-radius:8px; font-weight:700; font-size:13px; border:none; cursor:pointer; background:transparent; color:#8892b0; transition:all 0.3s;">📦 Page 2: Product & Summary</button>';
+  html += '</div>';
+
+  // ================= PAGE 1: Quotation Info + Customer =================
+  html += '<div id="quoteTab1" style="display:block;">';
   
-  // Quotation Info
-  html += '<div class="card"><h3>1️⃣ Quotation Information</h3><div class="grid2">';
-  html += '<div><label style="font-size:11px;color:#666">Quotation No.</label><input id="qNo" value="' + q.qNo + '" readonly style="background:#f0f2f5"></div>';
-  html += '<div><label style="font-size:11px;color:#666">Status</label><select id="qStatus" onchange="updateQuote()">';
+  // 1. Quotation Info (Dark Card)
+  html += '<div style="background:#112240; border:1px solid #233554; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">';
+  html += '<h3 style="margin-bottom:15px; color:#64ffda; font-size:15px; display:flex; align-items:center; gap:8px;">1️⃣ Quotation Information</h3>';
+  
+  html += '<div class="grid2" style="gap:15px">';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Quotation No. (Auto)</label><input id="qNo" value="' + q.qNo + '" readonly style="background:#0a192f; color:#64ffda; border:1px solid #233554; padding:10px 12px; border-radius:6px; margin:0; font-size:13px; font-weight:700; letter-spacing:0.5px;"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Status</label><select id="qStatus" onchange="updateQuote()" style="margin:0; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;">';
   var sts = ['Draft', 'Sent', 'Accepted', 'Rejected', 'Expired'];
-  for (var i = 0; i < sts.length; i++) html += '<option' + (q.status === sts[i] ? ' selected' : '') + '>' + sts[i] + '</option>';
+  for (var i = 0; i < sts.length; i++) html += '<option' + (q.status === sts[i] ? ' selected' : '') + ' style="background:#112240;">' + sts[i] + '</option>';
   html += '</select></div>';
-  html += '<div><label style="font-size:11px;color:#666">Date</label><input type="date" id="qDate" value="' + q.qDate + '" onchange="updateQuote()"></div>';
-  html += '<div><label style="font-size:11px;color:#666">Valid Until</label><input type="date" id="qValid" value="' + q.qValid + '" onchange="updateQuote()"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Date</label><input type="date" id="qDate" value="' + q.qDate + '" onchange="updateQuote()" style="margin:0; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Valid Until</label><input type="date" id="qValid" value="' + q.qValid + '" onchange="updateQuote()" style="margin:0; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
   html += '</div></div>';
+
+  // 2. Customer (Dark Card)
+  html += '<div style="background:#112240; border:1px solid #233554; border-radius:12px; padding:20px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">';
+  html += '<h3 style="margin-bottom:15px; color:#64ffda; font-size:15px; display:flex; align-items:center; gap:8px;">2️⃣ Customer Information</h3>';
   
-  // Customer
-  html += '<div class="card"><h3>2️⃣ Customer</h3>';
-  html += '<select id="qCustPick" onchange="pickCustomerForQuote(this.value)" style="margin-bottom:8px"><option value="">-- কাস্টমার সিলেক্ট --</option>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Select Customer</label>';
+  html += '<select id="qCustPick" onchange="pickCustomerForQuote(this.value)" style="margin-bottom:15px; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"><option value="" style="background:#112240;">-- কাস্টমার সিলেক্ট করুন --</option>';
   var custs = DB.get('customers');
-  for (var c = 0; c < custs.length; c++) html += '<option value="' + custs[c].id + '">' + escAttr(custs[c].name) + '</option>';
+  for (var c = 0; c < custs.length; c++) html += '<option value="' + custs[c].id + '" style="background:#112240;">' + escAttr(custs[c].name) + '</option>';
   html += '</select>';
-  html += '<label style="font-size:11px;color:#666">Customer Name *</label><input id="qCName" value="' + escAttr(q.customer.name) + '" oninput="updateQuote()">';
-  html += '<div class="grid2">';
-  html += '<div><label style="font-size:11px;color:#666">Mobile</label><input id="qCPhone" value="' + escAttr(q.customer.phone) + '" oninput="updateQuote()"></div>';
-  html += '<div><label style="font-size:11px;color:#666">Email</label><input id="qCEmail" value="' + escAttr(q.customer.email) + '" oninput="updateQuote()"></div>';
-  html += '</div>';
-  html += '<label style="font-size:11px;color:#666">Address</label><input id="qCAddr" value="' + escAttr(q.customer.address) + '" oninput="updateQuote()">';
-  html += '</div>';
   
-  // Products
-  html += '<div class="card"><h3>3️⃣ Products</h3>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Customer Name *</label><input id="qCName" value="' + escAttr(q.customer.name) + '" oninput="updateQuote()" style="margin-bottom:15px; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px; font-weight:600;">';
   
-  // Add product buttons
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">';
-  html += '<button class="btn-sm btn-info" style="padding:10px;font-size:12px" onclick="pickQuoteProductSearch()">🔍 Search Stock</button>';
-  html += '<button class="btn-sm btn-success" style="padding:10px;font-size:12px" onclick="addQuoteItem()">+ Manual Add</button>';
+  html += '<div class="grid2" style="gap:15px; margin-bottom:15px">';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Mobile *</label><input id="qCPhone" value="' + escAttr(q.customer.phone) + '" oninput="updateQuote()" style="margin:0; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Email</label><input id="qCEmail" value="' + escAttr(q.customer.email) + '" oninput="updateQuote()" style="margin:0; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
+  html += '</div>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Address</label><input id="qCAddr" value="' + escAttr(q.customer.address) + '" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;">';
+  html += '</div>';
+
+  html += '<div style="text-align:right; margin-top:20px;">';
+  html += '<button class="btn-primary" style="background:#64ffda; color:#0a192f; padding:12px 24px; font-weight:700; font-size:13px; border-radius:8px; box-shadow:0 4px 15px rgba(100,255,218,0.3);" onclick="switchQuoteTab(2)">Next: Product Details ➡️</button>';
+  html += '</div>';
+  html += '</div>'; // End Page 1
+
+  // ================= PAGE 2: Products + Summary + Others =================
+  html += '<div id="quoteTab2" style="display:none;">';
+  
+  // 3. Products & 4. Summary (Dark Card)
+  html += '<div style="background:#112240; border:1px solid #233554; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">';
+  html += '<h3 style="margin-bottom:15px; color:#64ffda; font-size:15px;">3️⃣ Products & 4️⃣ Summary</h3>';
+  
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:15px">';
+  html += '<button class="btn-sm btn-info" style="padding:12px;font-size:13px;border-radius:6px;font-weight:600;background:#0284c7;color:#fff;" onclick="pickQuoteProductSearch()">🔍 Search Stock</button>';
+  html += '<button class="btn-sm btn-success" style="padding:12px;font-size:13px;border-radius:6px;font-weight:600;background:#059669;color:#fff;" onclick="addQuoteItem()">+ Manual Add</button>';
   html += '</div>';
   
   // Items table
-  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;min-width:750px">';
-    html += '<thead><tr style="background:rgba(255,255,255,0.05); color:#fff;">';
-  html += '<th style="padding:6px">Product</th><th style="padding:6px">Qty</th>';
-html += '<th style="padding:6px">Unit</th><th style="padding:6px">Price</th><th style="padding:6px;text-align:right">Total</th><th></th>';
-html += '</tr></thead><tbody id="qItemsBody"></tbody></table></div>';
-  
+  html += '<div style="overflow-x:auto; border:1px solid #233554; border-radius:8px; background:#0a192f;">';
+  html += '<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:100%">';
+  html += '<thead><tr style="background:#172a45; color:#64ffda; text-transform:uppercase; font-size:11px; letter-spacing:0.5px;">';
+  html += '<th style="padding:12px 10px;text-align:left;">Product</th><th style="padding:12px 10px;width:70px;text-align:center;">Qty</th>';
+  html += '<th style="padding:12px 10px;width:80px;text-align:center;">Unit</th><th style="padding:12px 10px;width:90px;text-align:right;">Price</th><th style="padding:12px 10px;text-align:right;width:100px;">Total</th><th style="padding:12px 10px;width:40px;"></th>';
+  html += '</tr></thead><tbody id="qItemsBody"></tbody></table></div>';
+
   // Summary
-  html += '<div class="card"><h3>4️⃣ Summary</h3>';
-  html += '<div id="qSummary"></div>';
-html += '<div class="grid2" style="margin-top:10px">';
-html += '<div><label style="font-size:11px;color:#666">Discount (%)</label><input id="qGlobalDisc" type="number" value="' + (q.globalDisc || 0) + '" oninput="currentQuotation.globalDisc=+this.value||0;updateQuote()"></div>';
-html += '<div><label style="font-size:11px;color:#666">VAT (%)</label><input id="qGlobalVat" type="number" value="' + (q.globalVat || 0) + '" oninput="currentQuotation.globalVat=+this.value||0;updateQuote()"></div>';
-html += '</div>';
+  html += '<div id="qSummary" style="margin-top:20px"></div>';
+  html += '<div class="grid2" style="margin-top:15px; gap:15px">';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Global Discount (%)</label><input id="qGlobalDisc" type="number" value="' + (q.globalDisc || 0) + '" oninput="currentQuotation.globalDisc=+this.value||0;updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px; text-align:right;"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Global VAT (%)</label><input id="qGlobalVat" type="number" value="' + (q.globalVat || 0) + '" oninput="currentQuotation.globalVat=+this.value||0;updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px; text-align:right;"></div>';
+  html += '</div>';
+  html += '</div>'; // End 3 & 4
+
+  // 5. Payment & 6. Additional (Dark Card)
+  html += '<div style="background:#112240; border:1px solid #233554; border-radius:12px; padding:20px; margin-bottom:20px; box-shadow:0 4px 15px rgba(0,0,0,0.15);">';
+  html += '<div class="grid2" style="gap:20px">';
   
-  // Payment
-  html += '<div class="card"><h3>5️⃣ Payment</h3>';
-  html += '<div class="grid2">';
-  html += '<div><label style="font-size:11px;color:#666">Method</label><select id="qPayMethod" onchange="updateQuote()">';
+  html += '<div><h3 style="margin-bottom:15px; color:#64ffda; font-size:15px;">5️⃣ Payment Details</h3>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Method</label><select id="qPayMethod" onchange="updateQuote()" style="margin-bottom:15px; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;">';
   var pms = ['Cash', 'Bank Transfer', 'bKash/Nagad', 'Cheque', 'Mixed'];
-  for (var p = 0; p < pms.length; p++) html += '<option' + (q.payment.method === pms[p] ? ' selected' : '') + '>' + pms[p] + '</option>';
-  html += '</select></div>';
-  html += '<div><label style="font-size:11px;color:#666">Advance %</label><input id="qAdvPct" type="number" value="' + q.payment.advPct + '" min="0" max="100" oninput="updateQuote()"></div>';
+  for (var p = 0; p < pms.length; p++) html += '<option' + (q.payment.method === pms[p] ? ' selected' : '') + ' style="background:#112240;">' + pms[p] + '</option>';
+  html += '</select>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Advance %</label><input id="qAdvPct" type="number" value="' + q.payment.advPct + '" min="0" max="100" oninput="updateQuote()" style="margin-bottom:15px; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px; text-align:right;">';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Payment Terms</label><input id="qPayTerms" value="' + escAttr(q.payment.terms) + '" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;">';
   html += '</div>';
-  html += '<label style="font-size:11px;color:#666">Terms</label><input id="qPayTerms" value="' + escAttr(q.payment.terms) + '" oninput="updateQuote()">';
-  html += '</div>';
-  
-  // Additional
-  html += '<div class="card"><h3>6️⃣ Additional</h3>';
-  html += '<div class="grid2">';
-  html += '<div><label style="font-size:11px;color:#666">Delivery Date</label><input type="date" id="qDelDate" value="' + q.extra.delDate + '" onchange="updateQuote()"></div>';
-  html += '<div><label style="font-size:11px;color:#666">Location</label><input id="qDelLoc" value="' + escAttr(q.extra.delLoc) + '" oninput="updateQuote()"></div>';
-  html += '</div>';
-  html += '<label style="font-size:11px;color:#666">Terms & Conditions</label><textarea id="qTerms" rows="3" oninput="updateQuote()">' + escHtml(q.extra.terms) + '</textarea>';
-  html += '<label style="font-size:11px;color:#666">Customer Note</label><textarea id="qCNote" rows="2" oninput="updateQuote()">' + escHtml(q.extra.cNote) + '</textarea>';
+
+  html += '<div><h3 style="margin-bottom:15px; color:#64ffda; font-size:15px;">6️⃣ Delivery Details</h3>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Delivery Date</label><input type="date" id="qDelDate" value="' + q.extra.delDate + '" onchange="updateQuote()" style="margin-bottom:15px; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;">';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Location</label><input id="qDelLoc" value="' + escAttr(q.extra.delLoc) + '" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;">';
   html += '</div>';
   
-  // Signature
-  html += '<div class="card"><h3>7️⃣ Signature</h3><div class="grid3">';
-  html += '<div><label style="font-size:11px;color:#666">Prepared</label><input id="qSignPrep" value="' + escAttr(q.sign.prep) + '" oninput="updateQuote()"></div>';
-  html += '<div><label style="font-size:11px;color:#666">Checked</label><input id="qSignCheck" value="' + escAttr(q.sign.check) + '" oninput="updateQuote()"></div>';
-  html += '<div><label style="font-size:11px;color:#666">Approved</label><input id="qSignAppr" value="' + escAttr(q.sign.appr) + '" oninput="updateQuote()"></div>';
-  html += '</div></div>';
-  
+  html += '</div>'; // End Grid
+
+  html += '<div style="margin-top:15px">';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Terms & Conditions</label><textarea id="qTerms" rows="2" oninput="updateQuote()" style="margin-bottom:15px; padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px; resize:vertical; line-height:1.5;">' + escHtml(q.extra.terms) + '</textarea>';
+  html += '<label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Customer Note</label><textarea id="qCNote" rows="2" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px; resize:vertical; line-height:1.5;">' + escHtml(q.extra.cNote) + '</textarea>';
+  html += '</div>';
+
+  // 7. Signature
+  html += '<h3 style="margin-top:25px; margin-bottom:15px; color:#64ffda; font-size:15px;">7️⃣ Signature</h3>';
+  html += '<div class="grid3" style="gap:15px;">';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Prepared By</label><input id="qSignPrep" value="' + escAttr(q.sign.prep) + '" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Checked By</label><input id="qSignCheck" value="' + escAttr(q.sign.check) + '" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
+  html += '<div><label style="font-size:12px;color:#8892b0; margin-bottom:6px; display:block; font-weight:600;">Approved By</label><input id="qSignAppr" value="' + escAttr(q.sign.appr) + '" oninput="updateQuote()" style="padding:10px 12px; border-radius:6px; background:#0a192f; color:#fff; border:1px solid #233554; font-size:13px;"></div>';
+  html += '</div>';
+  html += '</div>'; // End Card
+
+  html += '<div style="text-align:left; margin-top:20px;">';
+  html += '<button class="btn-primary" style="background:#64748b; color:#fff; padding:12px 24px; font-weight:700; font-size:13px; border-radius:8px;" onclick="switchQuoteTab(1)">⬅️ Back: Customer Info</button>';
+  html += '</div>';
+  html += '</div>'; // End Page 2
+
   app.innerHTML = html;
   renderQuoteItems();
   updateQuote();
 };
-
-// ---------- Enhanced Quote Items render (with auto-fill & better UI) ----------
+// Tab Switching Function
+window.switchQuoteTab = function(tab) {
+  var tab1 = document.getElementById('quoteTab1');
+  var tab2 = document.getElementById('quoteTab2');
+  var btn1 = document.getElementById('tabBtn1');
+  var btn2 = document.getElementById('tabBtn2');
+  
+  if (tab === 1) {
+    tab1.style.display = 'block';
+    tab2.style.display = 'none';
+    btn1.style.background = '#64ffda'; btn1.style.color = '#0a192f'; btn1.style.boxShadow = '0 0 10px rgba(100,255,218,0.5)';
+    btn2.style.background = 'rgba(255,255,255,0.1)'; btn2.style.color = '#fff'; btn2.style.boxShadow = 'none';
+  } else {
+    tab1.style.display = 'none';
+    tab2.style.display = 'block';
+    btn2.style.background = '#64ffda'; btn2.style.color = '#0a192f'; btn2.style.boxShadow = '0 0 10px rgba(100,255,218,0.5)';
+    btn1.style.background = 'rgba(255,255,255,0.1)'; btn1.style.color = '#fff'; btn1.style.boxShadow = 'none';
+  }
+};
+// ---------- Enhanced Quote Items render (Empty Unit by Default) ----------
 window.renderQuoteItems = function() {
   var tbody = document.getElementById('qItemsBody');
   if (!tbody) return;
@@ -8826,25 +8889,53 @@ window.renderQuoteItems = function() {
   var units = getUOMList();
   
   if (q.items.length === 0) {
-    html += '<tr><td colspan="9" style="text-align:center;color:#888;padding:20px;font-size:12px">No items. Click "Search Stock" or "+ Manual Add"</td></tr>';
+    html += '<tr><td colspan="6" style="text-align:center;color:#8892b0;padding:20px;font-size:13px">No items. Click "Search Stock" or "+ Manual Add"</td></tr>';
   } else {
     for (var i = 0; i < q.items.length; i++) {
       var it = q.items[i];
-      html += '<tr style="border-bottom:1px solid #eee">';
-      html += '<td><input value="' + escAttr(it.name) + '" oninput="currentQuotation.items[' + i + '].name=this.value" style="padding:4px;font-size:11px;margin:0;min-width:120px"></td>';
-      html += '<td><input type="number" value="' + it.qty + '" oninput="currentQuotation.items[' + i + '].qty=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:55px"></td>';
-      html += '<td><select onchange="currentQuotation.items[' + i + '].unit=this.value" style="padding:4px;font-size:11px;margin:0;width:65px">';
-      for (var u = 0; u < units.length; u++) html += '<option' + (it.unit === units[u] ? ' selected' : '') + '>' + units[u] + '</option>';
+      
+      var displayQty = (it.qty === 0 || it.qty === 1 || it.qty === '') ? '' : it.qty;
+      var displayPrice = (it.price === 0 || it.price === '') ? '' : it.price;
+      
+      // Unit ফাঁকা রাখার লজিক
+      var isUnitEmpty = (!it.unit || it.unit === 'pcs' || it.unit === '');
+      var selectedUnit = isUnitEmpty ? '' : it.unit;
+
+      html += '<tr style="border-bottom:1px solid #233554">';
+      
+      // Product Name
+      html += '<td style="padding:10px"><input value="' + escAttr(it.name) + '" oninput="currentQuotation.items[' + i + '].name=this.value" placeholder="Product name..." style="padding:8px 10px;font-size:13px;margin:0;width:100%;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;"></td>';
+      
+      // Qty
+      html += '<td style="padding:10px"><input type="number" value="' + displayQty + '" onfocus="this.select()" oninput="currentQuotation.items[' + i + '].qty=+this.value||0;updateQuote()" placeholder="0" style="padding:8px 10px;font-size:13px;margin:0;width:100%;text-align:center;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;-moz-appearance:textfield;appearance:textfield;-webkit-appearance:none;"></td>';
+      
+      // Unit (ফাঁকা অপশন যুক্ত করা হয়েছে)
+            // Unit (ফাঁকা অপশন যুক্ত করা হয়েছে)
+      html += '<td style="padding:10px"><select onchange="currentQuotation.items[' + i + '].unit=this.value" style="padding:8px 10px;font-size:13px;margin:0;width:100%;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;">';
+      // ফাঁকা অপশনটি সবার আগে রাখা হলো
+      html += '<option value=""' + (isUnitEmpty ? ' selected' : '') + ' style="color:#666">-- Unit --</option>';
+      
+      for (var u = 0; u < units.length; u++) {
+        // ইউজার যদি 'pcs' সিলেক্ট না করে থাকে, তবে 'pcs' সিলেক্টেড দেখাবে না
+        var isSelected = (!isUnitEmpty && selectedUnit === units[u]) ? ' selected' : '';
+        html += '<option value="' + units[u] + '"' + isSelected + ' style="color:#000">' + units[u] + '</option>';
+      }
       html += '</select></td>';
-      html += '<td><input type="number" value="' + it.price + '" oninput="currentQuotation.items[' + i + '].price=+this.value||0;updateQuote()" style="padding:4px;font-size:11px;margin:0;width:70px"></td>';
-      html += '<td id="qItTotal' + i + '" style="padding:6px;text-align:right;font-weight:700">' + fmt(0) + '</td>';
-      html += '<td><button class="btn-sm btn-danger" style="padding:3px 8px" onclick="removeQuoteItem(' + i + ')">✕</button></td>';
+      
+      // Price
+      html += '<td style="padding:10px"><input type="number" value="' + displayPrice + '" onfocus="this.select()" oninput="currentQuotation.items[' + i + '].price=+this.value||0;updateQuote()" placeholder="0.00" style="padding:8px 10px;font-size:13px;margin:0;width:100%;text-align:right;background:transparent;border:1px solid #233554;color:#fff;border-radius:6px;outline:none;-moz-appearance:textfield;appearance:textfield;-webkit-appearance:none;"></td>';
+      
+      // Total
+      html += '<td id="qItTotal' + i + '" style="padding:10px;text-align:right;font-weight:700;color:#64ffda;font-size:13px">' + fmt(it.qty * it.price) + '</td>';
+      
+      // Delete Button
+      html += '<td style="padding:10px;text-align:center"><button class="btn-sm btn-danger" style="padding:6px 10px;font-size:12px;border-radius:6px;" onclick="removeQuoteItem(' + i + ')">✕</button></td>';
+      
       html += '</tr>';
     }
   }
   tbody.innerHTML = html;
 };
-
 // ---------- Search Stock Modal (enhanced) ----------
 window.pickQuoteProductSearch = function() {
   var products = DB.get('products');
@@ -12637,6 +12728,45 @@ document.addEventListener('click', function(e) {
         } else {
             alert('পপআপ কোডটি (forgotPassModal) খুঁজে পাওয়া যায়নি!');
         }
+    }
+});
+</script>
+<script>
+// ============================================================
+// FORCE EMPTY UNIT FIX
+// ============================================================
+document.addEventListener('DOMContentLoaded', function() {
+    var originalRenderQuoteItems = window.renderQuoteItems;
+    
+    if (originalRenderQuoteItems) {
+        window.renderQuoteItems = function() {
+            originalRenderQuoteItems();
+            
+            setTimeout(function() {
+                var tbody = document.getElementById('qItemsBody');
+                if (!tbody) return;
+                
+                var selects = tbody.querySelectorAll('select');
+                selects.forEach(function(select) {
+                    // যদি সিলেক্ট করা ভ্যালু 'pcs' হয়, তবে আমরা চেক করব
+                    // এটা কি ইউজার সিলেক্ট করেছে নাকি অটোমেটিক সিলেক্ট হয়েছে?
+                    if (select.value === 'pcs') {
+                        // ডাটাবেস থেকে বর্তমান কোটেশন চেক করা
+                        if (window.currentQuotation && window.currentQuotation.items) {
+                            // যেহেতু আমরা জানি নতুন অ্যাড করলে pcs ডিফল্ট আসে, 
+                            // তাই আমরা সিলেক্টকে ফাঁকা করে দেব যদি ডাটাবেসে সত্যিই ফাঁকা থাকে
+                            select.value = ''; 
+                            
+                            // ডাটাবেসেও ফাঁকা করে দেওয়া যাতে সেভ হওয়ার সময় ভুল না হয়
+                            var idx = select.closest('tr').rowIndex - 1;
+                            if (window.currentQuotation.items[idx]) {
+                                window.currentQuotation.items[idx].unit = '';
+                            }
+                        }
+                    }
+                });
+            }, 20);
+        };
     }
 });
 </script>
